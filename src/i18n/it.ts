@@ -168,6 +168,13 @@ export const it = {
   filter_spells: 'Filtra Incantesimi',
   no_spells: 'Nessun incantesimo disponibile',
   spell_detail: 'Dettaglio Incantesimo',
+
+  // Spell picker modal
+  manage_spells: 'Gestisci Incantesimi',
+  spell_picker_title: 'Scegli Incantesimi',
+  spell_picker_subtitle: 'Seleziona gli incantesimi da aggiungere al tuo grimorio',
+  no_spells_for_level: 'Nessun incantesimo disponibile per questo livello',
+  spell_picker_close: 'Chiudi',
 } as const
 
 export type TranslationKey = keyof typeof it

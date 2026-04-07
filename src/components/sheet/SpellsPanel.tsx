@@ -3,6 +3,7 @@ import { getSpellsByClass } from '../../data/spells'
 import type { Spell } from '../../types'
 import { it } from '../../i18n/it'
 import { SpellDetailModal } from './SpellDetailModal'
+import { SpellPickerModal } from './SpellPickerModal'
 import { useCharacterDispatch } from '../../context/CharacterContext'
 
 interface SpellSlot {
@@ -120,9 +121,16 @@ function SpellSlotTracker({ spellSlots }: { spellSlots: SpellSlot[] }) {
   )
 }
 
+/** Derive the highest spell level available from spellSlots */
+function getMaxSpellLevel(spellSlots: SpellSlot[]): number {
+  if (spellSlots.length === 0) return 0
+  return Math.max(...spellSlots.map((s) => s.level))
+}
+
 export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }: SpellsPanelProps) {
   const [levelFilter, setLevelFilter] = useState<number>(-1)
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null)
+  const [showPicker, setShowPicker] = useState(false)
 
   const allSpells = getSpellsByClass(classId)
   const filteredSpells = levelFilter === -1 ? allSpells : allSpells.filter((s) => s.level === levelFilter)
@@ -132,27 +140,38 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
   }
 
   const cantripTier = getCantripTier(characterLevel)
+  const maxSpellLevel = getMaxSpellLevel(spellSlots)
 
   return (
     <div className="space-y-3">
       {/* Spell slot tracker */}
       <SpellSlotTracker spellSlots={spellSlots} />
 
-      {/* Level filter buttons */}
-      <div className="flex gap-1.5 flex-wrap">
-        {LEVEL_FILTERS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setLevelFilter(value)}
-            className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-all border ${
-              levelFilter === value
-                ? 'bg-accent-gold/25 text-accent-gold border-accent-gold/50 shadow-sm'
-                : 'bg-bg-card/60 text-text-secondary border-border/50 hover:text-text-primary hover:bg-bg-card'
-            }`}
-          >
-            {label()}
-          </button>
-        ))}
+      {/* Header row: filter buttons + manage button */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap flex-1">
+          {LEVEL_FILTERS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setLevelFilter(value)}
+              className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-all border ${
+                levelFilter === value
+                  ? 'bg-accent-gold/25 text-accent-gold border-accent-gold/50 shadow-sm'
+                  : 'bg-bg-card/60 text-text-secondary border-border/50 hover:text-text-primary hover:bg-bg-card'
+              }`}
+            >
+              {label()}
+            </button>
+          ))}
+        </div>
+        {/* Manage spells button */}
+        <button
+          onClick={() => setShowPicker(true)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold border transition-all bg-accent-purple/10 text-accent-purple border-accent-purple/30 hover:bg-accent-purple/20 hover:border-accent-purple/50"
+        >
+          <span>✦</span>
+          <span>{it.manage_spells}</span>
+        </button>
       </div>
 
       {/* Spell count */}
@@ -232,6 +251,16 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
           spell={selectedSpell}
           characterLevel={characterLevel}
           onClose={() => setSelectedSpell(null)}
+        />
+      )}
+
+      {/* Spell picker modal */}
+      {showPicker && (
+        <SpellPickerModal
+          classId={classId}
+          maxSpellLevel={maxSpellLevel}
+          knownSpells={knownSpells}
+          onClose={() => setShowPicker(false)}
         />
       )}
     </div>
