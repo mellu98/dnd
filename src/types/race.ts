@@ -1,4 +1,4 @@
-import type { Feature } from './common'
+import type { Feature, Proficiency } from './common'
 
 export interface Species {
   id: string
@@ -8,6 +8,8 @@ export interface Species {
   size: 'Small' | 'Medium'
   sizeIT: string
   features: Feature[]
+  /** Species proficiencies (weapons, armor, skills, tools, languages) */
+  proficiencies: Proficiency[]
   languages: string[]
   languagesIT: string[]
   darkvision: number

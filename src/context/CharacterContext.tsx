@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react'
-import type { AbilityName, Character, CharacterAbilityScores, SkillName, Feature, BackgroundAbilityChoices } from '../types'
+import type { Character, CharacterAbilityScores, SkillName, Feature, BackgroundAbilityChoices } from '../types'
 import { loadStorage, saveStorage, generateId } from '../utils/storage'
 import { computeMaxHp } from '../engine/hp-calculator'
 import { aggregateBonuses } from '../engine/bonus-aggregator'

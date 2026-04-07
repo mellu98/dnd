@@ -1,4 +1,4 @@
-import type { Character, BackgroundAbilityChoices } from '../types'
+import type { Character } from '../types'
 
 interface StorageSchemaV1 {
   version: 1

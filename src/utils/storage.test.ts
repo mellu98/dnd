@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { loadStorage, saveStorage } from './storage'
+import { loadStorage } from './storage'
 
 const STORAGE_KEY = 'dnd5e-characters'
 
