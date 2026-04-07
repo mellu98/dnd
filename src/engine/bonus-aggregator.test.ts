@@ -32,7 +32,7 @@ describe('aggregateBonuses', () => {
 
   it('includes origin feat from background', () => {
     const agg = aggregateBonuses({ backgroundId: 'acolyte' })
-    expect(agg.features.some(f => f.name === 'Magic Initiate (Cleric)')).toBe(true)
+    expect(agg.features.some((f) => f.name === 'Magic Initiate (Cleric)')).toBe(true)
   })
 
   it('combines multiple sources', () => {
@@ -85,6 +85,9 @@ describe('calculateAllStats', () => {
       bonds: '',
       flaws: '',
       equipment: [],
+      equippedArmorId: null,
+      equippedShieldId: null,
+      knownSpells: [],
       notes: '',
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
@@ -116,6 +119,9 @@ describe('calculateAllStats', () => {
       bonds: '',
       flaws: '',
       equipment: [],
+      equippedArmorId: null,
+      equippedShieldId: null,
+      knownSpells: [],
       notes: '',
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
@@ -147,6 +153,9 @@ describe('calculateAllStats', () => {
       bonds: '',
       flaws: '',
       equipment: [],
+      equippedArmorId: null,
+      equippedShieldId: null,
+      knownSpells: [],
       notes: '',
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
@@ -163,7 +172,26 @@ describe('calculateAllStats', () => {
 // Translation test spot-check
 describe('i18n', () => {
   it('has translations for all skills', () => {
-    const skillKeys: SkillName[] = ['acrobatics', 'animal_handling', 'arcana', 'athletics', 'deception', 'history', 'insight', 'intimidation', 'investigation', 'medicine', 'nature', 'perception', 'performance', 'persuasion', 'religion', 'sleight_of_hand', 'stealth', 'survival']
+    const skillKeys: SkillName[] = [
+      'acrobatics',
+      'animal_handling',
+      'arcana',
+      'athletics',
+      'deception',
+      'history',
+      'insight',
+      'intimidation',
+      'investigation',
+      'medicine',
+      'nature',
+      'perception',
+      'performance',
+      'persuasion',
+      'religion',
+      'sleight_of_hand',
+      'stealth',
+      'survival',
+    ]
     for (const skill of skillKeys) {
       expect(translations[`skill_${skill}` as keyof typeof translations]).toBeDefined()
     }

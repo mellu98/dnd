@@ -4,8 +4,43 @@ import { proficiencyBonus } from '../utils/proficiency-bonus'
 import { skills } from '../data/skills'
 import { aggregateBonuses } from './bonus-aggregator'
 import { computeMaxHp } from './hp-calculator'
+import { getArmorById } from '../data/equipment'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
+
+/**
+ * Calculates Armor Class dynamically based on equipped armor, shield, class
+ * (Unarmored Defense for Barbarian/Monk), and magical bonuses.
+ */
+function calculateArmorClass(character: Character, modifiers: Record<AbilityName, number>): number {
+  const armorId = character.equippedArmorId
+  const shieldId = character.equippedShieldId
+  const classId = character.classId
+
+  // No armor equipped → Unarmored Defense
+  if (!armorId) {
+    if (classId === 'barbarian') return 10 + modifiers.DEX + modifiers.CON
+    if (classId === 'monk') return 10 + modifiers.DEX + modifiers.WIS
+    return 10 + modifiers.DEX
+  }
+
+  // Armor equipped
+  const armor = getArmorById(armorId)
+  if (!armor) return 10 + modifiers.DEX // fallback — unknown armor id
+
+  let ac = armor.ac
+  const dexCap = armor.dexModifier ?? Infinity
+  ac += Math.min(modifiers.DEX, dexCap)
+
+  // Shield bonus
+  if (shieldId === 'shield') ac += 2
+
+  // Magical armor bonus (equipped item in category 'armor' with magicalBonus)
+  const magicalItem = character.equipment.find((e) => e.equipped && e.magicalBonus != null && e.category === 'armor')
+  if (magicalItem?.magicalBonus) ac += magicalItem.magicalBonus
+
+  return ac
+}
 
 export function calculateAllStats(character: Character): CalculatedStats {
   const aggregated = aggregateBonuses({
@@ -74,7 +109,7 @@ export function calculateAllStats(character: Character): CalculatedStats {
     skillProficiencies,
     savingThrowModifiers,
     savingThrowProficiencies,
-    armorClass: 10 + abilityModifiers.DEX,
+    armorClass: calculateArmorClass(character, abilityModifiers),
     initiative: abilityModifiers.DEX,
     speed: aggregated.speed,
     passivePerception: 10 + skillModifiers.perception,

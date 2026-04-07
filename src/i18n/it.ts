@@ -113,6 +113,50 @@ export const it = {
   // Misc
   ft: 'ft',
   meters: 'm',
+
+  // Equipment
+  armor_none: 'Nessuna Armatura',
+  armor_light: 'Armatura Leggera',
+  armor_medium: 'Armatura Media',
+  armor_heavy: 'Armatura Pesante',
+  shield_label: 'Scudo',
+  shield_bonus: '+2 CA',
+  equip: 'Equipaggia',
+  unequip: 'Disequipaggia',
+  equipped: 'Equipaggiato',
+  weight: 'Peso',
+  value_label: 'Valore',
+  stealth_disadvantage: 'Svantaggio su Furtività',
+  strength_requirement: 'Forza Richiesta',
+
+  // Spell schools
+  school_abjuration: 'Abiurazione',
+  school_conjuration: 'Congiurazione',
+  school_divination: 'Divinazione',
+  school_enchantment: 'Ammaliamento',
+  school_evocation: 'Evocazione',
+  school_illusion: 'Illusione',
+  school_necromancy: 'Necromanzia',
+  school_transmutation: 'Trasmutazione',
+
+  // Spell levels
+  spell_cantrip: 'Trucco',
+  spell_level_1: 'Livello 1',
+  spell_level_2: 'Livello 2',
+  spell_level_3: 'Livello 3',
+  all_levels: 'Tutti',
+
+  // Spell components
+  component_verbal: 'Vocale',
+  component_somatic: 'Gestuale',
+  component_material: 'Materiale',
+  concentration_label: 'Concentrazione',
+  ritual_label: 'Rituale',
+
+  // Spell filters
+  filter_spells: 'Filtra Incantesimi',
+  no_spells: 'Nessun incantesimo disponibile',
+  spell_detail: 'Dettaglio Incantesimo',
 } as const
 
 export type TranslationKey = keyof typeof it
