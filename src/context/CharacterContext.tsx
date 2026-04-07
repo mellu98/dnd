@@ -290,7 +290,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   const lastCreatedCharId = useRef<string | null>(null)
   useEffect(() => {
     const char = state.character
-    if (!char || char.creationStep !== undefined) return // skip non-characters
+    if (!char) return // skip null characters
     if (char.imageUrl) return // already has an image
     if (!char.createdAt) return // not fully created yet
     if (lastCreatedCharId.current === char.id) return // already attempted

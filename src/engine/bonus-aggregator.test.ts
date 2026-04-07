@@ -74,6 +74,7 @@ describe('calculateAllStats', () => {
       notes: '',
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
+      imageUrl: null,
     })
     expect(stats.speed).toBeGreaterThanOrEqual(25)
     expect(stats.passivePerception).toBeGreaterThanOrEqual(10)
@@ -105,6 +106,7 @@ describe('calculateAllStats', () => {
       notes: '',
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
+      imageUrl: null,
     })
     // acrobatics is DEX-based, DEX 12 → mod +1, prof +2 → +3
     expect(stats.skillModifiers['acrobatics']).toBe(3)
