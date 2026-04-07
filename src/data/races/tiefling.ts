@@ -1,6 +1,6 @@
-import type { Race } from '../../types'
+import type { Species } from '../../types'
 
-export const tiefling: Race = {
+export const tiefling: Species = {
   id: 'tiefling',
   name: 'Tiefling',
   nameIT: 'Tiefling',
@@ -8,10 +8,6 @@ export const tiefling: Race = {
   size: 'Medium',
   sizeIT: 'Media',
   darkvision: 60,
-  abilityBonuses: [
-    { ability: 'CHA', value: 2 },
-    { ability: 'INT', value: 1 },
-  ],
   features: [
     {
       name: 'Hellish Resistance',
@@ -31,5 +27,5 @@ export const tiefling: Race = {
   proficiencies: [],
   languages: ['Common', 'Infernal'],
   languagesIT: ['Comune', 'Infernale'],
-  subraces: [],
+  variants: [],
 }

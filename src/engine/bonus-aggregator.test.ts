@@ -7,9 +7,11 @@ import type { SkillName } from '../types'
 import { it as translations } from '../i18n/it'
 
 describe('aggregateBonuses', () => {
-  it('aggregates race ability bonuses', () => {
+  it('aggregates species features (no ability bonuses)', () => {
     const agg = aggregateBonuses({ raceId: 'human' })
-    expect(agg.abilityBonuses.length).toBeGreaterThanOrEqual(0)
+    // Species in 2024 have no ability bonuses, just features
+    expect(agg.backgroundAbilityBonuses.length).toBe(0)
+    expect(agg.speed).toBe(30)
   })
 
   it('aggregates class features', () => {
@@ -17,17 +19,30 @@ describe('aggregateBonuses', () => {
     expect(agg.features.length).toBeGreaterThanOrEqual(2) // Rage, Unarmored Defense at level 1
   })
 
-  it('aggregates background proficiencies', () => {
-    const agg = aggregateBonuses({ backgroundId: 'acolyte' })
+  it('aggregates background proficiencies and ASI', () => {
+    const agg = aggregateBonuses({
+      backgroundId: 'acolyte',
+      backgroundAbilityChoices: { primary: 'WIS', secondary: 'INT' },
+    })
     expect(agg.proficiencies.length).toBeGreaterThanOrEqual(2)
+    expect(agg.backgroundAbilityBonuses.length).toBe(2)
+    expect(agg.backgroundAbilityBonuses[0].value).toBe(2)
+    expect(agg.backgroundAbilityBonuses[1].value).toBe(1)
+  })
+
+  it('includes origin feat from background', () => {
+    const agg = aggregateBonuses({ backgroundId: 'acolyte' })
+    expect(agg.features.some(f => f.name === 'Magic Initiate (Cleric)')).toBe(true)
   })
 
   it('combines multiple sources', () => {
     const agg = aggregateBonuses({
       raceId: 'elf',
       classId: 'fighter',
+      backgroundId: 'guard',
+      backgroundAbilityChoices: { primary: 'STR', secondary: 'WIS' },
     })
-    expect(agg.abilityBonuses.length).toBeGreaterThanOrEqual(1)
+    expect(agg.backgroundAbilityBonuses.length).toBe(2)
     expect(agg.features.length).toBeGreaterThan(0)
   })
 })
@@ -56,14 +71,13 @@ describe('calculateAllStats', () => {
       raceId: 'elf',
       classId: 'barbarian',
       backgroundId: 'acolyte',
+      backgroundAbilityChoices: { primary: 'WIS', secondary: 'INT' },
       level: 1,
       abilityScores: { STR: 14, DEX: 16, CON: 12, INT: 10, WIS: 10, CHA: 8 },
       hp: { max: 0, current: 0, temporary: 0 },
       skillProficiencies: ['acrobatics', 'perception'],
       chosenLanguages: ['Elvish'],
-      chosenAbilityBonuses: [],
       name: 'Test',
-      subraceId: null,
       subclassId: null,
       alignment: '',
       personalityTraits: '',
@@ -87,16 +101,15 @@ describe('calculateAllStats', () => {
       id: 'test',
       name: 'Test',
       raceId: 'human',
-      subraceId: null,
       classId: 'fighter',
       subclassId: null,
-      backgroundId: 'acolyte',
+      backgroundId: 'criminal', // criminal gives stealth + deception, no perception
+      backgroundAbilityChoices: { primary: 'DEX', secondary: 'INT' },
       level: 1,
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
       hp: { max: 0, current: 0, temporary: 0 },
       skillProficiencies: ['acrobatics'],
       chosenLanguages: [],
-      chosenAbilityBonuses: [],
       alignment: '',
       personalityTraits: '',
       ideals: '',
@@ -108,10 +121,42 @@ describe('calculateAllStats', () => {
       updatedAt: '2024-01-01',
       imageUrl: null,
     })
-    // acrobatics is DEX-based, DEX 12 → mod +1, prof +2 → +3
-    expect(stats.skillModifiers['acrobatics']).toBe(3)
-    // perception without prof, WIS 10 → mod +0
+    // acrobatics is DEX-based, DEX 12 + 2 (background primary DEX) = 14 → mod +2, prof +2 → +4
+    expect(stats.skillModifiers['acrobatics']).toBe(4)
+    // perception without prof, WIS 10 → mod +0 (no ASI to WIS in this build)
     expect(stats.skillModifiers['perception']).toBe(0)
+  })
+
+  it('applies background ASI to final ability scores', () => {
+    const stats = calculateAllStats({
+      id: 'test',
+      name: 'Test',
+      raceId: 'human',
+      classId: 'fighter',
+      subclassId: null,
+      backgroundId: 'guard',
+      backgroundAbilityChoices: { primary: 'STR', secondary: 'WIS' },
+      level: 1,
+      abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
+      hp: { max: 0, current: 0, temporary: 0 },
+      skillProficiencies: [],
+      chosenLanguages: [],
+      alignment: '',
+      personalityTraits: '',
+      ideals: '',
+      bonds: '',
+      flaws: '',
+      equipment: [],
+      notes: '',
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01',
+      imageUrl: null,
+    })
+    // STR 14 + 2 (background primary) = 16 → mod +3
+    expect(stats.finalAbilityScores.STR).toBe(16)
+    expect(stats.abilityModifiers.STR).toBe(3)
+    // WIS 10 + 1 (background secondary) = 11 → mod +0
+    expect(stats.finalAbilityScores.WIS).toBe(11)
   })
 })
 

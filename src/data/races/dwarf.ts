@@ -1,6 +1,6 @@
-import type { Race } from '../../types'
+import type { Species } from '../../types'
 
-export const dwarf: Race = {
+export const dwarf: Species = {
   id: 'dwarf',
   name: 'Dwarf',
   nameIT: 'Nano',
@@ -8,9 +8,6 @@ export const dwarf: Race = {
   size: 'Medium',
   sizeIT: 'Media',
   darkvision: 60,
-  abilityBonuses: [
-    { ability: 'CON', value: 2 },
-  ],
   features: [
     {
       name: 'Dwarven Resilience',
@@ -26,48 +23,36 @@ export const dwarf: Race = {
       descriptionIT: 'Quando effettui una prova di Intelligenza (Storia) relativa all\'origine di lavori in pietra, sei considerato competente e aggiungi il doppio del bonus di competenza.',
       level: 1,
     },
+    // Hill Dwarf variant
+    {
+      name: 'Dwarven Toughness',
+      nameIT: 'Robustezza Nanica',
+      description: 'Your hit point maximum increases by 1, and it increases by 1 every time you gain a level (Hill Dwarf variant).',
+      descriptionIT: 'Il tuo massimo di punti ferita aumenta di 1, e aumenta di 1 ogni volta che guadagni un livello (variante Nano delle Colline).',
+      level: 1,
+    },
+    // Mountain Dwarf variant
+    {
+      name: 'Dwarven Armor Training',
+      nameIT: 'Addestramento Armatura Nanica',
+      description: 'You gain proficiency with light and medium armor (Mountain Dwarf variant).',
+      descriptionIT: 'Ottieni competenza con armature leggere e medie (variante Nano delle Montagne).',
+      level: 1,
+    },
   ],
   proficiencies: [
     { type: 'weapon', value: 'Battleaxe', valueIT: 'Ascia da Battaglia' },
     { type: 'weapon', value: 'Handaxe', valueIT: 'Accetta' },
     { type: 'weapon', value: 'Light Hammer', valueIT: 'Martello Leggero' },
     { type: 'weapon', value: 'Warhammer', valueIT: 'Martello da Guerra' },
-    { type: 'tool', value: "Smith's Tools, Brewer's Supplies, or Mason's Tools (choose one)", valueIT: 'Strumenti da Fabbro, da Birraio o da Muratore (scegline uno)' },
+    { type: 'armor', value: 'Light Armor', valueIT: 'Armatura Leggera' },
+    { type: 'armor', value: 'Medium Armor', valueIT: 'Armatura Media' },
+    { type: 'tool', value: "Smith's Tools", valueIT: 'Strumenti da Fabbro' },
+    { type: 'tool', value: "Brewer's Supplies", valueIT: 'Strumenti da Birraio' },
+    { type: 'tool', value: "Mason's Tools", valueIT: 'Strumenti da Muratore' },
     { type: 'language', value: 'Dwarvish', valueIT: 'Nanico' },
   ],
   languages: ['Common', 'Dwarvish'],
   languagesIT: ['Comune', 'Nanico'],
-  subraces: [
-    {
-      id: 'hill-dwarf',
-      name: 'Hill Dwarf',
-      nameIT: 'Nano delle Colline',
-      abilityBonuses: [
-        { ability: 'WIS', value: 1 },
-      ],
-      features: [
-        {
-          name: 'Dwarven Toughness',
-          nameIT: 'Robustezza Nanica',
-          description: 'Your hit point maximum increases by 1, and it increases by 1 every time you gain a level.',
-          descriptionIT: 'Il tuo massimo di punti ferita aumenta di 1, e aumenta di 1 ogni volta che guadagni un livello.',
-          level: 1,
-        },
-      ],
-      proficiencies: [],
-    },
-    {
-      id: 'mountain-dwarf',
-      name: 'Mountain Dwarf',
-      nameIT: 'Nano delle Montagne',
-      abilityBonuses: [
-        { ability: 'STR', value: 2 },
-      ],
-      features: [],
-      proficiencies: [
-        { type: 'armor', value: 'Light Armor', valueIT: 'Armatura Leggera' },
-        { type: 'armor', value: 'Medium Armor', valueIT: 'Armatura Media' },
-      ],
-    },
-  ],
+  variants: ['Nano delle Colline', 'Nano delle Montagne'],
 }

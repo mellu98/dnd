@@ -1,4 +1,4 @@
-import type { Race, Subrace } from '../../types'
+import type { Species } from '../../types'
 
 import { human } from './human'
 import { elf } from './elf'
@@ -10,7 +10,7 @@ import { halfOrc } from './half-orc'
 import { tiefling } from './tiefling'
 import { dragonborn } from './dragonborn'
 
-export const races: Race[] = [
+export const races: Species[] = [
   human,
   elf,
   dwarf,
@@ -22,14 +22,8 @@ export const races: Race[] = [
   dragonborn,
 ]
 
-export function getRaceById(id: string): Race | undefined {
+export function getRaceById(id: string): Species | undefined {
   return races.find(r => r.id === id)
-}
-
-export function getSubraceById(raceId: string, subraceId: string): Subrace | undefined {
-  const race = getRaceById(raceId)
-  if (!race) return undefined
-  return race.subraces.find(s => s.id === subraceId)
 }
 
 export { human, elf, dwarf, halfling, gnome, halfElf, halfOrc, tiefling, dragonborn }

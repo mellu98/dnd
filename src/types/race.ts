@@ -1,31 +1,19 @@
-import type { AbilityName, AbilityScoreBonus, Feature, Proficiency } from './common'
+import type { Feature } from './common'
 
-export interface Subrace {
-  id: string
-  name: string
-  nameIT: string
-  abilityBonuses: AbilityScoreBonus[]
-  features: Feature[]
-  proficiencies: Proficiency[]
-}
-
-export interface Race {
+export interface Species {
   id: string
   name: string
   nameIT: string
   speed: number
   size: 'Small' | 'Medium'
   sizeIT: string
-  abilityBonuses: AbilityScoreBonus[]
   features: Feature[]
-  proficiencies: Proficiency[]
   languages: string[]
   languagesIT: string[]
-  subraces: Subrace[]
   darkvision: number
-  chooseAbilityBonuses?: {
-    choose: number
-    value: number
-    exclude: AbilityName[]
-  }
+  /** Flavor-only variant names (e.g. ["Alto Elfo", "Elfo dei Boschi", "Drow"]) — no mechanical differences */
+  variants?: string[]
 }
+
+// Backward compat alias
+export type Race = Species

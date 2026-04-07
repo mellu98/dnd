@@ -1,6 +1,6 @@
-import type { Race } from '../../types'
+import type { Species } from '../../types'
 
-export const halfOrc: Race = {
+export const halfOrc: Species = {
   id: 'half-orc',
   name: 'Half-Orc',
   nameIT: 'Mezzorco',
@@ -8,10 +8,6 @@ export const halfOrc: Race = {
   size: 'Medium',
   sizeIT: 'Media',
   darkvision: 60,
-  abilityBonuses: [
-    { ability: 'STR', value: 2 },
-    { ability: 'CON', value: 1 },
-  ],
   features: [
     {
       name: 'Menacing',
@@ -40,5 +36,5 @@ export const halfOrc: Race = {
   ],
   languages: ['Common', 'Orc'],
   languagesIT: ['Comune', 'Orchesco'],
-  subraces: [],
+  variants: [],
 }

@@ -10,17 +10,16 @@ const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 export function calculateAllStats(character: Character): CalculatedStats {
   const aggregated = aggregateBonuses({
     raceId: character.raceId,
-    subraceId: character.subraceId ?? undefined,
     classId: character.classId,
     subclassId: character.subclassId ?? undefined,
     backgroundId: character.backgroundId,
     level: character.level,
-    chosenAbilityBonuses: character.chosenAbilityBonuses,
+    backgroundAbilityChoices: character.backgroundAbilityChoices,
   })
 
-  // Compute final ability scores (base + racial bonuses)
+  // Compute final ability scores (base + background ASI bonuses)
   const finalAbilityScores = { ...character.abilityScores } as CharacterAbilityScores
-  for (const bonus of aggregated.abilityBonuses) {
+  for (const bonus of aggregated.backgroundAbilityBonuses) {
     finalAbilityScores[bonus.ability] += bonus.value
   }
 

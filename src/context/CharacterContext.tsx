@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react'
-import type { AbilityScoreBonus, Character, CharacterAbilityScores, SkillName, Feature } from '../types'
+import type { AbilityName, Character, CharacterAbilityScores, SkillName, Feature, BackgroundAbilityChoices } from '../types'
 import { loadStorage, saveStorage, generateId } from '../utils/storage'
 import { computeMaxHp } from '../engine/hp-calculator'
 import { aggregateBonuses } from '../engine/bonus-aggregator'
@@ -23,7 +23,6 @@ export interface CharacterState {
 }
 
 // Actions
-// Image generation status
 export type ImageGenStatus = 'idle' | 'generating' | 'done' | 'failed'
 
 export interface GenerationState {
@@ -32,11 +31,11 @@ export interface GenerationState {
 }
 
 type Action =
-  | { type: 'SET_RACE'; raceId: string; subraceId: string | null }
+  | { type: 'SET_RACE'; raceId: string }
   | { type: 'SET_CLASS'; classId: string; subclassId: string | null }
   | { type: 'SET_BACKGROUND'; backgroundId: string }
+  | { type: 'SET_BACKGROUND_ABILITY_CHOICES'; choices: BackgroundAbilityChoices }
   | { type: 'SET_ABILITY_SCORES'; scores: CharacterAbilityScores }
-  | { type: 'SET_CHOSEN_ABILITY_BONUSES'; bonuses: AbilityScoreBonus[] }
   | { type: 'SET_SKILL_PROFICIENCIES'; skills: SkillName[] }
   | { type: 'SET_DETAILS'; name: string; alignment: string; personalityTraits: string; ideals: string; bonds: string; flaws: string }
   | { type: 'TAKE_DAMAGE'; amount: number }
@@ -84,7 +83,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'SET_RACE':
       return {
         ...state,
-        creationDraft: { ...state.creationDraft, raceId: action.raceId, subraceId: action.subraceId },
+        creationDraft: { ...state.creationDraft, raceId: action.raceId },
       }
     case 'SET_CLASS':
       return {
@@ -96,15 +95,15 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         ...state,
         creationDraft: { ...state.creationDraft, backgroundId: action.backgroundId },
       }
+    case 'SET_BACKGROUND_ABILITY_CHOICES':
+      return {
+        ...state,
+        creationDraft: { ...state.creationDraft, backgroundAbilityChoices: action.choices },
+      }
     case 'SET_ABILITY_SCORES':
       return {
         ...state,
         creationDraft: { ...state.creationDraft, abilityScores: action.scores },
-      }
-    case 'SET_CHOSEN_ABILITY_BONUSES':
-      return {
-        ...state,
-        creationDraft: { ...state.creationDraft, chosenAbilityBonuses: action.bonuses },
       }
     case 'SET_SKILL_PROFICIENCIES':
       return {
@@ -181,16 +180,15 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         id: generateId(),
         name: draft.name || 'Senza Nome',
         raceId: draft.raceId || '',
-        subraceId: draft.subraceId ?? null,
         classId: draft.classId || '',
         subclassId: draft.subclassId ?? null,
         backgroundId: draft.backgroundId || '',
+        backgroundAbilityChoices: draft.backgroundAbilityChoices ?? null,
         level: 1,
         abilityScores: draft.abilityScores || { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
         hp: { max: 0, current: 0, temporary: 0 },
         skillProficiencies: draft.skillProficiencies || [],
         chosenLanguages: [],
-        chosenAbilityBonuses: draft.chosenAbilityBonuses || [],
         alignment: draft.alignment || '',
         personalityTraits: draft.personalityTraits || '',
         ideals: draft.ideals || '',
@@ -204,13 +202,13 @@ function reducer(state: CharacterState, action: Action): CharacterState {
       }
       const agg = aggregateBonuses({
         raceId: character.raceId,
-        subraceId: character.subraceId ?? undefined,
         classId: character.classId,
         subclassId: character.subclassId ?? undefined,
-        chosenAbilityBonuses: character.chosenAbilityBonuses,
+        backgroundId: character.backgroundId,
+        backgroundAbilityChoices: character.backgroundAbilityChoices,
       })
       let conScore = character.abilityScores.CON
-      for (const b of agg.abilityBonuses) {
+      for (const b of agg.backgroundAbilityBonuses) {
         if (b.ability === 'CON') conScore += b.value
       }
       const conMod = abilityModifier(conScore)
@@ -272,7 +270,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 1,
+        version: 3,
         characters: saved.length > 0 ? saved : updatedChars,
         activeCharacterId: char?.id ?? null,
       })
@@ -290,10 +288,10 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   const lastCreatedCharId = useRef<string | null>(null)
   useEffect(() => {
     const char = state.character
-    if (!char) return // skip null characters
-    if (char.imageUrl) return // already has an image
-    if (!char.createdAt) return // not fully created yet
-    if (lastCreatedCharId.current === char.id) return // already attempted
+    if (!char) return
+    if (char.imageUrl) return
+    if (!char.createdAt) return
+    if (lastCreatedCharId.current === char.id) return
 
     const createdTime = new Date(char.createdAt).getTime()
     const now = Date.now()
@@ -303,18 +301,14 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
     ;(async () => {
       const { generateCharacterImage } = await import('../services/image-generator')
-      const { getRaceById, getSubraceById } = await import('../data/races')
+      const { getRaceById } = await import('../data/races')
       const { getClassById } = await import('../data/classes')
 
       const race = getRaceById(char.raceId)
-      const subrace = char.subraceId && race
-        ? getSubraceById(char.raceId, char.subraceId)
-        : null
       const cls = getClassById(char.classId)
 
       const imageUrl = await generateCharacterImage({
         raceName: race?.nameIT ?? char.raceId,
-        subraceName: subrace?.nameIT,
         className: cls?.nameIT ?? char.classId,
       })
 

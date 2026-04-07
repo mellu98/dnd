@@ -1,25 +1,24 @@
 import { useMemo, useState } from 'react'
 import { it } from '../../i18n/it'
 import { aggregateBonuses } from '../../engine/bonus-aggregator'
-import type { AbilityName, AbilityScoreBonus } from '../../types'
+import type { AbilityName } from '../../types'
 
 interface Props {
   raceId?: string
-  subraceId?: string
   classId?: string
   subclassId?: string
   backgroundId?: string
-  chosenAbilityBonuses?: AbilityScoreBonus[]
+  backgroundAbilityChoices?: { primary: AbilityName; secondary: AbilityName }
 }
 
 const abilityLabel: Record<AbilityName, string> = {
   STR: it.STR, DEX: it.DEX, CON: it.CON, INT: it.INT, WIS: it.WIS, CHA: it.CHA,
 }
 
-export default function BonusPreview({ raceId, subraceId, classId, subclassId, backgroundId, chosenAbilityBonuses }: Props) {
+export default function BonusPreview({ raceId, classId, subclassId, backgroundId, backgroundAbilityChoices }: Props) {
   const bonuses = useMemo(() => aggregateBonuses({
-    raceId, subraceId, classId, subclassId, backgroundId, chosenAbilityBonuses,
-  }), [raceId, subraceId, classId, subclassId, backgroundId, chosenAbilityBonuses])
+    raceId, classId, subclassId, backgroundId, backgroundAbilityChoices,
+  }), [raceId, classId, subclassId, backgroundId, backgroundAbilityChoices])
 
   const [expandedFeature, setExpandedFeature] = useState<number | null>(null)
 
@@ -29,7 +28,7 @@ export default function BonusPreview({ raceId, subraceId, classId, subclassId, b
     return (
       <div className="bg-bg-secondary rounded-xl p-4 border border-border">
         <h3 className="text-accent-gold font-semibold text-lg mb-2">Anteprima Bonus</h3>
-        <p className="text-text-secondary text-sm">Seleziona razza, classe o background per vedere i bonus in tempo reale.</p>
+        <p className="text-text-secondary text-sm">Seleziona background, specie o classe per vedere i bonus in tempo reale.</p>
       </div>
     )
   }
@@ -53,14 +52,14 @@ export default function BonusPreview({ raceId, subraceId, classId, subclassId, b
     <div className="bg-bg-secondary rounded-xl p-4 border border-border overflow-y-auto max-h-[calc(100vh-200px)]">
       <h3 className="text-accent-gold font-semibold text-lg mb-3">Anteprima Bonus</h3>
 
-      {/* Ability Bonuses */}
-      {bonuses.abilityBonuses.length > 0 && (
-        <Section title={it.ability_bonuses}>
+      {/* Background ASI Bonuses */}
+      {bonuses.backgroundAbilityBonuses.length > 0 && (
+        <Section title="Bonus Background (ASI)">
           <div className="flex flex-wrap gap-2">
-            {bonuses.abilityBonuses.map((b, i) => (
+            {bonuses.backgroundAbilityBonuses.map((b, i) => (
               <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm font-mono">
                 <span className="text-accent-gold">{abilityLabel[b.ability]}</span>{' '}
-                <span className="text-accent-green">+{b.value}</span>
+                <span className="text-accent-emerald">+{b.value}</span>
               </span>
             ))}
           </div>
@@ -90,7 +89,7 @@ export default function BonusPreview({ raceId, subraceId, classId, subclassId, b
         <Section title={it.saving_throws}>
           <div className="flex gap-2">
             {bonuses.savingThrows.map(st => (
-              <span key={st} className="bg-bg-card px-3 py-1 rounded-lg text-sm text-accent-green">
+              <span key={st} className="bg-bg-card px-3 py-1 rounded-lg text-sm text-accent-emerald">
                 {abilityLabel[st]}
               </span>
             ))}

@@ -1,20 +1,18 @@
 import type { AbilityName, AbilityScoreBonus, DieType, Feature, Proficiency, SkillName } from '../types'
-import { getRaceById, getSubraceById } from '../data/races'
+import { getRaceById } from '../data/races'
 import { getClassById } from '../data/classes'
 import { getBackgroundById } from '../data/backgrounds'
 
 export interface AggregateParams {
   raceId?: string
-  subraceId?: string
   classId?: string
   subclassId?: string
   backgroundId?: string
+  backgroundAbilityChoices?: { primary: AbilityName; secondary: AbilityName } | null
   level?: number
-  chosenAbilityBonuses?: AbilityScoreBonus[]
 }
 
 export interface AggregatedBonuses {
-  abilityBonuses: AbilityScoreBonus[]
   proficiencies: Proficiency[]
   features: Feature[]
   languages: string[]
@@ -24,11 +22,11 @@ export interface AggregatedBonuses {
   hitDie: DieType | null
   savingThrows: AbilityName[]
   skillChoices: { choose: number; from: SkillName[] } | null
+  backgroundAbilityBonuses: AbilityScoreBonus[]
 }
 
 export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
   const result: AggregatedBonuses = {
-    abilityBonuses: [],
     proficiencies: [],
     features: [],
     languages: [],
@@ -38,37 +36,22 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
     hitDie: null,
     savingThrows: [],
     skillChoices: null,
+    backgroundAbilityBonuses: [],
   }
 
   const level = params.level ?? 1
 
-  // Race bonuses
+  // Species (race) traits — no ability bonuses in 2024
   if (params.raceId) {
     const race = getRaceById(params.raceId)
     if (race) {
-      result.abilityBonuses.push(...race.abilityBonuses)
       result.features.push(...race.features)
-      result.proficiencies.push(...race.proficiencies)
+      result.proficiencies.push(...(race as any).proficiencies || [])
       result.speed = race.speed
       result.darkvision = race.darkvision
       result.languages = [...race.languages]
       result.languagesIT = [...race.languagesIT]
-
-      // Subrace bonuses
-      if (params.subraceId) {
-        const subrace = getSubraceById(params.raceId, params.subraceId)
-        if (subrace) {
-          result.abilityBonuses.push(...subrace.abilityBonuses)
-          result.features.push(...subrace.features)
-          result.proficiencies.push(...subrace.proficiencies)
-        }
-      }
     }
-  }
-
-  // Chosen ability bonuses (Half-Elf etc.)
-  if (params.chosenAbilityBonuses) {
-    result.abilityBonuses.push(...params.chosenAbilityBonuses)
   }
 
   // Class bonuses
@@ -79,9 +62,9 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
       result.savingThrows = [...cls.savingThrows]
       result.skillChoices = cls.skillChoices
       result.proficiencies.push(
-        ...cls.armorProficiencies,
-        ...cls.weaponProficiencies,
-        ...cls.toolProficiencies,
+        ...(cls as any).armorProficiencies || [],
+        ...(cls as any).weaponProficiencies || [],
+        ...(cls as any).toolProficiencies || [],
       )
       result.features.push(...cls.features.filter(f => f.level <= level))
 
@@ -90,21 +73,33 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
         const subclass = cls.subclasses.find(s => s.id === params.subclassId)
         if (subclass) {
           result.features.push(...subclass.features.filter(f => f.level <= level))
-          result.proficiencies.push(...subclass.proficiencies)
+          result.proficiencies.push(...(subclass as any).proficiencies || [])
         }
       }
     }
   }
 
-  // Background bonuses
+  // Background bonuses — includes ASI, skills, tool, origin feat
   if (params.backgroundId) {
     const bg = getBackgroundById(params.backgroundId)
     if (bg) {
-      result.proficiencies.push(...bg.skillProficiencies, ...bg.toolProficiencies)
-      result.features.push({
-        ...bg.feature,
-        level: 1,
-      })
+      result.proficiencies.push(...bg.skillProficiencies)
+      if (bg.toolProficiency && bg.toolProficiency.value !== 'None') {
+        result.proficiencies.push(bg.toolProficiency)
+      }
+      result.features.push(bg.originFeat)
+
+      // Derive ASI bonuses from backgroundAbilityChoices
+      if (params.backgroundAbilityChoices) {
+        result.backgroundAbilityBonuses.push({
+          ability: params.backgroundAbilityChoices.primary,
+          value: 2,
+        })
+        result.backgroundAbilityBonuses.push({
+          ability: params.backgroundAbilityChoices.secondary,
+          value: 1,
+        })
+      }
     }
   }
 

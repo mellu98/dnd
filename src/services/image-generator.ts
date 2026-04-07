@@ -3,16 +3,13 @@ const MODEL_ID = 'google/gemini-2.5-flash-image'
 
 export interface ImageGenerationParams {
   raceName: string
-  subraceName?: string
   className: string
 }
 
 function buildPrompt(params: ImageGenerationParams): string {
-  const { raceName, subraceName, className } = params
+  const { raceName, className } = params
 
-  const race = subraceName ? `${subraceName} ${raceName}` : raceName
-
-  return `Ultra realistic DnD character portrait of a ${race} ${className}. Full body heroic pose, dramatic cinematic lighting, dark fantasy art style, highly detailed, professional digital painting, epic composition.`
+  return `Ultra realistic DnD character portrait of a ${raceName} ${className}. Full body heroic pose, dramatic cinematic lighting, dark fantasy art style, highly detailed, professional digital painting, epic composition.`
 }
 
 export async function generateCharacterImage(params: ImageGenerationParams): Promise<string | null> {

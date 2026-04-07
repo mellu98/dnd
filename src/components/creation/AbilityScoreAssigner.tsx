@@ -29,9 +29,11 @@ export default function AbilityScoreAssigner() {
 
   const bonuses = useMemo(() => aggregateBonuses({
     raceId: draft.raceId,
-    subraceId: draft.subraceId ?? undefined,
-    chosenAbilityBonuses: draft.chosenAbilityBonuses,
-  }), [draft.raceId, draft.subraceId, draft.chosenAbilityBonuses])
+    classId: draft.classId,
+    subclassId: draft.subclassId ?? undefined,
+    backgroundId: draft.backgroundId,
+    backgroundAbilityChoices: draft.backgroundAbilityChoices ?? undefined,
+  }), [draft.raceId, draft.classId, draft.subclassId, draft.backgroundId, draft.backgroundAbilityChoices])
 
   const usedPoints = Object.values(scores).reduce((sum, s) => sum + pointCosts[s], 0)
   const remaining = TOTAL_POINTS - usedPoints
@@ -40,8 +42,8 @@ export default function AbilityScoreAssigner() {
     dispatch({ type: 'SET_ABILITY_SCORES', scores })
   }, [scores, dispatch])
 
-  const getRacialBonus = (ability: AbilityName) => {
-    return bonuses.abilityBonuses
+  const getBackgroundBonus = (ability: AbilityName) => {
+    return bonuses.backgroundAbilityBonuses
       .filter(b => b.ability === ability)
       .reduce((sum, b) => sum + b.value, 0)
   }
@@ -57,7 +59,10 @@ export default function AbilityScoreAssigner() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-accent-gold mb-4">{it.step_abilities}</h2>
+      <h2 className="text-xl font-semibold text-accent-gold mb-2">{it.step_abilities}</h2>
+      <p className="text-sm text-text-muted mb-4">
+        Assegna 27 punti alle tue caratteristiche (min 8, max 15). I bonus del tuo Background (+2/+1) verranno applicati dopo.
+      </p>
 
       <div className="bg-bg-secondary/80 rounded-xl p-4 border border-border mb-4">
         <div className="flex items-center justify-between">
@@ -80,8 +85,8 @@ export default function AbilityScoreAssigner() {
 
       <div className="space-y-3">
         {abilities.map(({ key, label, abbr }) => {
-          const racialBonus = getRacialBonus(key)
-          const finalScore = scores[key] + racialBonus
+          const bgBonus = getBackgroundBonus(key)
+          const finalScore = scores[key] + bgBonus
           return (
             <div
               key={key}
@@ -111,8 +116,8 @@ export default function AbilityScoreAssigner() {
                   </button>
                 </div>
 
-                {racialBonus > 0 && (
-                  <span className="text-xs text-accent-emerald font-medium bg-accent-emerald/10 px-2 py-0.5 rounded-full">+{racialBonus}</span>
+                {bgBonus > 0 && (
+                  <span className="text-xs text-accent-gold font-medium bg-accent-gold/10 px-2 py-0.5 rounded-full">+{bgBonus} bg</span>
                 )}
 
                 <div className="flex items-center gap-1 min-w-[70px]">

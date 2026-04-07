@@ -1,4 +1,4 @@
-import type { AbilityName, AbilityScoreBonus, Feature, Proficiency, SkillName } from './common'
+import type { AbilityName, Feature, Proficiency, SkillName } from './common'
 
 export interface CharacterAbilityScores {
   STR: number
@@ -15,20 +15,24 @@ export interface HpState {
   temporary: number
 }
 
+export interface BackgroundAbilityChoices {
+  primary: AbilityName
+  secondary: AbilityName
+}
+
 export interface Character {
   id: string
   name: string
   raceId: string
-  subraceId: string | null
   classId: string
   subclassId: string | null
   backgroundId: string
+  backgroundAbilityChoices: BackgroundAbilityChoices | null
   level: number
   abilityScores: CharacterAbilityScores
   hp: HpState
   skillProficiencies: SkillName[]
   chosenLanguages: string[]
-  chosenAbilityBonuses: AbilityScoreBonus[]
   alignment: string
   personalityTraits: string
   ideals: string

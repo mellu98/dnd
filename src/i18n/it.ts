@@ -35,6 +35,7 @@ export const it = {
   // Creation wizard
   creation_title: 'Creazione Personaggio',
   step_race: 'Razza',
+  step_species: 'Specie',
   step_class: 'Classe',
   step_background: 'Background',
   step_abilities: 'Caratteristiche',
@@ -81,6 +82,7 @@ export const it = {
   proficiencies: 'Competenze',
   hit_die: 'Dado Vita',
   ability_bonuses: 'Bonus ai Punteggi',
+  origin_feat: 'Talento di Origine',
   size: 'Taglia',
 
   // Character details

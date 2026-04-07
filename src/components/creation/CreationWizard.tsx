@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
-import RaceSelector from './RaceSelector'
-import ClassSelector from './ClassSelector'
 import BackgroundSelector from './BackgroundSelector'
+import SpeciesSelector from './SpeciesSelector'
+import ClassSelector from './ClassSelector'
 import AbilityScoreAssigner from './AbilityScoreAssigner'
 import CharacterDetails from './CharacterDetails'
 import BonusPreview from './BonusPreview'
 
 const steps = [
-  { num: 1, label: it.step_race, icon: '🧬' },
-  { num: 2, label: it.step_class, icon: '⚔️' },
-  { num: 3, label: it.step_background, icon: '📜' },
+  { num: 1, label: it.step_background, icon: '📜' },
+  { num: 2, label: it.step_species, icon: '🧬' },
+  { num: 3, label: it.step_class, icon: '⚔️' },
   { num: 4, label: it.step_abilities, icon: '💪' },
   { num: 5, label: it.step_details, icon: '✏️' },
 ]
@@ -23,9 +23,9 @@ export default function CreationWizard() {
 
   const canNext = () => {
     switch (creationStep) {
-      case 1: return !!creationDraft.raceId
-      case 2: return !!creationDraft.classId
-      case 3: return !!creationDraft.backgroundId
+      case 1: return !!creationDraft.backgroundId
+      case 2: return !!creationDraft.raceId
+      case 3: return !!creationDraft.classId
       case 4: return !!creationDraft.abilityScores
       case 5: return !!creationDraft.name && creationDraft.name.trim().length > 0
       default: return false
@@ -34,9 +34,9 @@ export default function CreationWizard() {
 
   const renderStep = () => {
     switch (creationStep) {
-      case 1: return <RaceSelector />
-      case 2: return <ClassSelector />
-      case 3: return <BackgroundSelector />
+      case 1: return <BackgroundSelector />
+      case 2: return <SpeciesSelector />
+      case 3: return <ClassSelector />
       case 4: return <AbilityScoreAssigner />
       case 5: return <CharacterDetails />
       default: return null
@@ -127,11 +127,10 @@ export default function CreationWizard() {
             <div className="sticky top-4 glass rounded-xl">
               <BonusPreview
                 raceId={creationDraft.raceId}
-                subraceId={creationDraft.subraceId ?? undefined}
                 classId={creationDraft.classId}
                 subclassId={creationDraft.subclassId ?? undefined}
                 backgroundId={creationDraft.backgroundId}
-                chosenAbilityBonuses={creationDraft.chosenAbilityBonuses}
+                backgroundAbilityChoices={creationDraft.backgroundAbilityChoices ?? undefined}
               />
             </div>
           </div>
@@ -149,11 +148,10 @@ export default function CreationWizard() {
             <div className="mt-2 animate-slide-up">
               <BonusPreview
                 raceId={creationDraft.raceId}
-                subraceId={creationDraft.subraceId ?? undefined}
                 classId={creationDraft.classId}
                 subclassId={creationDraft.subclassId ?? undefined}
                 backgroundId={creationDraft.backgroundId}
-                chosenAbilityBonuses={creationDraft.chosenAbilityBonuses}
+                backgroundAbilityChoices={creationDraft.backgroundAbilityChoices ?? undefined}
               />
             </div>
           )}

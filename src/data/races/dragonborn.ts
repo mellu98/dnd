@@ -1,6 +1,6 @@
-import type { Race } from '../../types'
+import type { Species } from '../../types'
 
-export const dragonborn: Race = {
+export const dragonborn: Species = {
   id: 'dragonborn',
   name: 'Dragonborn',
   nameIT: 'Dragonide',
@@ -8,10 +8,6 @@ export const dragonborn: Race = {
   size: 'Medium',
   sizeIT: 'Media',
   darkvision: 0,
-  abilityBonuses: [
-    { ability: 'STR', value: 2 },
-    { ability: 'CHA', value: 1 },
-  ],
   features: [
     {
       name: 'Draconic Ancestry',
@@ -38,5 +34,5 @@ export const dragonborn: Race = {
   proficiencies: [],
   languages: ['Common', 'Draconic'],
   languagesIT: ['Comune', 'Draconico'],
-  subraces: [],
+  variants: ['Nero', 'Blu', 'Ottone', 'Bronzo', 'Copper', 'Oro', 'Argento', 'Rosso', 'Verde', 'Bianco'],
 }
