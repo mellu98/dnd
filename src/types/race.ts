@@ -1,6 +1,6 @@
-import type { Feature, Proficiency } from './common'
+import type { Feature, Proficiency, Sourced } from './common'
 
-export interface Species {
+export interface Species extends Sourced {
   id: string
   name: string
   nameIT: string

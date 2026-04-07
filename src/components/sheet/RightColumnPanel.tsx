@@ -68,7 +68,12 @@ export function RightColumnPanel({ stats }: Props) {
       {hasSpellcasting && character && (
         <div className="bg-bg-card/60 border border-border/50 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-accent-gold uppercase tracking-wider mb-3">{it.tab_spells}</h3>
-          <SpellsPanel classId={character.classId} knownSpells={character.knownSpells} />
+          <SpellsPanel
+            classId={character.classId}
+            knownSpells={character.knownSpells}
+            characterLevel={character.level}
+            spellSlots={stats.spellSlots}
+          />
         </div>
       )}
 

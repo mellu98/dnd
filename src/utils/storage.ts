@@ -32,20 +32,26 @@ interface StorageSchemaV1 {
 
 interface StorageSchemaV3 {
   version: 3
-  characters: Character[]
+  characters: any[]
   activeCharacterId: string | null
 }
 
 interface StorageSchemaV4 {
   version: 4
+  characters: any[]
+  activeCharacterId: string | null
+}
+
+interface StorageSchemaV5 {
+  version: 5
   characters: Character[]
   activeCharacterId: string | null
 }
 
 const STORAGE_KEY = 'dnd5e-characters'
 
-const defaultStorage: StorageSchemaV4 = {
-  version: 4,
+const defaultStorage: StorageSchemaV5 = {
+  version: 5,
   characters: [],
   activeCharacterId: null,
 }
@@ -82,6 +88,8 @@ function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
       equippedArmorId: null,
       equippedShieldId: null,
       knownSpells: [],
+      expendedSpellSlots: {},
+      asiChoices: [],
       notes: c.notes,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -122,12 +130,31 @@ function migrateV3toV4(v3: StorageSchemaV3): StorageSchemaV4 {
       equippedArmorId: c.equippedArmorId ?? null,
       equippedShieldId: c.equippedShieldId ?? null,
       knownSpells: Array.isArray(c.knownSpells) ? c.knownSpells : [],
+      expendedSpellSlots:
+        c.expendedSpellSlots != null && typeof c.expendedSpellSlots === 'object' ? c.expendedSpellSlots : {},
+      asiChoices: [],
     })),
     activeCharacterId: v3.activeCharacterId,
   }
 }
 
-export function loadStorage(): StorageSchemaV4 {
+/**
+ * Migrates v4 data to v5.
+ * Key changes:
+ * - asiChoices: [] added to all characters
+ */
+function migrateV4toV5(v4: StorageSchemaV4): StorageSchemaV5 {
+  return {
+    version: 5,
+    characters: v4.characters.map((c: any) => ({
+      ...c,
+      asiChoices: Array.isArray(c.asiChoices) ? c.asiChoices : [],
+    })) as Character[],
+    activeCharacterId: v4.activeCharacterId,
+  }
+}
+
+export function loadStorage(): StorageSchemaV5 {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultStorage
@@ -135,13 +162,18 @@ export function loadStorage(): StorageSchemaV4 {
 
     if (parsed.version === 1) {
       const v3 = migrateV1toV3(parsed as StorageSchemaV1)
-      return migrateV3toV4(v3)
+      const v4 = migrateV3toV4(v3)
+      return migrateV4toV5(v4)
     }
     if (parsed.version === 3) {
-      return migrateV3toV4(parsed as StorageSchemaV3)
+      const v4 = migrateV3toV4(parsed as StorageSchemaV3)
+      return migrateV4toV5(v4)
     }
     if (parsed.version === 4) {
-      return parsed as StorageSchemaV4
+      return migrateV4toV5(parsed as StorageSchemaV4)
+    }
+    if (parsed.version === 5) {
+      return parsed as StorageSchemaV5
     }
     // Unknown version — return default (safe fallback)
     return defaultStorage
@@ -150,7 +182,7 @@ export function loadStorage(): StorageSchemaV4 {
   }
 }
 
-export function saveStorage(data: StorageSchemaV4): void {
+export function saveStorage(data: StorageSchemaV5): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 }
 

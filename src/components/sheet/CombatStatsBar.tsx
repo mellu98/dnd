@@ -144,7 +144,7 @@ export function CombatStatsBar({ stats }: Props) {
                 <button
                   key={action}
                   onClick={() => toggleAction(action)}
-                  className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                  className={`px-2 py-1 min-h-[44px] min-w-[44px] rounded-md text-xs font-medium transition-all duration-200 ${
                     activeAction === action ? colors[action].active : colors[action].idle
                   }`}
                 >

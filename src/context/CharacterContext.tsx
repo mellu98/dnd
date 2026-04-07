@@ -8,7 +8,14 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react'
-import type { Character, CharacterAbilityScores, SkillName, Feature, BackgroundAbilityChoices } from '../types'
+import type {
+  ASIChoice,
+  Character,
+  CharacterAbilityScores,
+  SkillName,
+  Feature,
+  BackgroundAbilityChoices,
+} from '../types'
 import type { EquipmentItem } from '../types/equipment'
 import { loadStorage, saveStorage, generateId } from '../utils/storage'
 import { computeMaxHp } from '../engine/hp-calculator'
@@ -60,6 +67,9 @@ type Action =
   | { type: 'TOGGLE_EQUIPMENT'; itemId: string }
   | { type: 'SET_KNOWN_SPELLS'; spellIds: string[] }
   | { type: 'TOGGLE_SPELL'; spellId: string }
+  | { type: 'EXPEND_SPELL_SLOT'; level: number }
+  | { type: 'RESTORE_SPELL_SLOT'; level: number }
+  | { type: 'RESTORE_ALL_SPELL_SLOTS' }
   | { type: 'UPDATE_HP_MAX'; max: number }
   | { type: 'LOAD_CHARACTER'; character: Character }
   | { type: 'NEW_CHARACTER' }
@@ -70,6 +80,7 @@ type Action =
   | { type: 'GO_HOME' }
   | { type: 'SET_CHARACTER_IMAGE'; id: string; imageUrl: string }
   | { type: 'SET_GENERATING_IMAGE'; charId: string }
+  | { type: 'SAVE_ASI_CHOICE'; choice: ASIChoice }
 
 function initState(): CharacterState {
   const storage = loadStorage()
@@ -264,6 +275,48 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         character: { ...state.character, knownSpells: spells, updatedAt: new Date().toISOString() },
       }
     }
+    case 'EXPEND_SPELL_SLOT': {
+      if (!state.character) return state
+      const current = state.character.expendedSpellSlots[action.level] ?? 0
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expendedSpellSlots: { ...state.character.expendedSpellSlots, [action.level]: current + 1 },
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'RESTORE_SPELL_SLOT': {
+      if (!state.character) return state
+      const current = state.character.expendedSpellSlots[action.level] ?? 0
+      const next = Math.max(0, current - 1)
+      const updated = { ...state.character.expendedSpellSlots }
+      if (next === 0) {
+        delete updated[action.level]
+      } else {
+        updated[action.level] = next
+      }
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expendedSpellSlots: updated,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'RESTORE_ALL_SPELL_SLOTS': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expendedSpellSlots: {},
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
     case 'LOAD_CHARACTER':
       return { ...state, character: action.character, creationStep: 0 }
     case 'NEW_CHARACTER':
@@ -293,6 +346,8 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         equippedArmorId: null,
         equippedShieldId: null,
         knownSpells: [],
+        expendedSpellSlots: {},
+        asiChoices: [],
         notes: '',
         createdAt: now,
         updatedAt: now,
@@ -338,6 +393,20 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'SET_GENERATING_IMAGE': {
       return state
     }
+    case 'SAVE_ASI_CHOICE': {
+      if (!state.character) return state
+      // Replace existing choice at same level or append new one
+      const existing = state.character.asiChoices ?? []
+      const filtered = existing.filter((c) => c.level !== action.choice.level)
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          asiChoices: [...filtered, action.choice],
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
     default:
       return state
   }
@@ -368,7 +437,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 4,
+        version: 5,
         characters: saved.length > 0 ? saved : updatedChars,
         activeCharacterId: char?.id ?? null,
       })

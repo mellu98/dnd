@@ -5,5 +5,6 @@ export * from './class'
 export * from './background'
 export * from './equipment'
 export * from './spell'
+export * from './feat'
 
-export type { Feature } from './common'
+export type { Feature, ASIChoice } from './common'

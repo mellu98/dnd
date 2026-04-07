@@ -9,7 +9,16 @@ export const fighter: ClassDefinition = {
   savingThrows: ['STR', 'CON'],
   skillChoices: {
     choose: 2,
-    from: ['acrobatics', 'animal_handling', 'athletics', 'history', 'insight', 'intimidation', 'perception', 'survival'],
+    from: [
+      'acrobatics',
+      'animal_handling',
+      'athletics',
+      'history',
+      'insight',
+      'intimidation',
+      'perception',
+      'survival',
+    ],
   },
   armorProficiencies: [
     { type: 'armor', value: 'All Armor', valueIT: 'Tutte le Armature' },
@@ -24,23 +33,71 @@ export const fighter: ClassDefinition = {
     {
       name: 'Fighting Style',
       nameIT: 'Stile di Combattimento',
-      description: 'You adopt a particular style of fighting as your specialty, such as Archery, Defense, Dueling, Great Weapon Fighting, Protection, or Two-Weapon Fighting.',
-      descriptionIT: 'Adotti uno stile di combattimento come specialita, come Tiro con l\'Arco, Difesa, Duello, Combattimento con Arma a Due Mani, Protezione o Combattimento con Due Armi.',
+      description:
+        'You adopt a particular style of fighting as your specialty, such as Archery, Defense, Dueling, Great Weapon Fighting, Protection, or Two-Weapon Fighting.',
+      descriptionIT:
+        "Adotti uno stile di combattimento come specialita, come Tiro con l'Arco, Difesa, Duello, Combattimento con Arma a Due Mani, Protezione o Combattimento con Due Armi.",
       level: 1,
     },
     {
       name: 'Second Wind',
       nameIT: 'Secondo Vento',
-      description: 'You can use a bonus action to regain hit points equal to 1d10 + your fighter level, once per short rest.',
-      descriptionIT: 'Puoi usare un\'azione bonus per recuperare PF pari a 1d10 + il tuo livello da guerriero, una volta per riposo breve.',
+      description:
+        'You can use a bonus action to regain hit points equal to 1d10 + your fighter level, once per short rest.',
+      descriptionIT:
+        "Puoi usare un'azione bonus per recuperare PF pari a 1d10 + il tuo livello da guerriero, una volta per riposo breve.",
       level: 1,
     },
     {
       name: 'Action Surge',
       nameIT: 'Azione Impetuosa',
-      description: 'You can push yourself beyond your normal limits for a moment. You can take one additional action on your turn, once per short rest.',
-      descriptionIT: 'Puoi spingerti oltre i tuoi limiti normali. Puoi compiere un\'azione aggiuntiva nel tuo turno, una volta per riposo breve.',
+      description:
+        'You can push yourself beyond your normal limits for a moment. You can take one additional action on your turn, once per short rest.',
+      descriptionIT:
+        "Puoi spingerti oltre i tuoi limiti normali. Puoi compiere un'azione aggiuntiva nel tuo turno, una volta per riposo breve.",
       level: 2,
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 4,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 6,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 8,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 12,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 14,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 16,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 19,
+      type: 'ASI',
     },
   ],
   subclasses: [
@@ -65,6 +122,6 @@ export const fighter: ClassDefinition = {
     ['Chain mail', 'Leather armor + longbow + 20 arrows'],
     ['A martial weapon + shield', 'Two martial weapons'],
     ['Light crossbow + 20 bolts', 'Two handaxes'],
-    ['Dungeoneer\'s pack', 'Explorer\'s pack'],
+    ["Dungeoneer's pack", "Explorer's pack"],
   ],
 }
