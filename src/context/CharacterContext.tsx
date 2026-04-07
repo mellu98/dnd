@@ -9,6 +9,7 @@ import {
   type Dispatch,
 } from 'react'
 import type { Character, CharacterAbilityScores, SkillName, Feature, BackgroundAbilityChoices } from '../types'
+import type { EquipmentItem } from '../types/equipment'
 import { loadStorage, saveStorage, generateId } from '../utils/storage'
 import { computeMaxHp } from '../engine/hp-calculator'
 import { aggregateBonuses } from '../engine/bonus-aggregator'
@@ -37,13 +38,28 @@ type Action =
   | { type: 'SET_BACKGROUND_ABILITY_CHOICES'; choices: BackgroundAbilityChoices }
   | { type: 'SET_ABILITY_SCORES'; scores: CharacterAbilityScores }
   | { type: 'SET_SKILL_PROFICIENCIES'; skills: SkillName[] }
-  | { type: 'SET_DETAILS'; name: string; alignment: string; personalityTraits: string; ideals: string; bonds: string; flaws: string }
+  | {
+      type: 'SET_DETAILS'
+      name: string
+      alignment: string
+      personalityTraits: string
+      ideals: string
+      bonds: string
+      flaws: string
+    }
   | { type: 'TAKE_DAMAGE'; amount: number }
   | { type: 'HEAL'; amount: number }
   | { type: 'SET_TEMP_HP'; amount: number }
   | { type: 'SET_LEVEL'; level: number }
   | { type: 'UPDATE_EQUIPMENT'; equipment: string[] }
   | { type: 'UPDATE_NOTES'; notes: string }
+  | { type: 'SET_EQUIPPED_ARMOR'; armorId: string | null }
+  | { type: 'SET_EQUIPPED_SHIELD'; equipped: boolean }
+  | { type: 'ADD_EQUIPMENT_ITEM'; item: EquipmentItem }
+  | { type: 'REMOVE_EQUIPMENT_ITEM'; itemId: string }
+  | { type: 'TOGGLE_EQUIPMENT'; itemId: string }
+  | { type: 'SET_KNOWN_SPELLS'; spellIds: string[] }
+  | { type: 'TOGGLE_SPELL'; spellId: string }
   | { type: 'UPDATE_HP_MAX'; max: number }
   | { type: 'LOAD_CHARACTER'; character: Character }
   | { type: 'NEW_CHARACTER' }
@@ -58,7 +74,7 @@ type Action =
 function initState(): CharacterState {
   const storage = loadStorage()
   const active = storage.activeCharacterId
-    ? storage.characters.find(c => c.id === storage.activeCharacterId) ?? null
+    ? (storage.characters.find((c) => c.id === storage.activeCharacterId) ?? null)
     : null
   return {
     character: active,
@@ -70,7 +86,7 @@ function initState(): CharacterState {
 
 function deduplicateFeatures(features: Feature[]): Feature[] {
   const seen = new Set<string>()
-  return features.filter(f => {
+  return features.filter((f) => {
     const key = `${f.name}-${f.level}`
     if (seen.has(key)) return false
     seen.add(key)
@@ -162,12 +178,91 @@ function reducer(state: CharacterState, action: Action): CharacterState {
       return { ...state, character: { ...state.character, hp, updatedAt: new Date().toISOString() } }
     }
     case 'UPDATE_EQUIPMENT': {
+      // Legacy action: converts string[] to EquipmentItem[] for backward compat
       if (!state.character) return state
-      return { ...state, character: { ...state.character, equipment: action.equipment, updatedAt: new Date().toISOString() } }
+      const items = action.equipment.map((s, i) => ({
+        id: `gear-legacy-${i}`,
+        name: s,
+        nameIT: s,
+        category: 'gear' as const,
+        quantity: 1,
+        equipped: false,
+      }))
+      return { ...state, character: { ...state.character, equipment: items, updatedAt: new Date().toISOString() } }
     }
     case 'UPDATE_NOTES': {
       if (!state.character) return state
       return { ...state, character: { ...state.character, notes: action.notes, updatedAt: new Date().toISOString() } }
+    }
+    case 'SET_EQUIPPED_ARMOR': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: { ...state.character, equippedArmorId: action.armorId, updatedAt: new Date().toISOString() },
+      }
+    }
+    case 'SET_EQUIPPED_SHIELD': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          equippedShieldId: action.equipped ? 'shield' : null,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'ADD_EQUIPMENT_ITEM': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          equipment: [...state.character.equipment, action.item],
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'REMOVE_EQUIPMENT_ITEM': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          equipment: state.character.equipment.filter((e) => e.id !== action.itemId),
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'TOGGLE_EQUIPMENT': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          equipment: state.character.equipment.map((e) =>
+            e.id === action.itemId ? { ...e, equipped: !e.equipped } : e,
+          ),
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'SET_KNOWN_SPELLS': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: { ...state.character, knownSpells: action.spellIds, updatedAt: new Date().toISOString() },
+      }
+    }
+    case 'TOGGLE_SPELL': {
+      if (!state.character) return state
+      const spells = state.character.knownSpells.includes(action.spellId)
+        ? state.character.knownSpells.filter((id) => id !== action.spellId)
+        : [...state.character.knownSpells, action.spellId]
+      return {
+        ...state,
+        character: { ...state.character, knownSpells: spells, updatedAt: new Date().toISOString() },
+      }
     }
     case 'LOAD_CHARACTER':
       return { ...state, character: action.character, creationStep: 0 }
@@ -195,6 +290,9 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         bonds: draft.bonds || '',
         flaws: draft.flaws || '',
         equipment: [],
+        equippedArmorId: null,
+        equippedShieldId: null,
+        knownSpells: [],
         notes: '',
         createdAt: now,
         updatedAt: now,
@@ -222,7 +320,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
       return { ...state, character, creationStep: 0, savedCharacters: saved, creationDraft: {} }
     }
     case 'DELETE_CHARACTER': {
-      const saved = state.savedCharacters.filter(c => c.id !== action.id)
+      const saved = state.savedCharacters.filter((c) => c.id !== action.id)
       const char = state.character?.id === action.id ? null : state.character
       return { ...state, character: char, savedCharacters: saved }
     }
@@ -261,7 +359,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       const updatedChars = [...storage.characters]
 
       if (char) {
-        const idx = updatedChars.findIndex(c => c.id === char.id)
+        const idx = updatedChars.findIndex((c) => c.id === char.id)
         if (idx >= 0) {
           updatedChars[idx] = char
         } else {
@@ -270,7 +368,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 3,
+        version: 4,
         characters: saved.length > 0 ? saved : updatedChars,
         activeCharacterId: char?.id ?? null,
       })
@@ -298,7 +396,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     if (now - createdTime > 10_000) return
 
     lastCreatedCharId.current = char.id
-
     ;(async () => {
       const { generateCharacterImage } = await import('../services/image-generator')
       const { getRaceById } = await import('../data/races')
@@ -320,9 +417,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   return (
     <StateContext.Provider value={state}>
-      <DispatchContext.Provider value={dispatch}>
-        {children}
-      </DispatchContext.Provider>
+      <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
     </StateContext.Provider>
   )
 }

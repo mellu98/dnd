@@ -5,16 +5,18 @@ import { formatModifier } from '../../utils/modifiers'
 import { getRaceById } from '../../data/races'
 import { getClassById } from '../../data/classes'
 import { getBackgroundById } from '../../data/backgrounds'
+import { getArmorById } from '../../data/equipment'
 import { HpTracker } from './HpTracker'
 import { AbilityScoresRow } from './AbilityScoresRow'
 import { SavingThrows } from './SavingThrows'
 import { SkillsList } from './SkillsList'
 import { FeaturesPanel } from './FeaturesPanel'
 import { EquipmentPanel } from './EquipmentPanel'
+import { SpellsPanel } from './SpellsPanel'
 import { NotesPanel } from './NotesPanel'
 import { CharacterPortrait } from './CharacterPortrait'
 
-type TabId = 'features' | 'equipment' | 'notes'
+type TabId = 'features' | 'equipment' | 'spells' | 'notes'
 
 export function CharacterSheet() {
   const { state, dispatch, calculatedStats } = useCharacter()
@@ -35,23 +37,36 @@ export function CharacterSheet() {
   const cls = getClassById(character.classId)
   const bg = getBackgroundById(character.backgroundId)
 
+  const hasSpellcasting = !!cls?.spellcasting
+
   const handleLevelChange = (delta: number) => {
     const newLevel = Math.max(1, Math.min(20, character.level + delta))
     dispatch({ type: 'SET_LEVEL', level: newLevel })
   }
 
+  // Build AC label with equipped armor name
+  const equippedArmor = character.equippedArmorId ? getArmorById(character.equippedArmorId) : null
+  const acLabel = equippedArmor
+    ? `${stats.armorClass} (${equippedArmor.nameIT}${character.equippedShieldId ? ' + Scudo' : ''})`
+    : `${stats.armorClass}`
+
   const statBlocks = [
-    { label: it.armor_class, value: stats.armorClass, color: 'text-accent-blue' },
+    { label: it.armor_class, value: acLabel, color: 'text-accent-blue' },
     { label: it.initiative, value: formatModifier(stats.initiative), color: 'text-accent-gold' },
     { label: it.speed, value: `${stats.speed} ${it.ft}`, color: 'text-text-primary' },
     { label: it.proficiency_bonus, value: formatModifier(stats.proficiencyBonus), color: 'text-accent-emerald' },
     { label: it.passive_perception, value: stats.passivePerception, color: 'text-accent-purple' },
-    { label: it.darkvision, value: stats.darkvision > 0 ? `${stats.darkvision} ${it.ft}` : '--', color: 'text-text-secondary' },
+    {
+      label: it.darkvision,
+      value: stats.darkvision > 0 ? `${stats.darkvision} ${it.ft}` : '--',
+      color: 'text-text-secondary',
+    },
   ]
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
     { id: 'features', label: it.tab_features, icon: '⚡' },
     { id: 'equipment', label: it.tab_equipment, icon: '🎒' },
+    ...(hasSpellcasting ? [{ id: 'spells' as const, label: it.tab_spells, icon: '✨' }] : []),
     { id: 'notes', label: it.tab_notes, icon: '📝' },
   ]
 
@@ -68,14 +83,17 @@ export function CharacterSheet() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-text-primary">
-                {character.name}
-              </h1>
+              <h1 className="text-xl md:text-2xl font-bold text-text-primary">{character.name}</h1>
               <p className="text-sm text-text-secondary mt-0.5">
                 <span className="text-accent-gold">{race?.nameIT ?? character.raceId}</span>
                 {' · '}
                 <span className="text-accent-blue">{cls?.nameIT ?? character.classId}</span>
-                {bg && <><span className="text-text-muted"> · </span><span className="text-accent-purple">{bg.nameIT}</span></>}
+                {bg && (
+                  <>
+                    <span className="text-text-muted"> · </span>
+                    <span className="text-accent-purple">{bg.nameIT}</span>
+                  </>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-2 bg-bg-card/80 border border-border rounded-xl px-3 py-1.5">
@@ -90,9 +108,7 @@ export function CharacterSheet() {
                 <span className="text-[10px] text-text-muted uppercase tracking-wider block leading-none">
                   {it.level}
                 </span>
-                <span className="text-2xl font-black text-accent-gold tabular-nums">
-                  {character.level}
-                </span>
+                <span className="text-2xl font-black text-accent-gold tabular-nums">{character.level}</span>
               </div>
               <button
                 onClick={() => handleLevelChange(1)}
@@ -117,9 +133,7 @@ export function CharacterSheet() {
               <div className="text-[10px] text-text-secondary uppercase tracking-wider mb-1 leading-tight">
                 {block.label}
               </div>
-              <div className={`text-lg font-black ${block.color}`}>
-                {block.value}
-              </div>
+              <div className={`text-lg font-black ${block.color}`}>{block.value}</div>
             </div>
           ))}
         </div>
@@ -162,6 +176,9 @@ export function CharacterSheet() {
             <div className="min-h-[300px] bg-bg-card/40 backdrop-blur-sm border border-border/50 rounded-xl p-4">
               {activeTab === 'features' && <FeaturesPanel stats={stats} />}
               {activeTab === 'equipment' && <EquipmentPanel />}
+              {activeTab === 'spells' && hasSpellcasting && (
+                <SpellsPanel classId={character.classId} knownSpells={character.knownSpells} />
+              )}
               {activeTab === 'notes' && <NotesPanel />}
             </div>
           </div>

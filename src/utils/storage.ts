@@ -36,10 +36,16 @@ interface StorageSchemaV3 {
   activeCharacterId: string | null
 }
 
+interface StorageSchemaV4 {
+  version: 4
+  characters: Character[]
+  activeCharacterId: string | null
+}
+
 const STORAGE_KEY = 'dnd5e-characters'
 
-const defaultStorage: StorageSchemaV3 = {
-  version: 3,
+const defaultStorage: StorageSchemaV4 = {
+  version: 4,
   characters: [],
   activeCharacterId: null,
 }
@@ -47,7 +53,7 @@ const defaultStorage: StorageSchemaV3 = {
 function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
   return {
     version: 3,
-    characters: old.characters.map(c => ({
+    characters: old.characters.map((c) => ({
       id: c.id,
       name: c.name,
       raceId: c.raceId,
@@ -65,7 +71,17 @@ function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
       ideals: c.ideals,
       bonds: c.bonds,
       flaws: c.flaws,
-      equipment: c.equipment,
+      equipment: c.equipment.map((s: string, i: number) => ({
+        id: `gear-${i}`,
+        name: s,
+        nameIT: s,
+        category: 'gear' as const,
+        quantity: 1,
+        equipped: false,
+      })),
+      equippedArmorId: null,
+      equippedShieldId: null,
+      knownSpells: [],
       notes: c.notes,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -75,25 +91,66 @@ function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
   }
 }
 
-export function loadStorage(): StorageSchemaV3 {
+/**
+ * Migrates v3 data to v4.
+ * Key changes:
+ * - equipment: string[] → EquipmentItem[]  (strings become gear items)
+ * - equippedArmorId, equippedShieldId, knownSpells added with safe defaults
+ */
+function migrateV3toV4(v3: StorageSchemaV3): StorageSchemaV4 {
+  return {
+    version: 4,
+    characters: v3.characters.map((c: any) => ({
+      ...c,
+      equipment: Array.isArray(c.equipment)
+        ? c.equipment.map((item: unknown, i: number) => {
+            // Already an EquipmentItem object — pass through
+            if (typeof item === 'object' && item !== null && 'category' in item) {
+              return item
+            }
+            // Legacy string → convert to gear EquipmentItem
+            return {
+              id: `gear-${i}`,
+              name: String(item),
+              nameIT: String(item),
+              category: 'gear' as const,
+              quantity: 1,
+              equipped: false,
+            }
+          })
+        : [],
+      equippedArmorId: c.equippedArmorId ?? null,
+      equippedShieldId: c.equippedShieldId ?? null,
+      knownSpells: Array.isArray(c.knownSpells) ? c.knownSpells : [],
+    })),
+    activeCharacterId: v3.activeCharacterId,
+  }
+}
+
+export function loadStorage(): StorageSchemaV4 {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultStorage
     const parsed = JSON.parse(raw)
+
     if (parsed.version === 1) {
-      return migrateV1toV3(parsed as StorageSchemaV1)
+      const v3 = migrateV1toV3(parsed as StorageSchemaV1)
+      return migrateV3toV4(v3)
     }
     if (parsed.version === 3) {
-      return parsed as StorageSchemaV3
+      return migrateV3toV4(parsed as StorageSchemaV3)
     }
-    // Unknown version — return default
+    if (parsed.version === 4) {
+      return parsed as StorageSchemaV4
+    }
+    // Unknown version — return default (safe fallback)
     return defaultStorage
   } catch {
     return defaultStorage
   }
 }
 
-export function saveStorage(data: StorageSchemaV3): void {
+export function saveStorage(data: StorageSchemaV4): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 }
 

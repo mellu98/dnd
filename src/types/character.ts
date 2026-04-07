@@ -1,4 +1,5 @@
 import type { AbilityName, Feature, Proficiency, SkillName } from './common'
+import type { EquipmentItem } from './equipment'
 
 export interface CharacterAbilityScores {
   STR: number
@@ -38,7 +39,10 @@ export interface Character {
   ideals: string
   bonds: string
   flaws: string
-  equipment: string[]
+  equipment: EquipmentItem[]
+  equippedArmorId: string | null
+  equippedShieldId: string | null
+  knownSpells: string[]
   notes: string
   createdAt: string
   updatedAt: string
