@@ -10,12 +10,12 @@ describe('storage migration', () => {
 
   it('returns default storage when empty', () => {
     const storage = loadStorage()
-    expect(storage.version).toBe(4)
+    expect(storage.version).toBe(5)
     expect(storage.characters).toEqual([])
     expect(storage.activeCharacterId).toBeNull()
   })
 
-  it('migrates v1 characters to v4', () => {
+  it('migrates v1 characters to v5', () => {
     const v1Data = {
       version: 1,
       characters: [
@@ -50,7 +50,7 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v1Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(4)
+    expect(storage.version).toBe(5)
     expect(storage.characters).toHaveLength(1)
 
     const char = storage.characters[0]
@@ -66,9 +66,10 @@ describe('storage migration', () => {
     expect(char.equippedArmorId).toBeNull()
     expect(char.equippedShieldId).toBeNull()
     expect(char.knownSpells).toEqual([])
+    expect(char.asiChoices).toEqual([])
   })
 
-  it('migrates v3 storage to v4 with new fields', () => {
+  it('migrates v3 storage to v5 with new fields', () => {
     const v3Data = {
       version: 3,
       characters: [
@@ -102,7 +103,7 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v3Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(4)
+    expect(storage.version).toBe(5)
     expect(storage.characters).toHaveLength(1)
     const char = storage.characters[0]
     expect(char.name).toBe('Nuovo Eroe')
@@ -110,13 +111,14 @@ describe('storage migration', () => {
       primary: 'STR',
       secondary: 'DEX',
     })
-    // New v4 fields added with safe defaults
+    // New v5 fields added with safe defaults
     expect(char.equippedArmorId).toBeNull()
     expect(char.equippedShieldId).toBeNull()
     expect(char.knownSpells).toEqual([])
+    expect(char.asiChoices).toEqual([])
   })
 
-  it('migrates v3 string equipment to v4 EquipmentItem[]', () => {
+  it('migrates v3 string equipment to v5 EquipmentItem[]', () => {
     const v3Data = {
       version: 3,
       characters: [
@@ -150,7 +152,7 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v3Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(4)
+    expect(storage.version).toBe(5)
     const char = storage.characters[0]
     expect(char.equipment).toHaveLength(2)
     expect(char.equipment[0]).toMatchObject({
@@ -168,7 +170,7 @@ describe('storage migration', () => {
     })
   })
 
-  it('passes through v4 storage unchanged', () => {
+  it('passes through v4 storage by upgrading to v5', () => {
     const v4Data = {
       version: 4,
       characters: [
@@ -214,17 +216,19 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v4Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(4)
+    expect(storage.version).toBe(5)
     const char = storage.characters[0]
     expect(char.knownSpells).toEqual(['fire-bolt', 'magic-missile'])
     expect(char.equippedArmorId).toBeNull()
     expect(char.equipment[0].name).toBe('Spellbook')
+    // v5 migration adds asiChoices
+    expect(char.asiChoices).toEqual([])
   })
 
   it('returns default for unknown versions', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 99, characters: [] }))
     const storage = loadStorage()
-    expect(storage.version).toBe(4)
+    expect(storage.version).toBe(5)
     expect(storage.characters).toEqual([])
   })
 })

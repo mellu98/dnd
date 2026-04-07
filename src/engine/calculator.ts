@@ -58,10 +58,18 @@ export function calculateAllStats(character: Character): CalculatedStats {
     backgroundAbilityChoices: character.backgroundAbilityChoices,
   })
 
-  // Compute final ability scores (base + background ASI bonuses)
+  // Compute final ability scores (base + background ASI bonuses + class ASI choices)
   const finalAbilityScores = { ...character.abilityScores } as CharacterAbilityScores
   for (const bonus of aggregated.backgroundAbilityBonuses) {
     finalAbilityScores[bonus.ability] += bonus.value
+  }
+  // Apply ASI ability bonuses from explicit character choices (level-up ASIs)
+  for (const choice of character.asiChoices ?? []) {
+    if (choice.type === 'ability' && choice.abilityBonuses) {
+      for (const b of choice.abilityBonuses) {
+        finalAbilityScores[b.ability] = Math.min(20, finalAbilityScores[b.ability] + b.value)
+      }
+    }
   }
 
   // Compute modifiers
@@ -105,7 +113,7 @@ export function calculateAllStats(character: Character): CalculatedStats {
   if (aggregated.hitDie) {
     maxHp = computeMaxHp(aggregated.hitDie, abilityModifiers.CON, character.level)
   }
-  const currentHp = Math.min(character.hp.current, maxHp)
+  // currentHp is recalculated below after applying feat bonuses
 
   // Spell slot tracker
   const cls = getClassById(character.classId)
@@ -116,6 +124,40 @@ export function calculateAllStats(character: Character): CalculatedStats {
     return { level: spellLevel, max, expended: Math.min(expended, max) }
   })
 
+  // Apply feat bonuses from ASI choices + background origin feat
+  let initiativeBonus = abilityModifiers.DEX
+  let speed = aggregated.speed
+  let toughBonus = 0
+
+  // Collect all active feat IDs: from ASI choices + background origin feat (if mechanical)
+  const activeFeatIds: string[] = []
+  for (const choice of character.asiChoices ?? []) {
+    if (choice.type === 'feat' && choice.featId) {
+      activeFeatIds.push(choice.featId)
+    }
+  }
+  // Background origin feat — map known feat names to ids
+  const bgOriginFeatNameToId: Record<string, string> = {
+    Alert: 'alert',
+    Tough: 'tough',
+    Mobile: 'mobile',
+  }
+  for (const feat of aggregated.features) {
+    if (feat.name in bgOriginFeatNameToId) {
+      activeFeatIds.push(bgOriginFeatNameToId[feat.name])
+    }
+  }
+
+  for (const featId of activeFeatIds) {
+    if (featId === 'alert') initiativeBonus += 5
+    if (featId === 'mobile') speed += 10
+    if (featId === 'tough') toughBonus += character.level * 2
+  }
+
+  // Apply Tough bonus to HP
+  const finalMaxHp = maxHp + toughBonus
+  const finalCurrentHp = Math.min(character.hp.current, finalMaxHp)
+
   return {
     finalAbilityScores,
     abilityModifiers,
@@ -125,12 +167,12 @@ export function calculateAllStats(character: Character): CalculatedStats {
     savingThrowModifiers,
     savingThrowProficiencies,
     armorClass: calculateArmorClass(character, abilityModifiers),
-    initiative: abilityModifiers.DEX,
-    speed: aggregated.speed,
+    initiative: initiativeBonus,
+    speed,
     passivePerception: 10 + skillModifiers.perception,
     allProficiencies: aggregated.proficiencies,
     allFeatures: aggregated.features,
-    hp: { max: maxHp, current: currentHp, temporary: character.hp.temporary },
+    hp: { max: finalMaxHp, current: finalCurrentHp, temporary: character.hp.temporary },
     darkvision: aggregated.darkvision,
     sizeIT,
     spellSlots,

@@ -10,6 +10,7 @@ import { CombatInfoRow } from './CombatInfoRow'
 import { LeftColumnPanel } from './LeftColumnPanel'
 import { CenterColumnPanel } from './CenterColumnPanel'
 import { RightColumnPanel } from './RightColumnPanel'
+import { ASIPanel } from './ASIPanel'
 
 export function CharacterSheet() {
   const { state, dispatch, calculatedStats } = useCharacter()
@@ -109,6 +110,9 @@ export function CharacterSheet() {
         <div className="mb-6">
           <CombatInfoRow stats={stats} />
         </div>
+
+        {/* ── ASI Pending Choices Alert ── */}
+        <ASIPanel />
 
         {/* ── 3-Column CSS Grid (the 2024 sheet layout) ── */}
         {/*

@@ -8,7 +8,14 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react'
-import type { Character, CharacterAbilityScores, SkillName, Feature, BackgroundAbilityChoices } from '../types'
+import type {
+  ASIChoice,
+  Character,
+  CharacterAbilityScores,
+  SkillName,
+  Feature,
+  BackgroundAbilityChoices,
+} from '../types'
 import type { EquipmentItem } from '../types/equipment'
 import { loadStorage, saveStorage, generateId } from '../utils/storage'
 import { computeMaxHp } from '../engine/hp-calculator'
@@ -73,6 +80,7 @@ type Action =
   | { type: 'GO_HOME' }
   | { type: 'SET_CHARACTER_IMAGE'; id: string; imageUrl: string }
   | { type: 'SET_GENERATING_IMAGE'; charId: string }
+  | { type: 'SAVE_ASI_CHOICE'; choice: ASIChoice }
 
 function initState(): CharacterState {
   const storage = loadStorage()
@@ -339,6 +347,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         equippedShieldId: null,
         knownSpells: [],
         expendedSpellSlots: {},
+        asiChoices: [],
         notes: '',
         createdAt: now,
         updatedAt: now,
@@ -384,6 +393,20 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'SET_GENERATING_IMAGE': {
       return state
     }
+    case 'SAVE_ASI_CHOICE': {
+      if (!state.character) return state
+      // Replace existing choice at same level or append new one
+      const existing = state.character.asiChoices ?? []
+      const filtered = existing.filter((c) => c.level !== action.choice.level)
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          asiChoices: [...filtered, action.choice],
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
     default:
       return state
   }
@@ -414,7 +437,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 4,
+        version: 5,
         characters: saved.length > 0 ? saved : updatedChars,
         activeCharacterId: char?.id ?? null,
       })

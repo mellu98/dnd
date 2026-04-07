@@ -37,10 +37,20 @@ export interface AbilityScoreBonus {
 export interface Feature extends Sourced {
   name: string
   nameIT: string
-  description: string
-  descriptionIT: string
+  description?: string
+  descriptionIT?: string
   level: number
-  type?: string
+  type?: 'ASI' | string
+}
+
+export interface ASIChoice {
+  /** The class feature level this choice resolves */
+  level: number
+  type: 'ability' | 'feat'
+  /** Populated when type === 'ability' */
+  abilityBonuses?: { ability: AbilityName; value: number }[]
+  /** Populated when type === 'feat' */
+  featId?: string
 }
 
 export interface Proficiency {

@@ -39,6 +39,36 @@ export const wizard: ClassDefinition = {
         'Una volta al giorno durante un riposo breve, puoi recuperare slot incantesimo spesi con un livello combinato pari o inferiore alla meta del tuo livello da mago (arrotondato per eccesso).',
       level: 1,
     },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 4,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 8,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 12,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 16,
+      type: 'ASI',
+    },
+    {
+      name: 'Ability Score Improvement',
+      nameIT: 'Miglioramento dei Punteggi di Caratteristica',
+      level: 19,
+      type: 'ASI',
+    },
   ],
   subclasses: [
     {

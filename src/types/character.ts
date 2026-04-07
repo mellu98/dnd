@@ -1,4 +1,4 @@
-import type { AbilityName, Feature, Proficiency, SkillName } from './common'
+import type { AbilityName, ASIChoice, Feature, Proficiency, SkillName } from './common'
 import type { EquipmentItem } from './equipment'
 
 export interface CharacterAbilityScores {
@@ -45,6 +45,8 @@ export interface Character {
   knownSpells: string[]
   /** Tracks how many slots have been expended per spell level (key = spell level 1-9) */
   expendedSpellSlots: Record<number, number>
+  /** ASI choices made at class feature levels */
+  asiChoices: ASIChoice[]
   notes: string
   createdAt: string
   updatedAt: string
