@@ -9,6 +9,7 @@ export const human: Species = {
   sizeIT: 'Media',
   darkvision: 0,
   features: [],
+  proficiencies: [],
   languages: ['Common'],
   languagesIT: ['Comune'],
   variants: [],
