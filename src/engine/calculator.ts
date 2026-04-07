@@ -174,6 +174,16 @@ export function calculateAllStats(character: Character): CalculatedStats {
     Alert: 'alert',
     Tough: 'tough',
     Mobile: 'mobile',
+    Musician: 'musician',
+    Crafter: 'crafter',
+    Skilled: 'skilled',
+    Healer: 'healer',
+    'Tavern Brawler': 'tavern_brawler',
+    'Savage Attacker': 'savage_attacker',
+    Skulker: 'skulker',
+    'Fey Touched': 'fey_touched',
+    'Magic Initiate (Cleric)': 'magic_initiate_cleric',
+    'Magic Initiate (Wizard)': 'magic_initiate_wizard',
   }
   for (const feat of aggregated.features) {
     if (feat.name in bgOriginFeatNameToId) {
