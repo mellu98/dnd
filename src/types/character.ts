@@ -43,6 +43,8 @@ export interface Character {
   equippedArmorId: string | null
   equippedShieldId: string | null
   knownSpells: string[]
+  /** Tracks how many slots have been expended per spell level (key = spell level 1-9) */
+  expendedSpellSlots: Record<number, number>
   notes: string
   createdAt: string
   updatedAt: string
@@ -67,4 +69,6 @@ export interface CalculatedStats {
   darkvision: number
   /** Creature size derived from species (e.g. "Media", "Piccola") */
   sizeIT: string
+  /** Spell slot tracker per spell level */
+  spellSlots: { level: number; max: number; expended: number }[]
 }

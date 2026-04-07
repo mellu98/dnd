@@ -1,6 +1,8 @@
+import type { Sourced } from './common'
+
 export type EquipmentCategory = 'armor' | 'shield' | 'weapon' | 'gear' | 'consumable'
 
-export interface EquipmentItem {
+export interface EquipmentItem extends Sourced {
   id: string
   name: string
   nameIT: string
@@ -20,7 +22,7 @@ export interface EquipmentItem {
   magicalBonus?: number
 }
 
-export interface ArmorData {
+export interface ArmorData extends Sourced {
   id: string
   name: string
   nameIT: string
@@ -33,7 +35,21 @@ export interface ArmorData {
   category: 'light' | 'medium' | 'heavy'
 }
 
-export interface ShieldData {
+export interface WeaponData extends Sourced {
+  id: string
+  name: string
+  nameIT: string
+  damageDice: string
+  damageType: string
+  damageTypeIT: string
+  properties: string[]
+  propertiesIT: string[]
+  weight: number
+  value: number
+  category: 'simple' | 'martial'
+}
+
+export interface ShieldData extends Sourced {
   id: string
   name: string
   nameIT: string

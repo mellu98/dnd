@@ -1,4 +1,4 @@
-import type { AbilityName, DieType, Feature, Proficiency, SkillName } from './common'
+import type { AbilityName, DieType, Feature, Proficiency, SkillName, Sourced } from './common'
 
 export interface Subclass {
   id: string
@@ -8,7 +8,7 @@ export interface Subclass {
   proficiencies: Proficiency[]
 }
 
-export interface ClassDefinition {
+export interface ClassDefinition extends Sourced {
   id: string
   name: string
   nameIT: string
@@ -29,5 +29,7 @@ export interface ClassDefinition {
     ability: AbilityName
     knownType: 'prepared' | 'known' | 'all'
   }
+  /** Maps character level → array of available slots per spell level (index 0 = 1st-level slots, etc.) */
+  spellSlotTable?: Record<number, number[]>
   startingEquipment: string[][]
 }

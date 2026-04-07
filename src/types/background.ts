@@ -1,6 +1,6 @@
-import type { AbilityName, Feature, Proficiency } from './common'
+import type { AbilityName, Feature, Proficiency, Sourced } from './common'
 
-export interface Background {
+export interface Background extends Sourced {
   id: string
   name: string
   nameIT: string

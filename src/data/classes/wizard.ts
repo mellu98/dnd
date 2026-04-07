@@ -13,22 +13,30 @@ export const wizard: ClassDefinition = {
   },
   armorProficiencies: [],
   weaponProficiencies: [
-    { type: 'weapon', value: 'Daggers, Darts, Slings, Quarterstaffs, Light Crossbows', valueIT: 'Pugnali, Dardi, Fionde, Bastoni, Balestre Leggere' },
+    {
+      type: 'weapon',
+      value: 'Daggers, Darts, Slings, Quarterstaffs, Light Crossbows',
+      valueIT: 'Pugnali, Dardi, Fionde, Bastoni, Balestre Leggere',
+    },
   ],
   toolProficiencies: [],
   features: [
     {
       name: 'Spellcasting',
       nameIT: 'Incantesimi',
-      description: 'You can cast wizard spells using Intelligence as your spellcasting ability. You prepare spells from your spellbook each day.',
-      descriptionIT: 'Puoi lanciare incantesimi da mago usando Intelligenza come caratteristica da incantatore. Prepari gli incantesimi dal tuo libro degli incantesimi ogni giorno.',
+      description:
+        'You can cast wizard spells using Intelligence as your spellcasting ability. You prepare spells from your spellbook each day.',
+      descriptionIT:
+        'Puoi lanciare incantesimi da mago usando Intelligenza come caratteristica da incantatore. Prepari gli incantesimi dal tuo libro degli incantesimi ogni giorno.',
       level: 1,
     },
     {
       name: 'Arcane Recovery',
       nameIT: 'Recupero Arcano',
-      description: 'Once per day during a short rest, you can recover expended spell slots with a combined level equal to or less than half your wizard level (rounded up).',
-      descriptionIT: 'Una volta al giorno durante un riposo breve, puoi recuperare slot incantesimo spesi con un livello combinato pari o inferiore alla meta del tuo livello da mago (arrotondato per eccesso).',
+      description:
+        'Once per day during a short rest, you can recover expended spell slots with a combined level equal to or less than half your wizard level (rounded up).',
+      descriptionIT:
+        'Una volta al giorno durante un riposo breve, puoi recuperare slot incantesimo spesi con un livello combinato pari o inferiore alla meta del tuo livello da mago (arrotondato per eccesso).',
       level: 1,
     },
   ],
@@ -40,16 +48,19 @@ export const wizard: ClassDefinition = {
       features: [
         {
           name: 'Evocation Savant',
-          nameIT: 'Sapiente dell\'Evocazione',
+          nameIT: "Sapiente dell'Evocazione",
           description: 'The gold and time you must spend to copy an evocation spell into your spellbook is halved.',
-          descriptionIT: 'L\'oro e il tempo necessari per copiare un incantesimo di evocazione nel tuo libro degli incantesimi sono dimezzati.',
+          descriptionIT:
+            "L'oro e il tempo necessari per copiare un incantesimo di evocazione nel tuo libro degli incantesimi sono dimezzati.",
           level: 2,
         },
         {
           name: 'Sculpt Spells',
           nameIT: 'Scolpire Incantesimi',
-          description: 'You can create pockets of relative safety within the effects of your evocation spells. Chosen creatures automatically succeed on saving throws against the spell and take no damage.',
-          descriptionIT: 'Puoi creare zone di sicurezza relativa all\'interno degli effetti dei tuoi incantesimi di evocazione. Le creature scelte hanno automaticamente successo nei tiri salvezza e non subiscono danni.',
+          description:
+            'You can create pockets of relative safety within the effects of your evocation spells. Chosen creatures automatically succeed on saving throws against the spell and take no damage.',
+          descriptionIT:
+            "Puoi creare zone di sicurezza relativa all'interno degli effetti dei tuoi incantesimi di evocazione. Le creature scelte hanno automaticamente successo nei tiri salvezza e non subiscono danni.",
           level: 2,
         },
       ],
@@ -58,10 +69,33 @@ export const wizard: ClassDefinition = {
   ],
   subclassLevel: 2,
   spellcasting: { ability: 'INT', knownType: 'all' },
+  // PHB 2024 Wizard spell slot table (index 0 = 1st-level slots, etc.)
+  spellSlotTable: {
+    1: [2],
+    2: [3],
+    3: [4, 2],
+    4: [4, 3],
+    5: [4, 3, 2],
+    6: [4, 3, 3],
+    7: [4, 3, 3, 1],
+    8: [4, 3, 3, 2],
+    9: [4, 3, 3, 3, 1],
+    10: [4, 3, 3, 3, 2],
+    11: [4, 3, 3, 3, 2, 1],
+    12: [4, 3, 3, 3, 2, 1],
+    13: [4, 3, 3, 3, 2, 1, 1],
+    14: [4, 3, 3, 3, 2, 1, 1],
+    15: [4, 3, 3, 3, 2, 1, 1, 1],
+    16: [4, 3, 3, 3, 2, 1, 1, 1],
+    17: [4, 3, 3, 3, 2, 1, 1, 1, 1],
+    18: [4, 3, 3, 3, 3, 1, 1, 1, 1],
+    19: [4, 3, 3, 3, 3, 2, 1, 1, 1],
+    20: [4, 3, 3, 3, 3, 2, 2, 1, 1],
+  },
   startingEquipment: [
     ['Quarterstaff', 'Dagger'],
     ['Component pouch', 'Arcane focus'],
-    ['Scholar\'s pack', 'Explorer\'s pack'],
+    ["Scholar's pack", "Explorer's pack"],
     ['Spellbook'],
   ],
 }

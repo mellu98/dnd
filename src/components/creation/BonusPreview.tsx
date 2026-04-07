@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { it } from '../../i18n/it'
 import { aggregateBonuses } from '../../engine/bonus-aggregator'
 import type { AbilityName } from '../../types'
+import { feetToMeters } from '../../utils/units'
 
 interface Props {
   raceId?: string
@@ -12,13 +13,26 @@ interface Props {
 }
 
 const abilityLabel: Record<AbilityName, string> = {
-  STR: it.STR, DEX: it.DEX, CON: it.CON, INT: it.INT, WIS: it.WIS, CHA: it.CHA,
+  STR: it.STR,
+  DEX: it.DEX,
+  CON: it.CON,
+  INT: it.INT,
+  WIS: it.WIS,
+  CHA: it.CHA,
 }
 
 export default function BonusPreview({ raceId, classId, subclassId, backgroundId, backgroundAbilityChoices }: Props) {
-  const bonuses = useMemo(() => aggregateBonuses({
-    raceId, classId, subclassId, backgroundId, backgroundAbilityChoices,
-  }), [raceId, classId, subclassId, backgroundId, backgroundAbilityChoices])
+  const bonuses = useMemo(
+    () =>
+      aggregateBonuses({
+        raceId,
+        classId,
+        subclassId,
+        backgroundId,
+        backgroundAbilityChoices,
+      }),
+    [raceId, classId, subclassId, backgroundId, backgroundAbilityChoices],
+  )
 
   const [expandedFeature, setExpandedFeature] = useState<number | null>(null)
 
@@ -28,7 +42,9 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
     return (
       <div className="bg-bg-secondary rounded-xl p-4 border border-border">
         <h3 className="text-accent-gold font-semibold text-lg mb-2">Anteprima Bonus</h3>
-        <p className="text-text-secondary text-sm">Seleziona background, specie o classe per vedere i bonus in tempo reale.</p>
+        <p className="text-text-secondary text-sm">
+          Seleziona background, specie o classe per vedere i bonus in tempo reale.
+        </p>
       </div>
     )
   }
@@ -68,12 +84,12 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
 
       {/* Speed & Darkvision */}
       <Section title={it.speed}>
-        <span className="text-text-primary">{bonuses.speed} ft</span>
+        <span className="text-text-primary">{feetToMeters(bonuses.speed)}</span>
       </Section>
 
       {bonuses.darkvision > 0 && (
         <Section title={it.darkvision}>
-          <span className="text-text-primary">{bonuses.darkvision} ft</span>
+          <span className="text-text-primary">{feetToMeters(bonuses.darkvision)}</span>
         </Section>
       )}
 
@@ -88,7 +104,7 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
       {bonuses.savingThrows.length > 0 && (
         <Section title={it.saving_throws}>
           <div className="flex gap-2">
-            {bonuses.savingThrows.map(st => (
+            {bonuses.savingThrows.map((st) => (
               <span key={st} className="bg-bg-card px-3 py-1 rounded-lg text-sm text-accent-emerald">
                 {abilityLabel[st]}
               </span>
@@ -102,7 +118,9 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
         <Section title={it.languages}>
           <div className="flex flex-wrap gap-2">
             {bonuses.languagesIT.map((l, i) => (
-              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm">{l}</span>
+              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
+                {l}
+              </span>
             ))}
           </div>
         </Section>
@@ -113,7 +131,9 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
         <Section key={type} title={profTypeLabels[type] || type}>
           <div className="flex flex-wrap gap-2">
             {profs.map((p, i) => (
-              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm">{p.valueIT}</span>
+              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
+                {p.valueIT}
+              </span>
             ))}
           </div>
         </Section>
@@ -123,7 +143,7 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
       {bonuses.skillChoices && (
         <Section title={`${it.choose_skills} (${bonuses.skillChoices.choose})`}>
           <div className="flex flex-wrap gap-1">
-            {bonuses.skillChoices.from.map(s => (
+            {bonuses.skillChoices.from.map((s) => (
               <span key={s} className="bg-bg-card px-2 py-0.5 rounded text-xs text-text-secondary">
                 {it[`skill_${s}` as keyof typeof it]}
               </span>

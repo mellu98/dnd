@@ -4,6 +4,16 @@ import { it } from '../../i18n/it'
 interface SpellDetailModalProps {
   spell: Spell
   onClose: () => void
+  /** Character level — used to display cantrip scaling damage */
+  characterLevel?: number
+}
+
+/** Returns cantrip tier index (0-3) based on character level */
+function getCantripTier(level: number): 0 | 1 | 2 | 3 {
+  if (level >= 17) return 3
+  if (level >= 11) return 2
+  if (level >= 5) return 1
+  return 0
 }
 
 function ComponentPill({ label, fullLabel, active }: { label: string; fullLabel: string; active: boolean }) {
@@ -28,7 +38,9 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
   )
 }
 
-export function SpellDetailModal({ spell, onClose }: SpellDetailModalProps) {
+export function SpellDetailModal({ spell, onClose, characterLevel = 1 }: SpellDetailModalProps) {
+  const cantripTier = getCantripTier(characterLevel)
+  const scaledDamage = spell.level === 0 && spell.cantripScaling ? spell.cantripScaling.damageTiers[cantripTier] : null
   return (
     /* Overlay */
     <div
@@ -103,6 +115,19 @@ export function SpellDetailModal({ spell, onClose }: SpellDetailModalProps) {
               <p className="text-xs text-text-secondary mt-2 italic px-1">({spell.components.mIT})</p>
             )}
           </div>
+
+          {/* Cantrip scaling */}
+          {scaledDamage && (
+            <div className="bg-accent-gold/10 border border-accent-gold/30 rounded-lg px-3 py-2 flex items-center gap-2">
+              <span className="text-accent-gold text-base">⚔️</span>
+              <div>
+                <p className="text-[10px] text-text-muted uppercase tracking-wider leading-none mb-0.5">
+                  Danno (livello {characterLevel})
+                </p>
+                <p className="text-sm font-bold text-accent-gold">{scaledDamage} fuoco</p>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div>

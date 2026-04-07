@@ -1,6 +1,7 @@
 import type { CalculatedStats } from '../../types'
 import { it } from '../../i18n/it'
 import { formatModifier } from '../../utils/modifiers'
+import { feetToMeters } from '../../utils/units'
 
 interface Props {
   stats: CalculatedStats
@@ -19,7 +20,7 @@ export function CombatInfoRow({ stats }: Props) {
     },
     {
       label: it.speed,
-      value: `${stats.speed} ${it.ft}`,
+      value: feetToMeters(stats.speed),
       color: 'text-text-primary',
     },
     {
@@ -34,13 +35,13 @@ export function CombatInfoRow({ stats }: Props) {
     },
     {
       label: it.darkvision,
-      value: stats.darkvision > 0 ? `${stats.darkvision} ${it.ft}` : '—',
+      value: stats.darkvision > 0 ? feetToMeters(stats.darkvision) : '—',
       color: stats.darkvision > 0 ? 'text-accent-purple' : 'text-text-muted',
     },
   ]
 
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
       {boxes.map((box) => (
         <div
           key={box.label}

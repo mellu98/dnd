@@ -60,6 +60,9 @@ type Action =
   | { type: 'TOGGLE_EQUIPMENT'; itemId: string }
   | { type: 'SET_KNOWN_SPELLS'; spellIds: string[] }
   | { type: 'TOGGLE_SPELL'; spellId: string }
+  | { type: 'EXPEND_SPELL_SLOT'; level: number }
+  | { type: 'RESTORE_SPELL_SLOT'; level: number }
+  | { type: 'RESTORE_ALL_SPELL_SLOTS' }
   | { type: 'UPDATE_HP_MAX'; max: number }
   | { type: 'LOAD_CHARACTER'; character: Character }
   | { type: 'NEW_CHARACTER' }
@@ -264,6 +267,48 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         character: { ...state.character, knownSpells: spells, updatedAt: new Date().toISOString() },
       }
     }
+    case 'EXPEND_SPELL_SLOT': {
+      if (!state.character) return state
+      const current = state.character.expendedSpellSlots[action.level] ?? 0
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expendedSpellSlots: { ...state.character.expendedSpellSlots, [action.level]: current + 1 },
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'RESTORE_SPELL_SLOT': {
+      if (!state.character) return state
+      const current = state.character.expendedSpellSlots[action.level] ?? 0
+      const next = Math.max(0, current - 1)
+      const updated = { ...state.character.expendedSpellSlots }
+      if (next === 0) {
+        delete updated[action.level]
+      } else {
+        updated[action.level] = next
+      }
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expendedSpellSlots: updated,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'RESTORE_ALL_SPELL_SLOTS': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expendedSpellSlots: {},
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
     case 'LOAD_CHARACTER':
       return { ...state, character: action.character, creationStep: 0 }
     case 'NEW_CHARACTER':
@@ -293,6 +338,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         equippedArmorId: null,
         equippedShieldId: null,
         knownSpells: [],
+        expendedSpellSlots: {},
         notes: '',
         createdAt: now,
         updatedAt: now,

@@ -1,4 +1,13 @@
-export interface Spell {
+import type { Sourced } from './common'
+
+export interface CantripScaling {
+  /** Damage string per tier: [lvl 1-4, lvl 5-10, lvl 11-16, lvl 17+] */
+  damageTiers: [string, string, string, string]
+  /** Optional effect description per tier (e.g. for non-damage cantrips) */
+  effectIT?: [string, string, string, string]
+}
+
+export interface Spell extends Sourced {
   id: string
   name: string
   nameIT: string
@@ -21,4 +30,5 @@ export interface Spell {
   description: string
   descriptionIT: string
   ritual?: boolean
+  cantripScaling?: CantripScaling
 }

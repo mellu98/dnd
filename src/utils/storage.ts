@@ -82,6 +82,7 @@ function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
       equippedArmorId: null,
       equippedShieldId: null,
       knownSpells: [],
+      expendedSpellSlots: {},
       notes: c.notes,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -122,6 +123,8 @@ function migrateV3toV4(v3: StorageSchemaV3): StorageSchemaV4 {
       equippedArmorId: c.equippedArmorId ?? null,
       equippedShieldId: c.equippedShieldId ?? null,
       knownSpells: Array.isArray(c.knownSpells) ? c.knownSpells : [],
+      expendedSpellSlots:
+        c.expendedSpellSlots != null && typeof c.expendedSpellSlots === 'object' ? c.expendedSpellSlots : {},
     })),
     activeCharacterId: v3.activeCharacterId,
   }

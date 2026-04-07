@@ -76,7 +76,7 @@ export function CharacterSheet() {
               <button
                 onClick={() => handleLevelChange(-1)}
                 disabled={character.level <= 1}
-                className="w-8 h-8 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
+                className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
               >
                 −
               </button>
@@ -89,7 +89,7 @@ export function CharacterSheet() {
               <button
                 onClick={() => handleLevelChange(1)}
                 disabled={character.level >= 20}
-                className="w-8 h-8 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
+                className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
               >
                 +
               </button>

@@ -21,6 +21,9 @@ export const wizardSpells: Spell[] = [
       'You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage.',
     descriptionIT:
       'Scagli un frammento di fuoco contro una creatura o un oggetto entro gittata. Effettua un attacco con incantesimo a distanza. Se colpisci, il bersaglio subisce 1d10 danni da fuoco.',
+    cantripScaling: {
+      damageTiers: ['1d10', '2d10', '3d10', '4d10'],
+    },
   },
   {
     id: 'mage-hand',

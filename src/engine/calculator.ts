@@ -6,6 +6,7 @@ import { aggregateBonuses } from './bonus-aggregator'
 import { computeMaxHp } from './hp-calculator'
 import { getArmorById } from '../data/equipment'
 import { getRaceById } from '../data/races'
+import { getClassById } from '../data/classes'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
@@ -106,6 +107,15 @@ export function calculateAllStats(character: Character): CalculatedStats {
   }
   const currentHp = Math.min(character.hp.current, maxHp)
 
+  // Spell slot tracker
+  const cls = getClassById(character.classId)
+  const slotArray = cls?.spellSlotTable?.[character.level] ?? []
+  const spellSlots = slotArray.map((max, idx) => {
+    const spellLevel = idx + 1
+    const expended = character.expendedSpellSlots?.[spellLevel] ?? 0
+    return { level: spellLevel, max, expended: Math.min(expended, max) }
+  })
+
   return {
     finalAbilityScores,
     abilityModifiers,
@@ -123,5 +133,6 @@ export function calculateAllStats(character: Character): CalculatedStats {
     hp: { max: maxHp, current: currentHp, temporary: character.hp.temporary },
     darkvision: aggregated.darkvision,
     sizeIT,
+    spellSlots,
   }
 }
