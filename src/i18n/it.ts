@@ -110,6 +110,17 @@ export const it = {
   prof_tool: 'Strumenti',
   prof_language: 'Lingue',
 
+  // Combat row labels
+  combat_info: 'Dati di Combattimento',
+  hit_dice: 'Dadi Vita',
+  death_saves: 'Tiri Salvezza Morte',
+  attacks: 'Attacchi e Trucchi di Combattimento',
+  class_features: 'Privilegi di Classe',
+  species_traits: 'Tratti della Specie',
+  feats: 'Talenti',
+  prof_and_languages: 'Competenze e Lingue',
+  inspiration: 'Ispirazione',
+
   // Misc
   ft: 'ft',
   meters: 'm',

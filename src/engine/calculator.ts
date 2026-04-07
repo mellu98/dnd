@@ -5,6 +5,7 @@ import { skills } from '../data/skills'
 import { aggregateBonuses } from './bonus-aggregator'
 import { computeMaxHp } from './hp-calculator'
 import { getArmorById } from '../data/equipment'
+import { getRaceById } from '../data/races'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
@@ -43,6 +44,10 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
 }
 
 export function calculateAllStats(character: Character): CalculatedStats {
+  // Resolve species size (sizeIT) — defaults to "Media" if species not found
+  const race = getRaceById(character.raceId)
+  const sizeIT = race?.sizeIT ?? 'Media'
+
   const aggregated = aggregateBonuses({
     raceId: character.raceId,
     classId: character.classId,
@@ -117,5 +122,6 @@ export function calculateAllStats(character: Character): CalculatedStats {
     allFeatures: aggregated.features,
     hp: { max: maxHp, current: currentHp, temporary: character.hp.temporary },
     darkvision: aggregated.darkvision,
+    sizeIT,
   }
 }

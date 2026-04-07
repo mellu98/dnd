@@ -65,4 +65,6 @@ export interface CalculatedStats {
   allFeatures: Feature[]
   hp: HpState
   darkvision: number
+  /** Creature size derived from species (e.g. "Media", "Piccola") */
+  sizeIT: string
 }
