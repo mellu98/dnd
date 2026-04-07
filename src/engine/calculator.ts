@@ -12,17 +12,20 @@ const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
 /**
  * Calculates Armor Class dynamically based on equipped armor, shield, class
- * (Unarmored Defense for Barbarian/Monk), and magical bonuses.
+ * (Unarmored Defense for Barbarian/Monk/Sorcerer Draconic), and magical bonuses.
  */
 function calculateArmorClass(character: Character, modifiers: Record<AbilityName, number>): number {
   const armorId = character.equippedArmorId
   const shieldId = character.equippedShieldId
   const classId = character.classId
+  const subclassId = character.subclassId
 
-  // No armor equipped → Unarmored Defense
+  // No armor equipped → Unarmored Defense variants
   if (!armorId) {
     if (classId === 'barbarian') return 10 + modifiers.DEX + modifiers.CON
     if (classId === 'monk') return 10 + modifiers.DEX + modifiers.WIS
+    // Sorcerer: Draconic Bloodline — Draconic Resilience
+    if (classId === 'sorcerer' && subclassId === 'draconic') return 13 + modifiers.DEX
     return 10 + modifiers.DEX
   }
 
@@ -91,12 +94,30 @@ export function calculateAllStats(character: Character): CalculatedStats {
   }
   const skillProficiencies = Array.from(skillProfSet)
 
-  // Compute skill modifiers
+  // Detect Jack of All Trades (Bard level 2 feature)
+  const hasJackOfAllTrades = aggregated.features.some(
+    (f) => f.name === 'Jack of All Trades',
+  )
+
+  // Compute skill modifiers with Expertise and Jack of All Trades
+  const expertiseSet = new Set<SkillName>(character.expertiseSkills)
   const skillModifiers = {} as Record<SkillName, number>
   for (const skill of skills) {
     const mod = abilityModifiers[skill.ability]
     const isProficient = skillProfSet.has(skill.id)
-    skillModifiers[skill.id] = mod + (isProficient ? profBonus : 0)
+    const hasExpertise = expertiseSet.has(skill.id)
+
+    if (hasExpertise) {
+      // Expertise: double proficiency bonus
+      skillModifiers[skill.id] = mod + profBonus * 2
+    } else if (isProficient) {
+      skillModifiers[skill.id] = mod + profBonus
+    } else if (hasJackOfAllTrades) {
+      // Jack of All Trades: half proficiency (rounded down) on non-proficient skills
+      skillModifiers[skill.id] = mod + Math.floor(profBonus / 2)
+    } else {
+      skillModifiers[skill.id] = mod
+    }
   }
 
   // Saving throws
@@ -128,6 +149,18 @@ export function calculateAllStats(character: Character): CalculatedStats {
   let initiativeBonus = abilityModifiers.DEX
   let speed = aggregated.speed
   let toughBonus = 0
+
+  // Monk Unarmored Movement — speed bonus when no armor equipped
+  // PHB 2024 scaling: lvl 2 +10ft, lvl 6 +15ft, lvl 10 +20ft, lvl 14 +25ft, lvl 18 +30ft
+  if (character.classId === 'monk' && !character.equippedArmorId) {
+    const monkSpeedBonus = character.level >= 18 ? 30
+      : character.level >= 14 ? 25
+      : character.level >= 10 ? 20
+      : character.level >= 6 ? 15
+      : character.level >= 2 ? 10
+      : 0
+    speed += monkSpeedBonus
+  }
 
   // Collect all active feat IDs: from ASI choices + background origin feat (if mechanical)
   const activeFeatIds: string[] = []

@@ -2,6 +2,9 @@ import type { CalculatedStats } from '../../types'
 import { it } from '../../i18n/it'
 import { SpellsPanel } from './SpellsPanel'
 import { NotesPanel } from './NotesPanel'
+import { DeathSavesPanel } from './DeathSavesPanel'
+import { RestButtons } from './RestButtons'
+import { ConditionsTracker } from './ConditionsTracker'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { getClassById } from '../../data/classes'
 import { getRaceById } from '../../data/races'
@@ -12,7 +15,7 @@ interface Props {
 
 /**
  * Right column of the 2024-style sheet.
- * Contains: Species Traits + Feats (from features) + Spells (if applicable) + Notes.
+ * Contains: Death Saves + Conditions + Rest + Species Traits + Feats + Spells + Notes.
  */
 export function RightColumnPanel({ stats }: Props) {
   const { state } = useCharacterContext()
@@ -30,6 +33,15 @@ export function RightColumnPanel({ stats }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Death Saves (only when at 0 HP) */}
+      {character && <DeathSavesPanel characterLevel={character.level} />}
+
+      {/* Conditions */}
+      <ConditionsTracker />
+
+      {/* Rest System */}
+      {character && <RestButtons />}
+
       {/* Species Traits */}
       {speciesFeatures.length > 0 && (
         <div className="bg-bg-card/60 border border-border/50 rounded-xl p-4">

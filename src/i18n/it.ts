@@ -114,6 +114,8 @@ export const it = {
   combat_info: 'Dati di Combattimento',
   hit_dice: 'Dadi Vita',
   death_saves: 'Tiri Salvezza Morte',
+  conditions: 'Condizioni',
+  rest: 'Riposo',
   attacks: 'Attacchi e Trucchi di Combattimento',
   class_features: 'Privilegi di Classe',
   species_traits: 'Tratti della Specie',

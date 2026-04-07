@@ -16,6 +16,11 @@ export interface HpState {
   temporary: number
 }
 
+export interface DeathSaves {
+  successes: number
+  failures: number
+}
+
 export interface BackgroundAbilityChoices {
   primary: AbilityName
   secondary: AbilityName
@@ -47,6 +52,14 @@ export interface Character {
   expendedSpellSlots: Record<number, number>
   /** ASI choices made at class feature levels */
   asiChoices: ASIChoice[]
+  /** Death saving throws (only relevant when hp.current === 0) */
+  deathSaves: DeathSaves
+  /** Whether the character is stabilized */
+  isStabilized: boolean
+  /** Hit dice spent (used for short rest recovery) */
+  spentHitDice: number
+  /** Skills with Expertise (double proficiency bonus) */
+  expertiseSkills: SkillName[]
   notes: string
   createdAt: string
   updatedAt: string

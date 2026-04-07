@@ -81,6 +81,12 @@ type Action =
   | { type: 'SET_CHARACTER_IMAGE'; id: string; imageUrl: string }
   | { type: 'SET_GENERATING_IMAGE'; charId: string }
   | { type: 'SAVE_ASI_CHOICE'; choice: ASIChoice }
+  | { type: 'ROLL_DEATH_SAVE'; result: 'success' | 'failure' }
+  | { type: 'RESET_DEATH_SAVES' }
+  | { type: 'STABILIZE' }
+  | { type: 'SHORT_REST'; hitDiceToSpend?: number }
+  | { type: 'LONG_REST' }
+  | { type: 'SET_EXPERTISE_SKILLS'; skills: SkillName[] }
 
 function initState(): CharacterState {
   const storage = loadStorage()
@@ -348,6 +354,10 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         knownSpells: [],
         expendedSpellSlots: {},
         asiChoices: [],
+        deathSaves: { successes: 0, failures: 0 },
+        isStabilized: false,
+        spentHitDice: 0,
+        expertiseSkills: [],
         notes: '',
         createdAt: now,
         updatedAt: now,
@@ -407,6 +417,114 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         },
       }
     }
+    // ═══ Death Saves ═══
+    case 'ROLL_DEATH_SAVE': {
+      if (!state.character) return state
+      const ds = { ...state.character.deathSaves }
+      if (action.result === 'success') {
+        ds.successes = Math.min(3, ds.successes + 1)
+      } else {
+        ds.failures = Math.min(3, ds.failures + 1)
+      }
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          deathSaves: ds,
+          isStabilized: ds.successes >= 3,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'RESET_DEATH_SAVES': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          deathSaves: { successes: 0, failures: 0 },
+          isStabilized: false,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'STABILIZE': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          isStabilized: true,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    // ═══ Rest System ═══
+    case 'SHORT_REST': {
+      if (!state.character) return state
+      const hitDiceSpent = action.hitDiceToSpend ?? 0
+      const cls = getClassById(state.character.classId)
+      const hitDieValue = cls ? parseInt(cls.hitDie.slice(1), 10) : 8
+      const conMod = abilityModifier(state.character.abilityScores.CON)
+      let newHp = state.character.hp.current
+      let remainingDice = state.character.level - (state.character.spentHitDice ?? 0)
+
+      // Spend hit dice to heal
+      if (hitDiceSpent > 0 && hitDiceSpent <= remainingDice) {
+        const healAmount = hitDiceSpent * (Math.floor(hitDieValue / 2) + 1 + conMod)
+        newHp = Math.min(state.character.hp.max, newHp + healAmount)
+        remainingDice -= hitDiceSpent
+      }
+
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          hp: { ...state.character.hp, current: newHp },
+          spentHitDice: state.character.level - remainingDice,
+          expendedSpellSlots: {}, // Some class features reset on short rest
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'LONG_REST': {
+      if (!state.character) return state
+      const cls = getClassById(state.character.classId)
+      const hitDieValue = cls ? parseInt(cls.hitDie.slice(1), 10) : 8
+      const conMod = abilityModifier(state.character.abilityScores.CON)
+      // Restore HP: recover half character level in hit dice (minimum 1), then heal
+      const diceRecovered = Math.max(1, Math.floor(state.character.level / 2))
+      const spentDice = state.character.spentHitDice ?? 0
+      const remainingAfterRest = Math.min(state.character.level, spentDice - diceRecovered)
+
+      // Heal to full HP on long rest
+      const maxHp = computeMaxHp(cls?.hitDie ?? 'd8', conMod, state.character.level)
+
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          hp: { max: maxHp, current: maxHp, temporary: 0 },
+          expendedSpellSlots: {},
+          spentHitDice: Math.max(0, remainingAfterRest),
+          deathSaves: { successes: 0, failures: 0 },
+          isStabilized: false,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    // ═══ Expertise Skills ═══
+    case 'SET_EXPERTISE_SKILLS': {
+      if (!state.character) return state
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          expertiseSkills: action.skills,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
     default:
       return state
   }
@@ -450,7 +568,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 5,
+        version: 7,
         characters: updatedChars,
         activeCharacterId: char?.id ?? null,
       })
