@@ -142,10 +142,33 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
   const cantripTier = getCantripTier(characterLevel)
   const maxSpellLevel = getMaxSpellLevel(spellSlots)
 
+  // Count unknown spells available at current max spell level (for notification)
+  const unknownSpellCount = allSpells.filter(
+    (s) => s.level <= maxSpellLevel && !knownSpells.includes(s.id),
+  ).length
+  const hasUnknownSpells = unknownSpellCount > 0
+
   return (
     <div className="space-y-3">
       {/* Spell slot tracker */}
       <SpellSlotTracker spellSlots={spellSlots} />
+
+      {/* Level-up spell learning notification */}
+      {hasUnknownSpells && maxSpellLevel > 0 && (
+        <div className="bg-accent-purple/10 border border-accent-purple/30 rounded-xl px-3 py-2.5 flex items-center gap-2">
+          <span className="text-accent-purple text-sm">✦</span>
+          <p className="text-xs text-accent-purple font-medium flex-1">
+            {unknownSpellCount} incantesim{unknownSpellCount === 1 ? 'o' : 'i'} disponibile
+            {unknownSpellCount === 1 ? '' : 'i'} da imparare
+          </p>
+          <button
+            onClick={() => setShowPicker(true)}
+            className="shrink-0 px-3 py-1 rounded-lg bg-accent-purple/20 text-accent-purple text-xs font-semibold border border-accent-purple/40 hover:bg-accent-purple/30 transition-all"
+          >
+            Impara
+          </button>
+        </div>
+      )}
 
       {/* Header row: filter buttons + manage button */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -171,6 +194,11 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
         >
           <span>✦</span>
           <span>{it.manage_spells}</span>
+          {hasUnknownSpells && (
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent-purple text-white text-[10px] font-bold">
+              {unknownSpellCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -203,6 +231,9 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
                 {/* Spell name + school */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
+                    {isKnown && (
+                      <span className="text-accent-purple text-xs shrink-0">✓</span>
+                    )}
                     <span className="text-sm font-semibold text-text-primary truncate group-hover:text-accent-gold transition-colors">
                       {spell.nameIT}
                     </span>

@@ -131,6 +131,50 @@ export const rogue: ClassDefinition = {
       ],
       proficiencies: [],
     },
+    {
+      id: 'assassin',
+      name: 'Assassin',
+      nameIT: 'Assassino',
+      features: [
+        {
+          name: 'Bonus Proficiencies',
+          nameIT: 'Competenze Bonus',
+          description: 'You gain proficiency with the disguise kit and the poisoner\'s kit.',
+          descriptionIT: 'Ottieni competenza con il kit da travestimento e il kit del fabbricante di veleni.',
+          level: 3,
+        },
+        {
+          name: 'Assassinate',
+          nameIT: 'Assassinare',
+          description: 'You have advantage on attack rolls against creatures that haven\'t taken a turn. Any hit against a surprised creature is a critical hit.',
+          descriptionIT: 'Hai vantaggio sui tiri per colpire contro creature che non hanno ancora agito. Ogni colpo contro una creatura sorpresa e un colpo critico.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
+    {
+      id: 'arcane-trickster',
+      name: 'Arcane Trickster',
+      nameIT: 'Imbroglione Arcano',
+      features: [
+        {
+          name: 'Spellcasting',
+          nameIT: 'Incantesimi',
+          description: 'You learn to cast wizard spells using Intelligence as your spellcasting ability.',
+          descriptionIT: 'Impari a lanciare incantesimi da mago usando Intelligenza come caratteristica da incantatore.',
+          level: 3,
+        },
+        {
+          name: 'Mage Hand Legerdemain',
+          nameIT: 'Legerdemania di Mano del Mago',
+          description: 'Your Mage Hand can perform sleight of hand, pick locks, disarm traps, and is invisible.',
+          descriptionIT: 'La tua Mano del Mago puo compiere azioni di rapidita di mano, scassinare serrature, disattivare trappole ed e invisibile.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
   ],
   subclassLevel: 3,
   startingEquipment: [

@@ -116,6 +116,50 @@ export const fighter: ClassDefinition = {
       ],
       proficiencies: [],
     },
+    {
+      id: 'battle-master',
+      name: 'Battle Master',
+      nameIT: 'Maestro di Battaglia',
+      features: [
+        {
+          name: 'Combat Superiority',
+          nameIT: 'Superiorità in Combattimento',
+          description: 'You learn maneuvers and gain superiority dice (d8). You can use them to perform special combat techniques.',
+          descriptionIT: 'Impari delle manovre e ottieni dadi di superiorità (d8). Puoi usarli per eseguire tecniche di combattimento speciali.',
+          level: 3,
+        },
+        {
+          name: 'Student of War',
+          nameIT: 'Studente di Guerra',
+          description: 'You gain proficiency with one type of artisan\'s tools of your choice.',
+          descriptionIT: 'Ottieni competenza con un tipo di arnesi da artigiano a tua scelta.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
+    {
+      id: 'eldritch-knight',
+      name: 'Eldritch Knight',
+      nameIT: 'Cavaliere Arcano',
+      features: [
+        {
+          name: 'Spellcasting',
+          nameIT: 'Incantesimi',
+          description: 'You learn to cast wizard spells using Intelligence as your spellcasting ability.',
+          descriptionIT: 'Impari a lanciare incantesimi da mago usando Intelligenza come caratteristica da incantatore.',
+          level: 3,
+        },
+        {
+          name: 'Weapon Bond',
+          nameIT: 'Legame con l\'Arma',
+          description: 'You can bond with a weapon, allowing you to summon it to your hand as a bonus action.',
+          descriptionIT: 'Puoi legarti a un\'arma, permettendoti di evocarla nella tua mano come azione bonus.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
   ],
   subclassLevel: 3,
   startingEquipment: [

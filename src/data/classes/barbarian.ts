@@ -67,6 +67,21 @@ export const barbarian: ClassDefinition = {
       ],
       proficiencies: [],
     },
+    {
+      id: 'totem-warrior',
+      name: 'Path of the Totem Warrior',
+      nameIT: 'Sentiero del Guerriero Totemico',
+      features: [
+        {
+          name: 'Spirit Seeker',
+          nameIT: 'Cercatore Spirituale',
+          description: 'Yours is a path that seeks attunement with the natural world. You gain the ability to cast beast sense and speak with animals as rituals.',
+          descriptionIT: 'Il tuo percorso cerca la sintonia con il mondo naturale. Ottieni la capacità di lanciare sentire le bestie e parlare con gli animali come rituali.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
   ],
   subclassLevel: 3,
   startingEquipment: [

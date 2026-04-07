@@ -72,6 +72,36 @@ export const monk: ClassDefinition = {
       ],
       proficiencies: [],
     },
+    {
+      id: 'shadow',
+      name: 'Way of Shadow',
+      nameIT: 'Via dell\'Ombra',
+      features: [
+        {
+          name: 'Shadow Arts',
+          nameIT: 'Arti dell\'Ombra',
+          description: 'You can spend ki points to cast darkness, darkvision, pass without trace, or silence. At higher levels, you gain the ability to cast minor illusion at will.',
+          descriptionIT: 'Puoi spendere punti ki per lanciare oscurità, scurovisione, passare senza lasciare tracce o silenzio. A livelli superiori, ottieni la capacità di lanciare illusione minore a volontà.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
+    {
+      id: 'four-elements',
+      name: 'Way of the Four Elements',
+      nameIT: 'Via dei Quattro Elementi',
+      features: [
+        {
+          name: 'Disciple of the Elements',
+          nameIT: 'Discepolo degli Elementi',
+          description: 'You learn elemental disciplines that allow you to harness the power of the elements. You can spend ki points to cast spells such as burning hands, fog cloud, and gust of wind.',
+          descriptionIT: 'Impari discipline elementali che ti permettono di sfruttare il potere degli elementi. Puoi spendere punti ki per lanciare incantesimi come mani brucianti, nube di nebbia e soffio di vento.',
+          level: 3,
+        },
+      ],
+      proficiencies: [],
+    },
   ],
   subclassLevel: 3,
   startingEquipment: [
