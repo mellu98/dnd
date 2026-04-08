@@ -1,16 +1,12 @@
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
 
-interface DeathSavesPanelProps {
-  characterLevel: number
-}
-
 /**
  * Death saving throws panel.
  * Shows only when HP is at 0. Tracks 3 successes and 3 failures.
  * Rolling a nat 20 = instant recovery. Rolling a nat 1 = 2 failures.
  */
-export function DeathSavesPanel({ characterLevel }: DeathSavesPanelProps) {
+export function DeathSavesPanel() {
   const { state, dispatch } = useCharacterContext()
   const character = state.character
   if (!character) return null

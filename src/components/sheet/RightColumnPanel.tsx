@@ -34,7 +34,7 @@ export function RightColumnPanel({ stats }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {/* Death Saves (only when at 0 HP) */}
-      {character && <DeathSavesPanel characterLevel={character.level} />}
+      {character && <DeathSavesPanel />}
 
       {/* Conditions */}
       <ConditionsTracker />

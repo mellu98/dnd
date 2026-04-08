@@ -157,6 +157,12 @@ export const it = {
   spell_level_1: 'Livello 1',
   spell_level_2: 'Livello 2',
   spell_level_3: 'Livello 3',
+  spell_level_4: 'Livello 4',
+  spell_level_5: 'Livello 5',
+  spell_level_6: 'Livello 6',
+  spell_level_7: 'Livello 7',
+  spell_level_8: 'Livello 8',
+  spell_level_9: 'Livello 9',
   all_levels: 'Tutti',
 
   // Spell components

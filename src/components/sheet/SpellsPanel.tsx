@@ -25,6 +25,12 @@ const LEVEL_FILTERS = [
   { value: 1, label: () => it.spell_level_1 },
   { value: 2, label: () => it.spell_level_2 },
   { value: 3, label: () => it.spell_level_3 },
+  { value: 4, label: () => it.spell_level_4 },
+  { value: 5, label: () => it.spell_level_5 },
+  { value: 6, label: () => it.spell_level_6 },
+  { value: 7, label: () => it.spell_level_7 },
+  { value: 8, label: () => it.spell_level_8 },
+  { value: 9, label: () => it.spell_level_9 },
 ]
 
 /** Returns cantrip tier index (0-3) based on character level */
