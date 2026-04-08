@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  /* Primary palette - deep fantasy theme */
-  --color-bg-primary: #1a1a2e;
-  --color-bg-secondary: #16213e;
-  --color-bg-card: #0f3460;
-  --color-bg-card-hover: #1a4a7a;
-  --color-bg-glass: rgba(15, 52, 96, 0.6);
-  --color-bg-glass-hover: rgba(26, 74, 122, 0.7);
+  /* Primary palette - neutral dark theme */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #111111;
+  --color-bg-card: #1a1a1a;
+  --color-bg-card-hover: #252525;
+  --color-bg-glass: rgba(17, 17, 17, 0.6);
+  --color-bg-glass-hover: rgba(37, 37, 37, 0.7);
 
   /* Accent colors */
   --color-accent-red: #e94560;
   --color-accent-green: #3ddc84;
   --color-accent-emerald: #00d4aa;
   --color-accent-gold: #f0a500;
-  --color-accent-blue: #3a86ff;
+  --color-accent-blue: #6b7280;
   --color-accent-purple: #8b5cf6;
   --color-accent-pink: #ec4899;
   --color-accent-cyan: #06b6d4;
@@ -30,13 +30,13 @@
 
   /* Gradients */
   --gradient-gold: linear-gradient(135deg, #f0a500, #f59e0b, #fbbf24);
-  --gradient-accent: linear-gradient(135deg, #3a86ff, #8b5cf6);
-  --gradient-dark: linear-gradient(180deg, rgba(26,26,46,0.95), rgba(22,33,62,0.95));
-  --gradient-card: linear-gradient(145deg, rgba(15,52,96,0.8), rgba(22,33,62,0.8));
+  --gradient-accent: linear-gradient(135deg, #6b7280, #8b5cf6);
+  --gradient-dark: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(17,17,17,0.95));
+  --gradient-card: linear-gradient(145deg, rgba(26,26,26,0.8), rgba(17,17,17,0.8));
 
   /* Shadows */
   --shadow-gold: 0 4px 24px rgba(240, 165, 0, 0.15);
-  --shadow-blue: 0 4px 24px rgba(58, 134, 255, 0.15);
+  --shadow-blue: 0 4px 24px rgba(107, 114, 128, 0.15);
   --shadow-ring: 0 0 0 3px rgba(240, 165, 0, 0.3);
 
   /* Animations */
