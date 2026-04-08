@@ -138,15 +138,18 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null)
   const [showPicker, setShowPicker] = useState(false)
 
-  const allSpells = getSpellsByClass(classId)
-  const filteredSpells = levelFilter === -1 ? allSpells : allSpells.filter((s) => s.level === levelFilter)
+  const allClassSpells = getSpellsByClass(classId)
 
-  if (allSpells.length === 0) {
+  if (allClassSpells.length === 0) {
     return <p className="text-text-secondary text-sm italic px-1">{it.no_spells}</p>
   }
 
   const cantripTier = getCantripTier(characterLevel)
   const maxSpellLevel = getMaxSpellLevel(spellSlots)
+
+  // Only show spells the character can actually access at their current level
+  const allSpells = allClassSpells.filter((s) => s.level <= maxSpellLevel || s.level === 0)
+  const filteredSpells = levelFilter === -1 ? allSpells : allSpells.filter((s) => s.level === levelFilter)
 
   // Count unknown spells available at current max spell level (for notification)
   const unknownSpellCount = allSpells.filter(
@@ -179,7 +182,7 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
       {/* Header row: filter buttons + manage button */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex gap-1.5 flex-wrap flex-1">
-          {LEVEL_FILTERS.map(({ value, label }) => (
+          {LEVEL_FILTERS.filter(({ value }) => value === -1 || value === 0 || (value >= 1 && value <= maxSpellLevel)).map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setLevelFilter(value)}

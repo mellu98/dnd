@@ -45,7 +45,7 @@ export function CharacterSheet() {
       </div>
 
       {/* ═══════════ HEADER ═══════════ */}
-      <header className="relative z-10 bg-bg-secondary/80 backdrop-blur-md border-b border-border px-4 py-4 sticky top-0">
+      <header className="relative z-20 bg-bg-secondary border-b border-border px-4 py-4 sticky top-0">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between flex-wrap gap-3">
             {/* Portrait thumbnail (if available) + Character info */}

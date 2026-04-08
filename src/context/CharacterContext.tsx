@@ -82,6 +82,7 @@ type Action =
   | { type: 'SET_CHARACTER_IMAGE'; id: string; imageUrl: string }
   | { type: 'SET_GENERATING_IMAGE'; charId: string }
   | { type: 'SAVE_ASI_CHOICE'; choice: ASIChoice }
+  | { type: 'REMOVE_ASI_CHOICE'; level: number }
   | { type: 'ROLL_DEATH_SAVE'; result: 'success' | 'failure' }
   | { type: 'RESET_DEATH_SAVES' }
   | { type: 'STABILIZE' }
@@ -414,6 +415,18 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         character: {
           ...state.character,
           asiChoices: [...filtered, action.choice],
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    case 'REMOVE_ASI_CHOICE': {
+      if (!state.character) return state
+      const remaining = (state.character.asiChoices ?? []).filter((c) => c.level !== action.level)
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          asiChoices: remaining,
           updatedAt: new Date().toISOString(),
         },
       }

@@ -16,32 +16,49 @@ const ALL_ABILITIES: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
 type ASIMode = '+2_one' | '+1_two' | 'feat'
 
-interface PendingASI {
-  /** The level of the class feature that needs a choice */
-  level: number
-}
-
 interface ASIEditorProps {
-  pending: PendingASI
+  level: number
+  /** Pre-populate from an existing choice when editing */
+  existing?: ASIChoice
   onSave: (choice: ASIChoice) => void
   onCancel: () => void
 }
 
-function ASIEditor({ pending, onSave, onCancel }: ASIEditorProps) {
-  const [mode, setMode] = useState<ASIMode>('+2_one')
-  // +2 one stat
-  const [plusTwoAbility, setPlusTwoAbility] = useState<AbilityName>('STR')
-  // +1 two stats
-  const [plusOneA, setPlusOneA] = useState<AbilityName>('STR')
-  const [plusOneB, setPlusOneB] = useState<AbilityName>('DEX')
-  // Feat
-  const [selectedFeatId, setSelectedFeatId] = useState(feats[0]?.id ?? '')
+function ASIEditor({ level, existing, onSave, onCancel }: ASIEditorProps) {
+  // Derive initial state from existing choice (if editing)
+  const initialMode: ASIMode = existing
+    ? existing.type === 'feat'
+      ? 'feat'
+      : existing.abilityBonuses?.length === 1
+        ? '+2_one'
+        : '+1_two'
+    : '+2_one'
+
+  const [mode, setMode] = useState<ASIMode>(initialMode)
+  const [plusTwoAbility, setPlusTwoAbility] = useState<AbilityName>(
+    existing?.type === 'ability' && existing.abilityBonuses?.length === 1
+      ? existing.abilityBonuses[0].ability
+      : 'STR',
+  )
+  const [plusOneA, setPlusOneA] = useState<AbilityName>(
+    existing?.type === 'ability' && (existing.abilityBonuses?.length ?? 0) >= 2
+      ? existing.abilityBonuses![0].ability
+      : 'STR',
+  )
+  const [plusOneB, setPlusOneB] = useState<AbilityName>(
+    existing?.type === 'ability' && (existing.abilityBonuses?.length ?? 0) >= 2
+      ? existing.abilityBonuses![1].ability
+      : 'DEX',
+  )
+  const [selectedFeatId, setSelectedFeatId] = useState(
+    existing?.type === 'feat' && existing.featId ? existing.featId : feats[0]?.id ?? '',
+  )
 
   const handleSave = () => {
     let choice: ASIChoice
     if (mode === '+2_one') {
       choice = {
-        level: pending.level,
+        level,
         type: 'ability',
         abilityBonuses: [{ ability: plusTwoAbility, value: 2 }],
       }
@@ -51,7 +68,7 @@ function ASIEditor({ pending, onSave, onCancel }: ASIEditorProps) {
         return
       }
       choice = {
-        level: pending.level,
+        level,
         type: 'ability',
         abilityBonuses: [
           { ability: plusOneA, value: 1 },
@@ -59,8 +76,9 @@ function ASIEditor({ pending, onSave, onCancel }: ASIEditorProps) {
         ],
       }
     } else {
+      // feat — only save feat fields, no residual ability data
       choice = {
-        level: pending.level,
+        level,
         type: 'feat',
         featId: selectedFeatId,
       }
@@ -71,7 +89,7 @@ function ASIEditor({ pending, onSave, onCancel }: ASIEditorProps) {
   return (
     <div className="bg-bg-card border border-accent-gold/40 rounded-xl p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-text-primary text-sm">ASI — Livello {pending.level}</h3>
+        <h3 className="font-bold text-text-primary text-sm">ASI — Livello {level}</h3>
         <button onClick={onCancel} className="text-text-muted hover:text-text-secondary text-xs px-2 py-1 rounded">
           Annulla
         </button>
@@ -176,9 +194,29 @@ function ASIEditor({ pending, onSave, onCancel }: ASIEditorProps) {
   )
 }
 
+/* ──────────────────────────────────────────────────────────────
+ * Helpers to render a human-readable summary of an ASI choice
+ * ────────────────────────────────────────────────────────────── */
+
+function formatASIChoiceSummary(choice: ASIChoice): string {
+  if (choice.type === 'feat') {
+    const feat = feats.find((f) => f.id === choice.featId)
+    return `Talento: ${feat?.nameIT ?? choice.featId}`
+  }
+  // ability
+  const parts = (choice.abilityBonuses ?? []).map(
+    (b) => `+${b.value} ${ABILITY_LABELS[b.ability] ?? b.ability}`,
+  )
+  return parts.join(', ')
+}
+
 /**
- * ASIPanel — shows pending ASI choices (class features of type 'ASI' not yet resolved)
- * and lets the user pick +2/+1+1/feat for each.
+ * ASIPanel — shows ALL ASI levels for the current class (resolved + pending).
+ *
+ * - Resolved choices show the real summary (+2 Intelligenza / Talento: Allerta)
+ *   with a "Modifica" button to re-open the editor.
+ * - Pending choices show a prompt to make the choice.
+ * - Each level is independent — no state sharing between levels.
  */
 export function ASIPanel() {
   const { state, dispatch } = useCharacterContext()
@@ -190,60 +228,129 @@ export function ASIPanel() {
   const cls = getClassById(character.classId)
   if (!cls) return null
 
-  // Find ASI features at or below current level
-  const asiFeatures = cls.features
+  // All ASI feature levels at or below current character level (deduplicated)
+  const asiFeatureLevels = cls.features
     .filter((f) => f.type === 'ASI' && f.level <= character.level)
-    // Deduplicate by level (fighter has one per level slot)
-    .reduce<{ level: number }[]>((acc, f) => {
-      if (!acc.find((x) => x.level === f.level)) acc.push({ level: f.level })
+    .reduce<number[]>((acc, f) => {
+      if (!acc.includes(f.level)) acc.push(f.level)
       return acc
     }, [])
+    .sort((a, b) => a - b)
 
-  // Pending = not yet in asiChoices
-  const resolvedLevels = new Set((character.asiChoices ?? []).map((c) => c.level))
-  const pendingASIs = asiFeatures.filter((f) => !resolvedLevels.has(f.level))
+  if (asiFeatureLevels.length === 0) return null
 
-  if (pendingASIs.length === 0) return null
+  // Build a map of resolved choices by level
+  const choicesByLevel = new Map<number, ASIChoice>()
+  for (const c of character.asiChoices ?? []) {
+    choicesByLevel.set(c.level, c)
+  }
+
+  const pendingCount = asiFeatureLevels.filter((lv) => !choicesByLevel.has(lv)).length
 
   const handleSave = (choice: ASIChoice) => {
     dispatch({ type: 'SAVE_ASI_CHOICE', choice })
     setEditingLevel(null)
   }
 
+  const handleReset = (level: number) => {
+    // Save a "cleared" dispatch — the reducer replaces by level, so we dispatch
+    // a removal action. We need a dedicated action or we can just remove from the array.
+    // Since the reducer filters by level and replaces, we'll dispatch a special removal.
+    // But the current reducer only has SAVE_ASI_CHOICE. Let's add REMOVE_ASI_CHOICE.
+    dispatch({ type: 'REMOVE_ASI_CHOICE', level })
+  }
+
   return (
     <div className="mb-5 space-y-3">
-      {/* Alert badge */}
-      <div className="bg-accent-gold/10 border border-accent-gold/40 rounded-xl px-4 py-3 flex items-center gap-3">
-        <span className="text-accent-gold text-lg">⚡</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-accent-gold">
-            {pendingASIs.length} Miglioramento{pendingASIs.length > 1 ? 'i' : ''} in attesa
-          </p>
-          <p className="text-xs text-text-muted">
-            Hai {pendingASIs.length} ASI da assegnare. Clicca su un livello per scegliere.
-          </p>
+      {/* Header — alert if there are pending choices */}
+      {pendingCount > 0 && (
+        <div className="bg-accent-gold/10 border border-accent-gold/40 rounded-xl px-4 py-3 flex items-center gap-3">
+          <span className="text-accent-gold text-lg">⚡</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-accent-gold">
+              {pendingCount} Miglioramento{pendingCount > 1 ? 'i' : ''} in attesa
+            </p>
+            <p className="text-xs text-text-muted">
+              Hai {pendingCount} ASI da assegnare. Scegli per ogni livello qui sotto.
+            </p>
+          </div>
         </div>
-        <div className="flex gap-1 flex-wrap">
-          {pendingASIs.map((p) => (
-            <button
-              key={p.level}
-              onClick={() => setEditingLevel(p.level === editingLevel ? null : p.level)}
-              className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${
-                editingLevel === p.level
-                  ? 'bg-accent-gold/30 border-accent-gold text-accent-gold'
-                  : 'border-accent-gold/40 text-accent-gold/70 hover:border-accent-gold hover:text-accent-gold'
-              }`}
-            >
-              Lv {p.level}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Editor for selected level */}
-      {editingLevel !== null && (
-        <ASIEditor pending={{ level: editingLevel }} onSave={handleSave} onCancel={() => setEditingLevel(null)} />
       )}
+
+      {/* Per-level rows */}
+      <div className="space-y-2">
+        {asiFeatureLevels.map((lv) => {
+          const choice = choicesByLevel.get(lv)
+          const isEditing = editingLevel === lv
+
+          // ── Currently editing this level ──
+          if (isEditing) {
+            return (
+              <ASIEditor
+                key={lv}
+                level={lv}
+                existing={choice}
+                onSave={handleSave}
+                onCancel={() => setEditingLevel(null)}
+              />
+            )
+          }
+
+          // ── Resolved: show summary ──
+          if (choice) {
+            return (
+              <div
+                key={lv}
+                className="bg-bg-card/60 border border-border/50 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-bold text-accent-gold bg-accent-gold/15 px-1.5 py-0.5 rounded shrink-0">
+                    Lv {lv}
+                  </span>
+                  <span className="text-sm font-medium text-text-primary truncate">
+                    {formatASIChoiceSummary(choice)}
+                  </span>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setEditingLevel(lv)}
+                    className="text-xs px-2.5 py-1 rounded-lg border border-border text-text-muted hover:text-accent-gold hover:border-accent-gold/40 transition-all"
+                  >
+                    Modifica
+                  </button>
+                  <button
+                    onClick={() => handleReset(lv)}
+                    className="text-xs px-2.5 py-1 rounded-lg border border-border text-text-muted hover:text-red-400 hover:border-red-400/40 transition-all"
+                  >
+                    Reimposta
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
+          // ── Pending: not yet chosen ──
+          return (
+            <div
+              key={lv}
+              className="bg-bg-card/60 border border-accent-gold/30 border-dashed rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] font-bold text-accent-gold bg-accent-gold/15 px-1.5 py-0.5 rounded shrink-0">
+                  Lv {lv}
+                </span>
+                <span className="text-sm text-text-muted italic">Scelta non ancora effettuata</span>
+              </div>
+              <button
+                onClick={() => setEditingLevel(lv)}
+                className="text-xs px-3 py-1.5 rounded-lg border border-accent-gold/40 text-accent-gold hover:bg-accent-gold/10 transition-all shrink-0"
+              >
+                Scegli
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

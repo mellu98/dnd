@@ -83,7 +83,8 @@ export function CombatStatsBar({ stats }: Props) {
 
   return (
     <div className="bg-bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl overflow-hidden">
-      <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 divide-x divide-border/40">
+      {/* ── Desktop: 4 columns in a row ── */}
+      <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto] gap-0 divide-x divide-border/40">
         {/* CA Block */}
         <div className="flex flex-col items-center justify-center px-4 py-3 min-w-[80px]">
           <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5">{it.armor_class}</span>
@@ -95,7 +96,6 @@ export function CombatStatsBar({ stats }: Props) {
 
         {/* HP Section */}
         <div className="flex flex-col justify-center px-4 py-3 gap-2">
-          {/* HP numbers */}
           <div className="flex items-baseline gap-2 flex-wrap">
             <div className="text-center">
               <div className="text-[10px] text-text-secondary uppercase tracking-wider">{it.hp_current}</div>
@@ -113,74 +113,35 @@ export function CombatStatsBar({ stats }: Props) {
               </div>
             )}
           </div>
-
-          {/* HP bar */}
           <div className="relative h-2.5 bg-bg-secondary rounded-full overflow-hidden">
             <div
               className={`absolute inset-y-0 left-0 bg-gradient-to-r ${barColor} transition-all duration-500 ease-out rounded-full`}
               style={{ width: `${Math.max(0, Math.min(100, ratio * 100))}%` }}
             />
           </div>
-
-          {/* Action buttons row */}
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="grid grid-cols-3 gap-1.5">
             {(['damage', 'heal', 'temp'] as const).map((action) => {
               const colors = {
-                damage: {
-                  active: 'bg-accent-red text-white shadow-lg shadow-accent-red/30',
-                  idle: 'bg-accent-red/15 text-accent-red hover:bg-accent-red/25 border border-accent-red/30',
-                },
-                heal: {
-                  active: 'bg-accent-green text-white shadow-lg shadow-accent-green/30',
-                  idle: 'bg-accent-green/15 text-accent-green hover:bg-accent-green/25 border border-accent-green/30',
-                },
-                temp: {
-                  active: 'bg-accent-blue text-white shadow-lg shadow-accent-blue/30',
-                  idle: 'bg-accent-blue/15 text-accent-blue hover:bg-accent-blue/25 border border-accent-blue/30',
-                },
+                damage: { active: 'bg-accent-red text-white shadow-lg shadow-accent-red/30', idle: 'bg-accent-red/15 text-accent-red hover:bg-accent-red/25 border border-accent-red/30' },
+                heal: { active: 'bg-accent-green text-white shadow-lg shadow-accent-green/30', idle: 'bg-accent-green/15 text-accent-green hover:bg-accent-green/25 border border-accent-green/30' },
+                temp: { active: 'bg-accent-blue text-white shadow-lg shadow-accent-blue/30', idle: 'bg-accent-blue/15 text-accent-blue hover:bg-accent-blue/25 border border-accent-blue/30' },
               }
               const labels = { damage: it.take_damage, heal: it.heal, temp: it.hp_temp }
               return (
-                <button
-                  key={action}
-                  onClick={() => toggleAction(action)}
-                  className={`px-2 py-1 min-h-[44px] min-w-[44px] rounded-md text-xs font-medium transition-all duration-200 ${
-                    activeAction === action ? colors[action].active : colors[action].idle
-                  }`}
-                >
-                  {labels[action]}
-                </button>
+                <button key={action} onClick={() => toggleAction(action)}
+                  className={`py-1.5 min-h-[36px] rounded-md text-xs font-medium transition-all duration-200 text-center ${activeAction === action ? colors[action].active : colors[action].idle}`}
+                >{labels[action]}</button>
               )
             })}
           </div>
-
-          {/* Inline input */}
           {activeAction && (
             <div className="flex gap-2 animate-fade-in">
-              <input
-                type="number"
-                min="1"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  activeAction === 'damage' ? 'Danno...' : activeAction === 'heal' ? 'Cura...' : 'PF Temp...'
-                }
-                autoFocus
-                className="flex-1 bg-bg-secondary border border-border rounded-md px-2 py-1.5 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/50"
-              />
-              <button
-                onClick={handleConfirm}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium text-white transition-all ${
-                  activeAction === 'damage'
-                    ? 'bg-accent-red hover:bg-accent-red/80'
-                    : activeAction === 'heal'
-                      ? 'bg-accent-green hover:bg-accent-green/80'
-                      : 'bg-accent-blue hover:bg-accent-blue/80'
-                }`}
-              >
-                {it.confirm}
-              </button>
+              <input type="number" min="1" value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown}
+                placeholder={activeAction === 'damage' ? 'Danno...' : activeAction === 'heal' ? 'Cura...' : 'PF Temp...'}
+                autoFocus className="flex-1 bg-bg-secondary border border-border rounded-md px-2 py-1.5 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/50" />
+              <button onClick={handleConfirm}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium text-white transition-all ${activeAction === 'damage' ? 'bg-accent-red hover:bg-accent-red/80' : activeAction === 'heal' ? 'bg-accent-green hover:bg-accent-green/80' : 'bg-accent-blue hover:bg-accent-blue/80'}`}
+              >{it.confirm}</button>
             </div>
           )}
         </div>
@@ -194,10 +155,74 @@ export function CombatStatsBar({ stats }: Props) {
 
         {/* Bonus Competenza */}
         <div className="flex flex-col items-center justify-center px-4 py-3 min-w-[80px]">
-          <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5 text-center leading-tight">
-            {it.proficiency_bonus}
-          </span>
+          <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5 text-center leading-tight">{it.proficiency_bonus}</span>
           <span className="text-3xl font-black text-accent-emerald tabular-nums">+{stats.proficiencyBonus}</span>
+        </div>
+      </div>
+
+      {/* ── Mobile: stacked layout ── */}
+      <div className="md:hidden flex flex-col divide-y divide-border/40">
+        {/* Top row: CA + HP numbers + Dadi Vita + Bonus */}
+        <div className="grid grid-cols-4 divide-x divide-border/40">
+          <div className="flex flex-col items-center justify-center px-2 py-3">
+            <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5">{it.armor_class}</span>
+            <span className="text-2xl font-black text-accent-blue tabular-nums">{acLabel}</span>
+            <span className="text-[9px] text-text-muted mt-0.5 text-center leading-tight truncate max-w-[70px]">{acSub}</span>
+          </div>
+          <div className="flex flex-col items-center justify-center px-2 py-3">
+            <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5">{it.hp_current}</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-black text-accent-green tabular-nums">{hp.current}</span>
+              <span className="text-text-muted text-sm font-light">/{hp.max}</span>
+            </div>
+            {hp.temporary > 0 && (
+              <span className="text-[10px] text-accent-blue font-bold mt-0.5">+{hp.temporary} temp</span>
+            )}
+          </div>
+          <div className="flex flex-col items-center justify-center px-2 py-3">
+            <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5">{it.hit_die}</span>
+            <span className="text-2xl font-black text-accent-purple tabular-nums">{hitDie}</span>
+            <span className="text-[10px] text-text-muted mt-0.5">×{character?.level ?? 1}</span>
+          </div>
+          <div className="flex flex-col items-center justify-center px-2 py-3">
+            <span className="text-[10px] text-text-secondary uppercase tracking-widest mb-0.5 text-center leading-tight">{it.proficiency_bonus}</span>
+            <span className="text-2xl font-black text-accent-emerald tabular-nums">+{stats.proficiencyBonus}</span>
+          </div>
+        </div>
+
+        {/* HP bar + action buttons */}
+        <div className="px-4 py-3 space-y-2">
+          <div className="relative h-2.5 bg-bg-secondary rounded-full overflow-hidden">
+            <div
+              className={`absolute inset-y-0 left-0 bg-gradient-to-r ${barColor} transition-all duration-500 ease-out rounded-full`}
+              style={{ width: `${Math.max(0, Math.min(100, ratio * 100))}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {(['damage', 'heal', 'temp'] as const).map((action) => {
+              const colors = {
+                damage: { active: 'bg-accent-red text-white shadow-lg shadow-accent-red/30', idle: 'bg-accent-red/15 text-accent-red hover:bg-accent-red/25 border border-accent-red/30' },
+                heal: { active: 'bg-accent-green text-white shadow-lg shadow-accent-green/30', idle: 'bg-accent-green/15 text-accent-green hover:bg-accent-green/25 border border-accent-green/30' },
+                temp: { active: 'bg-accent-blue text-white shadow-lg shadow-accent-blue/30', idle: 'bg-accent-blue/15 text-accent-blue hover:bg-accent-blue/25 border border-accent-blue/30' },
+              }
+              const labels = { damage: it.take_damage, heal: it.heal, temp: it.hp_temp }
+              return (
+                <button key={action} onClick={() => toggleAction(action)}
+                  className={`py-2 min-h-[40px] rounded-lg text-xs font-semibold transition-all duration-200 text-center ${activeAction === action ? colors[action].active : colors[action].idle}`}
+                >{labels[action]}</button>
+              )
+            })}
+          </div>
+          {activeAction && (
+            <div className="flex gap-2 animate-fade-in">
+              <input type="number" min="1" value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown}
+                placeholder={activeAction === 'damage' ? 'Danno...' : activeAction === 'heal' ? 'Cura...' : 'PF Temp...'}
+                autoFocus className="flex-1 bg-bg-secondary border border-border rounded-md px-2 py-1.5 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent-blue/50" />
+              <button onClick={handleConfirm}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium text-white transition-all ${activeAction === 'damage' ? 'bg-accent-red hover:bg-accent-red/80' : activeAction === 'heal' ? 'bg-accent-green hover:bg-accent-green/80' : 'bg-accent-blue hover:bg-accent-blue/80'}`}
+              >{it.confirm}</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
