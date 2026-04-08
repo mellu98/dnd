@@ -4,7 +4,7 @@ import { proficiencyBonus } from '../utils/proficiency-bonus'
 import { skills } from '../data/skills'
 import { aggregateBonuses } from './bonus-aggregator'
 import { computeMaxHp } from './hp-calculator'
-import { getArmorById } from '../data/equipment'
+import { getArmorById, getShieldById } from '../data/equipment'
 import { getRaceById } from '../data/races'
 import { getClassById } from '../data/classes'
 
@@ -37,8 +37,11 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
   const dexCap = armor.dexModifier ?? Infinity
   ac += Math.min(modifiers.DEX, dexCap)
 
-  // Shield bonus
-  if (shieldId === 'shield') ac += 2
+  // Shield bonus (data-driven)
+  if (shieldId) {
+    const shield = getShieldById(shieldId)
+    if (shield) ac += shield.shieldBonus
+  }
 
   // Magical armor bonus (equipped item in category 'armor' with magicalBonus)
   const magicalItem = character.equipment.find((e) => e.equipped && e.magicalBonus != null && e.category === 'armor')

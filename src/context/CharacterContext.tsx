@@ -62,7 +62,7 @@ type Action =
   | { type: 'UPDATE_EQUIPMENT'; equipment: string[] }
   | { type: 'UPDATE_NOTES'; notes: string }
   | { type: 'SET_EQUIPPED_ARMOR'; armorId: string | null }
-  | { type: 'SET_EQUIPPED_SHIELD'; equipped: boolean }
+  | { type: 'SET_EQUIPPED_SHIELD'; shieldId: string | null }
   | { type: 'ADD_EQUIPMENT_ITEM'; item: EquipmentItem }
   | { type: 'REMOVE_EQUIPMENT_ITEM'; itemId: string }
   | { type: 'TOGGLE_EQUIPMENT'; itemId: string }
@@ -226,7 +226,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         ...state,
         character: {
           ...state.character,
-          equippedShieldId: action.equipped ? 'shield' : null,
+          equippedShieldId: action.shieldId,
           updatedAt: new Date().toISOString(),
         },
       }
