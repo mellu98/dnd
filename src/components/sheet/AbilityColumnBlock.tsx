@@ -6,10 +6,11 @@ import { formatModifier } from '../../utils/modifiers'
 interface Props {
   ability: AbilityName
   stats: CalculatedStats
+  expertiseSkills: Set<SkillName>
 }
 
 /** Renders a vertical card for one ability: score, modifier bubble, saving throw row, then all linked skills. */
-export function AbilityColumnBlock({ ability, stats }: Props) {
+export function AbilityColumnBlock({ ability, stats, expertiseSkills }: Props) {
   const score = stats.finalAbilityScores[ability]
   const modifier = stats.abilityModifiers[ability]
   const isSaveProficient = stats.savingThrowProficiencies.includes(ability)
@@ -54,21 +55,25 @@ export function AbilityColumnBlock({ ability, stats }: Props) {
       {/* Linked Skills */}
       <div className="px-3 py-1.5 flex flex-col gap-0.5 flex-1">
         {linkedSkills.map((skill) => {
-          const isProficient = stats.skillProficiencies.includes(skill.id as SkillName)
-          const skillMod = stats.skillModifiers[skill.id as SkillName]
+          const skillId = skill.id as SkillName
+          const isProficient = stats.skillProficiencies.includes(skillId)
+          const isExpertise = expertiseSkills.has(skillId)
+          const skillMod = stats.skillModifiers[skillId]
           return (
             <div key={skill.id} className="flex items-center gap-1.5 py-0.5">
               <div
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  isProficient
-                    ? 'bg-accent-emerald shadow-sm shadow-accent-emerald/50'
-                    : 'border border-text-secondary/40'
+                  isExpertise
+                    ? 'bg-accent-gold shadow-sm shadow-accent-gold/50 ring-1 ring-accent-gold/30'
+                    : isProficient
+                      ? 'bg-accent-emerald shadow-sm shadow-accent-emerald/50'
+                      : 'border border-text-secondary/40'
                 }`}
               />
               <span className="flex-1 text-[11px] text-text-primary leading-tight">{skill.nameIT}</span>
               <span
                 className={`text-[11px] font-mono font-semibold min-w-[26px] text-right ${
-                  isProficient ? 'text-accent-emerald' : 'text-text-secondary'
+                  isExpertise ? 'text-accent-gold font-bold' : isProficient ? 'text-accent-emerald' : 'text-text-secondary'
                 }`}
               >
                 {formatModifier(skillMod)}

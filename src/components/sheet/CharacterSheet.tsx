@@ -11,6 +11,7 @@ import { LeftColumnPanel } from './LeftColumnPanel'
 import { CenterColumnPanel } from './CenterColumnPanel'
 import { RightColumnPanel } from './RightColumnPanel'
 import { ASIPanel } from './ASIPanel'
+import { ExpertisePanel } from './ExpertisePanel'
 
 export function CharacterSheet() {
   const { state, dispatch, calculatedStats } = useCharacter()
@@ -113,6 +114,9 @@ export function CharacterSheet() {
 
         {/* ── ASI Pending Choices Alert ── */}
         <ASIPanel />
+
+        {/* ── Expertise Choices (Rogue / Bard) ── */}
+        <ExpertisePanel />
 
         {/* ── 3-Column CSS Grid (the 2024 sheet layout) ── */}
         {/*

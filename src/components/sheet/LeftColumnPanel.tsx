@@ -1,6 +1,7 @@
-import type { AbilityName, CalculatedStats } from '../../types'
+import type { AbilityName, CalculatedStats, SkillName } from '../../types'
 import { it } from '../../i18n/it'
 import { AbilityColumnBlock } from './AbilityColumnBlock'
+import { useCharacterContext } from '../../context/CharacterContext'
 
 const ABILITIES: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
@@ -13,6 +14,8 @@ interface Props {
  * Contains: 6 ability column blocks (each with saves+skills) + proficiencies list.
  */
 export function LeftColumnPanel({ stats }: Props) {
+  const { state } = useCharacterContext()
+  const expertiseSkills = new Set<SkillName>(state.character?.expertiseSkills ?? [])
   // Group proficiencies by type for display
   const profByType: Record<string, string[]> = {}
   for (const prof of stats.allProficiencies) {
@@ -37,7 +40,7 @@ export function LeftColumnPanel({ stats }: Props) {
       {/* 6 Ability Column Blocks */}
       <div className="grid grid-cols-2 gap-2">
         {ABILITIES.map((ability) => (
-          <AbilityColumnBlock key={ability} ability={ability} stats={stats} />
+          <AbilityColumnBlock key={ability} ability={ability} stats={stats} expertiseSkills={expertiseSkills} />
         ))}
       </div>
 
