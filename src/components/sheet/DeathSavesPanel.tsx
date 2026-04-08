@@ -22,8 +22,6 @@ export function DeathSavesPanel({ characterLevel }: DeathSavesPanelProps) {
   const isStabilized = character.isStabilized
   const isDead = failures >= 3
 
-  const isSuccess = characterLevel >= 5
-
   const rollDeathSave = () => {
     const roll = Math.floor(Math.random() * 20) + 1
     if (roll === 20) {

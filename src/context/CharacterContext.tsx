@@ -20,6 +20,7 @@ import type { EquipmentItem } from '../types/equipment'
 import { loadStorage, saveStorage, generateId } from '../utils/storage'
 import { computeMaxHp } from '../engine/hp-calculator'
 import { aggregateBonuses } from '../engine/bonus-aggregator'
+import { getClassById } from '../data/classes'
 import { abilityModifier } from '../utils/modifiers'
 
 // State
@@ -490,7 +491,6 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'LONG_REST': {
       if (!state.character) return state
       const cls = getClassById(state.character.classId)
-      const hitDieValue = cls ? parseInt(cls.hitDie.slice(1), 10) : 8
       const conMod = abilityModifier(state.character.abilityScores.CON)
       // Restore HP: recover half character level in hit dice (minimum 1), then heal
       const diceRecovered = Math.max(1, Math.floor(state.character.level / 2))
