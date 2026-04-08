@@ -205,7 +205,7 @@ export function EquipmentPanel() {
                         : 'border-border'
                     }`}>
                       {isEquipped && <span className="text-white text-xs">✓</span>}
-                    </button>
+                    </span>
                     <span>🛡 {shield.nameIT}</span>
                     {shieldData && (
                       <span className="text-accent-emerald font-semibold">+{shieldData.shieldBonus} CA</span>
