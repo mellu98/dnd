@@ -86,7 +86,10 @@ function SlotRow({ slot }: { slot: SpellSlot }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-text-muted w-14 shrink-0">{slot.level}Â° liv.</span>
+      <span className="text-[11px] text-text-muted w-14 shrink-0">
+        {slot.level}
+        {'\u00B0'} liv.
+      </span>
       <div className="flex gap-1 flex-wrap">
         {Array.from({ length: slot.max }).map((_, index) => {
           const isExpended = index >= available
@@ -276,7 +279,6 @@ export function SpellsPanel({
           onClick={() => setShowPicker(true)}
           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold border transition-all bg-accent-purple/10 text-accent-purple border-accent-purple/30 hover:bg-accent-purple/20 hover:border-accent-purple/50"
         >
-          <span>âœ¦</span>
           <span>{it.manage_spells}</span>
         </button>
       </div>
@@ -333,11 +335,11 @@ export function SpellsPanel({
 
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-[11px] text-text-muted">{spell.schoolIT}</span>
-                    <span className="text-text-muted/40">Â·</span>
+                    <span className="text-text-muted/40">{'\u00B7'}</span>
                     <span className="text-[11px] text-text-muted">{spell.castingTimeIT}</span>
                     {scaledDamage && (
                       <>
-                        <span className="text-text-muted/40">Â·</span>
+                        <span className="text-text-muted/40">{'\u00B7'}</span>
                         <span className="text-[11px] text-accent-gold font-semibold">{scaledDamage}</span>
                       </>
                     )}

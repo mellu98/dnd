@@ -27,6 +27,7 @@ export function ConditionsTracker() {
     () => new Set(character?.activeConditions ?? []),
     [character?.activeConditions],
   )
+  const activeConditionsCount = activeConditions.size
   const exhaustionLevel = character?.exhaustionLevel ?? 0
 
   const toggleCondition = (id: string) => {
@@ -50,9 +51,9 @@ export function ConditionsTracker() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-semibold text-accent-red uppercase tracking-wider">
           {it.conditions}
-          {(activeConditions.size > 0 || exhaustionLevel > 0) && (
+          {activeConditionsCount > 0 && (
             <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-accent-red text-white text-[9px]">
-              {activeConditions.size + (exhaustionLevel > 0 ? 1 : 0)}
+              {activeConditionsCount}
             </span>
           )}
         </h3>
@@ -65,6 +66,10 @@ export function ConditionsTracker() {
       </div>
 
       <div className="mb-3">
+        <div className="flex items-center justify-between mb-2 text-[11px]">
+          <span className="text-text-muted font-medium">{it.active_conditions_label}</span>
+          <span className="text-accent-red font-bold">{activeConditionsCount}/{CONDITIONS.length}</span>
+        </div>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[11px] text-text-muted font-medium">{it.exhaustion_label}</span>
           <span className="text-[11px] text-accent-gold font-bold">{exhaustionLevel}/6</span>

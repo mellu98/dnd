@@ -125,6 +125,7 @@ export const it = {
   inspiration_available: 'Disponibile per il prossimo tiro importante',
   inspiration_empty: 'Non disponibile',
   exhaustion_label: 'Sfinimento',
+  active_conditions_label: 'Condizioni attive',
   quick_switch_label: 'Cambia personaggio',
   initiative_tracker: 'Iniziativa di gruppo',
   initiative_next_turn: 'Prossimo turno',

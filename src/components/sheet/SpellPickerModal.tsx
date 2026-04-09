@@ -49,7 +49,7 @@ function SpellRow({
           </div>
           <div className="flex items-center gap-1 mt-0.5">
             <span className="text-[11px] text-text-muted">{spell.schoolIT}</span>
-            <span className="text-text-muted/40">Â·</span>
+            <span className="text-text-muted/40">{'\u00B7'}</span>
             <span className="text-[11px] text-text-muted">{spell.castingTimeIT}</span>
           </div>
         </div>
@@ -194,7 +194,7 @@ export function SpellPickerModal({
               <h2 className="text-base font-bold text-text-primary leading-tight">{it.manage_spells}</h2>
               <p className="text-xs text-text-muted mt-0.5">
                 {it.spells_known_label}: {knownSpells.length}
-                {spellcastingMode !== 'known' ? ` Â· ${it.spells_prepared_label}: ${preparedSpells.length}` : ''}
+                {spellcastingMode !== 'known' ? ` \u00B7 ${it.spells_prepared_label}: ${preparedSpells.length}` : ''}
               </p>
             </div>
             <button
@@ -207,15 +207,12 @@ export function SpellPickerModal({
           </div>
 
           <div className="mt-3 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">
-              ðŸ”
-            </span>
             <input
               type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={it.search_spell_placeholder}
-              className="w-full bg-bg-primary border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple/60 transition-colors"
+              className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple/60 transition-colors"
             />
           </div>
         </div>
@@ -237,7 +234,7 @@ export function SpellPickerModal({
                       : 'text-accent-blue bg-accent-blue/10 border-accent-blue/25'
                   }`}
                 >
-                  {level === 0 ? 'Trucchi' : `${level}Â° Livello`}
+                  {level === 0 ? 'Trucchi' : `${level}\u00B0 Livello`}
                 </span>
                 <span className="text-[11px] text-text-muted">{spells.length}</span>
               </div>

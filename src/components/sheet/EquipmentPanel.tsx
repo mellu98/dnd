@@ -186,15 +186,15 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
         {equippedArmor && (
           <div className="text-xs text-text-secondary flex flex-wrap gap-2 px-1">
             {equippedArmor.stealthDisadvantage && (
-              <span className="text-accent-red/80">⚠ {it.stealth_disadvantage}</span>
+              <span className="text-accent-red/80">{it.stealth_disadvantage}</span>
             )}
             {equippedArmor.strength !== undefined && (
               <span className="text-accent-gold/80">
-                💪 {it.strength_requirement}: {equippedArmor.strength}
+                {it.strength_requirement}: {equippedArmor.strength}
               </span>
             )}
             <span className="text-text-muted">
-              {it.weight}: {equippedArmor.weight} kg Â· {it.value_label}: {equippedArmor.value} mo
+              {it.weight}: {equippedArmor.weight} kg - {it.value_label}: {equippedArmor.value} mo
             </span>
           </div>
         )}
@@ -239,9 +239,9 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                         ? 'bg-accent-blue border-accent-blue'
                         : 'border-border'
                     }`}>
-                      {isEquipped && <span className="text-white text-xs">âœ“</span>}
+                      {isEquipped && <span className="text-white text-xs">{'\u2713'}</span>}
                     </span>
-                    <span>ðŸ›¡ {shield.nameIT}</span>
+                    <span>{shield.nameIT}</span>
                     {shieldData && (
                       <span className="text-accent-emerald font-semibold">+{shieldData.shieldBonus} CA</span>
                     )}
@@ -280,7 +280,7 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                   }`}
                 >
                   {shield.nameIT} (+{shield.shieldBonus} CA)
-                  {alreadyOwned && ' (giÃ  posseduto)'}
+                  {alreadyOwned && ' (già posseduto)'}
                 </button>
               )
             })}
@@ -335,12 +335,12 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                           ? 'bg-accent-blue border-accent-blue'
                           : 'border-border'
                       }`}>
-                        {isEquipped && <span className="text-white text-xs">âœ“</span>}
+                        {isEquipped && <span className="text-white text-xs">{'\u2713'}</span>}
                       </span>
 
                       <div className="space-y-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span>âš” {weapon.nameIT}</span>
+                          <span>{weapon.nameIT}</span>
                           {summary && (
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-semibold ${
                               summary.isProficient
@@ -452,7 +452,7 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                       >
                         {weapon.nameIT} ({weapon.damageDice} {weapon.damageTypeIT})
                         {weapon.propertiesIT.length > 0 ? ` · ${weapon.propertiesIT.join(', ')}` : ''}
-                        {alreadyOwned && ' (giÃ  posseduta)'}
+                        {alreadyOwned && ' (già posseduta)'}
                       </button>
                     )
                   })}
