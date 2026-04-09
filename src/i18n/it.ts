@@ -115,6 +115,9 @@ export const it = {
   hit_dice: 'Dadi Vita',
   death_saves: 'Tiri Salvezza Morte',
   conditions: 'Condizioni',
+  overview: 'Panoramica',
+  sheet_label: 'Scheda',
+  session_label: 'Sessione',
   rest: 'Riposo',
   attacks: 'Attacchi e Trucchi di Combattimento',
   class_features: 'Privilegi di Classe',
@@ -189,6 +192,7 @@ export const it = {
   // Spell filters
   filter_spells: 'Filtra Incantesimi',
   no_spells: 'Nessun incantesimo disponibile',
+  no_spellcasting: 'Questa classe non usa la magia.',
   no_spells_ready: 'Nessun incantesimo pronto da usare',
   spell_detail: 'Dettaglio Incantesimo',
   spell_attack_bonus: 'Attacco Incantesimi',
@@ -218,6 +222,19 @@ export const it = {
   rest_spend_hit_dice: 'Dadi da spendere',
   rest_heal_with: 'Cura con',
   rest_no_hit_dice: 'Nessun dado vita rimanente',
+
+  // Sheet shell
+  sheet_nav_overview: 'Panoramica',
+  sheet_nav_sheet: 'Scheda',
+  sheet_nav_equipment: 'Equip',
+  sheet_nav_spells: 'Magia',
+  sheet_nav_session: 'Sessione',
+  back_to_characters: 'I miei personaggi',
+  overview_resources: 'Risorse rapide',
+  conditions_summary: 'Condizioni attive',
+  hit_dice_remaining_label: 'Dadi vita rimasti',
+  proficiency_summary: 'Competenza',
+  quick_resources: 'Tutto quello che ti serve in 1-2 tocchi.',
 } as const
 
 export type TranslationKey = keyof typeof it

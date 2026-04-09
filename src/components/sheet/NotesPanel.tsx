@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
 
 export function NotesPanel() {
   const { state, dispatch } = useCharacterContext()
   const [notes, setNotes] = useState(state.character?.notes ?? '')
+
+  useEffect(() => {
+    setNotes(state.character?.notes ?? '')
+  }, [state.character?.id, state.character?.notes])
 
   const handleBlur = () => {
     dispatch({ type: 'UPDATE_NOTES', notes })

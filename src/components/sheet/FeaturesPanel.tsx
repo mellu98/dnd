@@ -3,7 +3,7 @@ import type { CalculatedStats } from '../../types'
 import { it } from '../../i18n/it'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { feats } from '../../data/feats'
-import type { AbilityName } from '../../types'
+import type { AbilityName, Feature } from '../../types'
 
 const ABILITY_LABELS: Record<AbilityName, string> = {
   STR: 'Forza',
@@ -16,9 +16,11 @@ const ABILITY_LABELS: Record<AbilityName, string> = {
 
 interface Props {
   stats: CalculatedStats
+  features?: Feature[]
+  emptyMessage?: string
 }
 
-export function FeaturesPanel({ stats }: Props) {
+export function FeaturesPanel({ stats, features = stats.allFeatures, emptyMessage = 'Nessuna capacita disponibile.' }: Props) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
   const { state } = useCharacterContext()
   const asiChoices = state.character?.asiChoices ?? []
@@ -27,17 +29,17 @@ export function FeaturesPanel({ stats }: Props) {
     setExpandedIndex(expandedIndex === i ? null : i)
   }
 
-  if (stats.allFeatures.length === 0) {
+  if (features.length === 0) {
     return (
       <div className="text-text-secondary text-sm italic p-4">
-        Nessuna capacita disponibile.
+        {emptyMessage}
       </div>
     )
   }
 
   return (
     <div className="space-y-2">
-      {stats.allFeatures.map((feature, i) => {
+      {features.map((feature, i) => {
         // For ASI features, resolve the actual choice
         const isASI = feature.type === 'ASI'
         const asiChoice = isASI ? asiChoices.find((c) => c.level === feature.level) : undefined
