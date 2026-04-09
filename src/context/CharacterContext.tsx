@@ -675,29 +675,14 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   const debouncedSave = useCallback((char: Character | null, saved: Character[]) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
-      // Start from persisted state to avoid stale data
-      const storage = loadStorage()
-      const updatedChars = [...storage.characters]
+      // State is the source of truth — write directly to avoid resurrecting deleted characters
+      const updatedChars = saved.map((s) => {
+        if (char && s.id === char.id) return char
+        return s
+      })
 
-      if (char) {
-        const idx = updatedChars.findIndex((c) => c.id === char.id)
-        if (idx >= 0) {
-          updatedChars[idx] = char
-        } else {
-          updatedChars.push(char)
-        }
-      }
-
-      // Merge non-active characters from state.savedCharacters
-      for (const s of saved) {
-        if (!char || s.id !== char.id) {
-          const idx = updatedChars.findIndex((c) => c.id === s.id)
-          if (idx >= 0) {
-            updatedChars[idx] = s
-          } else {
-            updatedChars.push(s)
-          }
-        }
+      if (char && !updatedChars.some((c) => c.id === char.id)) {
+        updatedChars.push(char)
       }
 
       saveStorage({

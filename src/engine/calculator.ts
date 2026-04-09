@@ -217,6 +217,19 @@ export function calculateAllStats(character: Character): CalculatedStats {
   const subclassFeatures = [...aggregated.subclassFeatures].sort((a, b) => a.level - b.level)
   const allFeatures = [...aggregated.features].sort((a, b) => a.level - b.level)
 
+  // Convert species/class/background languages into proficiency entries so they render
+  const languageProficiencies = aggregated.languagesIT.map((lang, i) => ({
+    type: 'language' as const,
+    value: aggregated.languages[i] ?? lang,
+    valueIT: lang,
+  }))
+
+  // Merge with existing proficiencies and deduplicate
+  const allProficiencies = dedupeByKey(
+    [...aggregated.proficiencies, ...languageProficiencies],
+    (p) => `${p.type}-${p.value}`,
+  )
+
   return {
     finalAbilityScores,
     abilityModifiers,
@@ -229,7 +242,7 @@ export function calculateAllStats(character: Character): CalculatedStats {
     initiative: initiativeBonus,
     speed,
     passivePerception: 10 + skillModifiers.perception,
-    allProficiencies: aggregated.proficiencies,
+    allProficiencies,
     allFeatures,
     speciesFeatures,
     classFeatures,
