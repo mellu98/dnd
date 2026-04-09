@@ -25,7 +25,7 @@ export const halfling: Species = {
     },
     {
       name: 'Halfling Nimbleness',
-      nameIT: 'Agilit‡ Halfling',
+      nameIT: 'Agilit√† Halfling',
       description: 'You can move through the space of any creature that is of a size larger than yours.',
       descriptionIT: 'Puoi muoverti attraverso lo spazio di qualsiasi creatura di taglia superiore alla tua.',
       level: 1,
@@ -42,7 +42,7 @@ export const halfling: Species = {
       features: [
         {
           name: 'Naturally Stealthy',
-          nameIT: 'Furtivit‡ Naturale',
+          nameIT: 'Furtivit√† Naturale',
           description: 'You can attempt to hide even when you are obscured only by a creature that is at least one size larger than you.',
           descriptionIT: 'Puoi tentare di nasconderti anche quando sei oscurato solo da una creatura di almeno una taglia superiore alla tua.',
           level: 1,

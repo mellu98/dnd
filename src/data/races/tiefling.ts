@@ -38,7 +38,7 @@ function createTieflingLegacy(params: {
         name: `${name} Legacy`,
         nameIT: `Lignaggio ${nameIT}`,
         description: `You have resistance to ${resistanceType} damage. You also know ${cantripName}. At 3rd level you can cast ${level3Spell} once per long rest, and at 5th level you can cast ${level5Spell} once per long rest.`,
-        descriptionIT: `Hai resistenza ai danni ${resistanceTypeIT.toLowerCase()}. Conosci inoltre ${cantripNameIT}. Al 3° livello puoi lanciare ${level3SpellIT} una volta per riposo lungo, e al 5° livello ${level5SpellIT} una volta per riposo lungo.`,
+        descriptionIT: `Hai resistenza ai danni ${resistanceTypeIT.toLowerCase()}. Conosci inoltre ${cantripNameIT}. Al 3Â° livello puoi lanciare ${level3SpellIT} una volta per riposo lungo, e al 5Â° livello ${level5SpellIT} una volta per riposo lungo.`,
         level: 1,
       },
     ],
@@ -59,7 +59,7 @@ const tieflingLegacies: SpeciesVariant[] = [
     cantripName: 'Poison Spray',
     cantripNameIT: 'Spruzzo Velenoso',
     level3Spell: 'Ray of Sickness',
-    level3SpellIT: 'Raggio di Infermità',
+    level3SpellIT: 'Raggio di InfermitÃ ',
     level5Spell: 'Hold Person',
     level5SpellIT: 'Blocca Persone',
   }),
@@ -87,7 +87,7 @@ const tieflingLegacies: SpeciesVariant[] = [
     level3Spell: 'Hellish Rebuke',
     level3SpellIT: 'Punizione Infernale',
     level5Spell: 'Darkness',
-    level5SpellIT: 'Oscurità',
+    level5SpellIT: 'OscuritÃ ',
   }),
 ]
 

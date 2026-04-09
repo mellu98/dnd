@@ -30,7 +30,7 @@ export const gnome: Species = {
           name: 'Natural Illusionist',
           nameIT: 'Illusionista Naturale',
           description: 'You know the minor illusion cantrip. Intelligence is your spellcasting ability for it.',
-          descriptionIT: 'Conosci il trucchetto illusione minore. Intelligenza è la tua caratteristica da incantatore.',
+          descriptionIT: 'Conosci il trucchetto illusione minore. Intelligenza Ã¨ la tua caratteristica da incantatore.',
           level: 1,
         },
         {
@@ -49,7 +49,7 @@ export const gnome: Species = {
       features: [
         {
           name: "Artificer's Lore",
-          nameIT: 'Sapere dell’Artefice',
+          nameIT: 'Sapere dellÂ’Artefice',
           description: 'Whenever you make an Intelligence (History) check related to magic items, alchemical objects, or technological devices, you add double your proficiency bonus.',
           descriptionIT: 'Quando effettui una prova di Intelligenza (Storia) relativa a oggetti magici, alchemici o tecnologici, aggiungi il doppio del tuo bonus di competenza.',
           level: 1,
@@ -57,7 +57,7 @@ export const gnome: Species = {
         {
           name: 'Tinker',
           nameIT: 'Inventore',
-          description: 'You have proficiency with tinker’s tools and can use them to assemble tiny clockwork devices.',
+          description: 'You have proficiency with tinkerÂ’s tools and can use them to assemble tiny clockwork devices.',
           descriptionIT: 'Hai competenza con gli strumenti da inventore e puoi usarli per assemblare minuscoli congegni a orologeria.',
           level: 1,
         },

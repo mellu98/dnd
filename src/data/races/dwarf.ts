@@ -18,7 +18,7 @@ export const dwarf: Species = {
     },
     {
       name: 'Stonecunning',
-      nameIT: 'Affinit‡ con la Pietra',
+      nameIT: 'Affinit√† con la Pietra',
       description: 'Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient and add double your proficiency bonus.',
       descriptionIT: 'Quando effettui una prova di Intelligenza (Storia) relativa all\'origine di lavori in pietra, sei considerato competente e aggiungi il doppio del bonus di competenza.',
       level: 1,

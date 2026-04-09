@@ -13,7 +13,7 @@ export const elf: Species = {
       name: 'Fey Ancestry',
       nameIT: 'Retaggio Fatato',
       description: 'You have advantage on saving throws against being charmed, and magic can\'t put you to sleep.',
-      descriptionIT: 'Hai vantaggio ai tiri salvezza contro l\'essere affascinato e la magia non può addormentarti.',
+      descriptionIT: 'Hai vantaggio ai tiri salvezza contro l\'essere affascinato e la magia non puÃ² addormentarti.',
       level: 1,
     },
     {
@@ -34,7 +34,7 @@ export const elf: Species = {
       name: 'Keen Senses',
       nameIT: 'Sensi Acuti',
       description: 'You have proficiency in the Perception skill.',
-      descriptionIT: 'Hai competenza nell\'abilità Percezione.',
+      descriptionIT: 'Hai competenza nell\'abilitÃ  Percezione.',
       level: 1,
     },
     {
@@ -65,7 +65,7 @@ export const elf: Species = {
           name: 'High Elf Cantrip',
           nameIT: 'Trucchetto Alto Elfo',
           description: 'You know one cantrip of your choice from the wizard spell list. Intelligence is your spellcasting ability for it.',
-          descriptionIT: 'Conosci un trucchetto a scelta dalla lista degli incantesimi del mago. Intelligenza è la tua caratteristica da incantatore.',
+          descriptionIT: 'Conosci un trucchetto a scelta dalla lista degli incantesimi del mago. Intelligenza Ã¨ la tua caratteristica da incantatore.',
           level: 1,
         },
       ],
@@ -80,7 +80,7 @@ export const elf: Species = {
           name: 'Fleet of Foot',
           nameIT: 'Passo Lesto',
           description: 'Your base walking speed increases to 35 feet.',
-          descriptionIT: 'La tua velocità base aumenta a 10,5 metri.',
+          descriptionIT: 'La tua velocitÃ  base aumenta a 10,5 metri.',
           level: 1,
         },
         {
@@ -107,7 +107,7 @@ export const elf: Species = {
         },
         {
           name: 'Sunlight Sensitivity',
-          nameIT: 'Sensibilità alla Luce Solare',
+          nameIT: 'SensibilitÃ  alla Luce Solare',
           description: 'You have disadvantage on attack rolls and Perception checks that rely on sight when you or your target is in direct sunlight.',
           descriptionIT: 'Hai svantaggio ai tiri per colpire e alle prove di Percezione basate sulla vista quando tu o il bersaglio siete alla luce diretta del sole.',
           level: 1,
@@ -116,7 +116,7 @@ export const elf: Species = {
           name: 'Drow Magic',
           nameIT: 'Magia Drow',
           description: 'You know the dancing lights cantrip. At 3rd level you can cast faerie fire once per long rest, and at 5th level darkness once per long rest. Charisma is your spellcasting ability.',
-          descriptionIT: 'Conosci il trucchetto luci danzanti. Al 3° livello puoi lanciare fuoco fatato una volta per riposo lungo, e al 5° livello oscurità una volta per riposo lungo. Carisma è la tua caratteristica da incantatore.',
+          descriptionIT: 'Conosci il trucchetto luci danzanti. Al 3Â° livello puoi lanciare fuoco fatato una volta per riposo lungo, e al 5Â° livello oscuritÃ  una volta per riposo lungo. Carisma Ã¨ la tua caratteristica da incantatore.',
           level: 1,
         },
       ],
