@@ -10,23 +10,34 @@ import { getClassById } from '../data/classes'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
+function getEquippedShieldBonus(character: Character): number {
+  const shieldId = character.equippedShieldId
+  if (!shieldId) return 0
+
+  const dataShieldBonus = getShieldById(shieldId)?.shieldBonus
+  if (typeof dataShieldBonus === 'number') return dataShieldBonus
+
+  const equippedShield = character.equipment.find((item) => item.id === shieldId && item.category === 'shield')
+  return equippedShield?.shieldBonus ?? 0
+}
+
 /**
  * Calculates Armor Class dynamically based on equipped armor, shield, class
  * (Unarmored Defense for Barbarian/Monk/Sorcerer Draconic), and magical bonuses.
  */
 function calculateArmorClass(character: Character, modifiers: Record<AbilityName, number>): number {
   const armorId = character.equippedArmorId
-  const shieldId = character.equippedShieldId
   const classId = character.classId
   const subclassId = character.subclassId
+  const shieldBonus = getEquippedShieldBonus(character)
 
   // No armor equipped → Unarmored Defense variants
   if (!armorId) {
-    if (classId === 'barbarian') return 10 + modifiers.DEX + modifiers.CON
-    if (classId === 'monk') return 10 + modifiers.DEX + modifiers.WIS
+    if (classId === 'barbarian') return 10 + modifiers.DEX + modifiers.CON + shieldBonus
+    if (classId === 'monk' && shieldBonus === 0) return 10 + modifiers.DEX + modifiers.WIS
     // Sorcerer: Draconic Bloodline — Draconic Resilience
-    if (classId === 'sorcerer' && subclassId === 'draconic') return 13 + modifiers.DEX
-    return 10 + modifiers.DEX
+    if (classId === 'sorcerer' && subclassId === 'draconic') return 13 + modifiers.DEX + shieldBonus
+    return 10 + modifiers.DEX + shieldBonus
   }
 
   // Armor equipped
@@ -38,10 +49,7 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
   ac += Math.min(modifiers.DEX, dexCap)
 
   // Shield bonus (data-driven)
-  if (shieldId) {
-    const shield = getShieldById(shieldId)
-    if (shield) ac += shield.shieldBonus
-  }
+  ac += shieldBonus
 
   // Magical armor bonus (equipped item in category 'armor' with magicalBonus)
   const magicalItem = character.equipment.find((e) => e.equipped && e.magicalBonus != null && e.category === 'armor')
