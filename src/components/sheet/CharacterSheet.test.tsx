@@ -84,8 +84,8 @@ describe('CharacterSheet navigation shell', () => {
   it('opens on overview and renders both desktop and mobile navigation shells', () => {
     render(<App />)
 
-    expect(screen.getByTestId('sheet-desktop-tabs')).toBeInTheDocument()
     expect(screen.getByTestId('sheet-bottom-nav')).toBeInTheDocument()
+    expect(screen.queryByTestId('sheet-desktop-tabs')).not.toBeInTheDocument()
 
     const outlet = screen.getByTestId('sheet-section-outlet')
     expect(within(outlet).getByRole('heading', { name: /panoramica/i })).toBeInTheDocument()
@@ -107,8 +107,8 @@ describe('CharacterSheet navigation shell', () => {
   it('resets the active section to overview after quick switching characters', () => {
     render(<App />)
 
-    const desktopTabs = screen.getByTestId('sheet-desktop-tabs')
-    fireEvent.click(within(desktopTabs).getByRole('button', { name: /sessione/i }))
+    const bottomNav = screen.getByTestId('sheet-bottom-nav')
+    fireEvent.click(within(bottomNav).getByRole('button', { name: /sessione/i }))
 
     let outlet = screen.getByTestId('sheet-section-outlet')
     expect(within(outlet).getByRole('heading', { name: /sessione/i })).toBeInTheDocument()

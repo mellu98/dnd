@@ -154,6 +154,36 @@ describe('calculateAllStats', () => {
     // WIS 10 + 1 (background secondary) = 11 → mod +0
     expect(stats.finalAbilityScores.WIS).toBe(11)
   })
+
+  it('adds shield bonus even when no armor is equipped', () => {
+    const stats = calculateAllStats(makeCharacter({
+      raceId: 'human',
+      classId: 'fighter',
+      backgroundId: 'guard',
+      backgroundAbilityChoices: { primary: 'DEX', secondary: 'WIS' },
+      abilityScores: { STR: 10, DEX: 14, CON: 12, INT: 10, WIS: 10, CHA: 8 },
+      equippedArmorId: null,
+      equippedShieldId: 'shield',
+    }))
+
+    // DEX 14 + background +2 = 16 → base 13, shield +2 → 15
+    expect(stats.armorClass).toBe(15)
+  })
+
+  it('does not keep monk unarmored defense when a shield is equipped', () => {
+    const stats = calculateAllStats(makeCharacter({
+      raceId: 'human',
+      classId: 'monk',
+      backgroundId: 'guard',
+      backgroundAbilityChoices: { primary: 'DEX', secondary: 'WIS' },
+      abilityScores: { STR: 10, DEX: 14, CON: 12, INT: 10, WIS: 14, CHA: 8 },
+      equippedArmorId: null,
+      equippedShieldId: 'shield',
+    }))
+
+    // Monk with shield falls back to 10 + DEX, then shield bonus applies
+    expect(stats.armorClass).toBe(15)
+  })
 })
 
 // Translation test spot-check

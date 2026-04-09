@@ -19,23 +19,33 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
   const shieldId = character.equippedShieldId
   const classId = character.classId
   const subclassId = character.subclassId
+  const hasShieldEquipped = Boolean(shieldId)
+
+  let ac: number
 
   // No armor equipped → Unarmored Defense variants
   if (!armorId) {
-    if (classId === 'barbarian') return 10 + modifiers.DEX + modifiers.CON
-    if (classId === 'monk') return 10 + modifiers.DEX + modifiers.WIS
+    if (classId === 'barbarian') {
+      ac = 10 + modifiers.DEX + modifiers.CON
+    } else if (classId === 'monk') {
+      ac = hasShieldEquipped ? 10 + modifiers.DEX : 10 + modifiers.DEX + modifiers.WIS
     // Sorcerer: Draconic Bloodline — Draconic Resilience
-    if (classId === 'sorcerer' && subclassId === 'draconic') return 13 + modifiers.DEX
-    return 10 + modifiers.DEX
+    } else if (classId === 'sorcerer' && subclassId === 'draconic') {
+      ac = 13 + modifiers.DEX
+    } else {
+      ac = 10 + modifiers.DEX
+    }
+  } else {
+    // Armor equipped
+    const armor = getArmorById(armorId)
+    if (!armor) {
+      ac = 10 + modifiers.DEX // fallback — unknown armor id
+    } else {
+      ac = armor.ac
+      const dexCap = armor.dexModifier ?? Infinity
+      ac += Math.min(modifiers.DEX, dexCap)
+    }
   }
-
-  // Armor equipped
-  const armor = getArmorById(armorId)
-  if (!armor) return 10 + modifiers.DEX // fallback — unknown armor id
-
-  let ac = armor.ac
-  const dexCap = armor.dexModifier ?? Infinity
-  ac += Math.min(modifiers.DEX, dexCap)
 
   // Shield bonus (data-driven)
   if (shieldId) {

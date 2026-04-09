@@ -329,7 +329,7 @@ export function CharacterSheet() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-start gap-3">
             <button
               type="button"
               onClick={() => dispatch({ type: 'GO_HOME' })}
@@ -338,21 +338,21 @@ export function CharacterSheet() {
               <span aria-hidden="true">\u2190</span>
               <span>{it.back_to_characters}</span>
             </button>
-
-            <SheetNavigation
-              sections={SHEET_SECTIONS}
-              activeSection={activeSection}
-              onChange={setActiveSection}
-            />
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl px-4 py-6 pb-28 md:pb-10">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-6 pb-32">
         <div data-testid="sheet-section-outlet" key={`${character.id}-${activeSection}`} className="animate-fade-in">
           {sectionContent[activeSection]}
         </div>
       </main>
+
+      <SheetNavigation
+        sections={SHEET_SECTIONS}
+        activeSection={activeSection}
+        onChange={setActiveSection}
+      />
     </div>
   )
 }
