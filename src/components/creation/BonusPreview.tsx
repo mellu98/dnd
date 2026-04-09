@@ -107,7 +107,7 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
           <div className="flex gap-2">
             {bonuses.savingThrows.map((st) => (
               <span key={st} className="bg-bg-card px-3 py-1 rounded-lg text-sm text-accent-emerald">
-                {abilityLabel[st]}
+                {abilityLabel[st as keyof typeof abilityLabel]}
               </span>
             ))}
           </div>

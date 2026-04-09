@@ -46,7 +46,7 @@ export function FeaturesPanel({ stats, features = stats.allFeatures, emptyMessag
         const asiChoice = isASI ? asiChoices.find((c) => c.level === feature.level) : undefined
 
         let displayName = feature.nameIT
-        let displayDescription = toMetricRuleText(feature.descriptionIT)
+        let displayDescription: string | undefined = toMetricRuleText(feature.descriptionIT)
 
         if (isASI && asiChoice) {
           if (asiChoice.type === 'feat') {

@@ -112,25 +112,28 @@ export default function BackgroundSelector() {
     }
 
     const existingChoices = state.creationDraft.backgroundAbilityChoices ?? null
+    const validExistingChoices = existingChoices && isBackgroundAbilityChoicesValid(background, existingChoices)
+      ? existingChoices
+      : null
     const defaultMode = availableModes[0] ?? 'plus2_plus1'
 
-    if (isBackgroundAbilityChoicesValid(background, existingChoices)) {
-      setSelectionMode(existingChoices.mode)
+    if (validExistingChoices?.mode === 'plus2_plus1') {
+      setSelectionMode(validExistingChoices.mode)
+      setPrimaryASI(validExistingChoices.primary)
+      setSecondaryASI(validExistingChoices.secondary)
+      setTripleASI([null, null, null])
+      return
+    }
 
-      if (existingChoices.mode === 'plus2_plus1') {
-        setPrimaryASI(existingChoices.primary)
-        setSecondaryASI(existingChoices.secondary)
-        setTripleASI([null, null, null])
-      } else {
-        setPrimaryASI(null)
-        setSecondaryASI(null)
-        setTripleASI([
-          existingChoices.abilities[0],
-          existingChoices.abilities[1],
-          existingChoices.abilities[2],
-        ])
-      }
-
+    if (validExistingChoices?.mode === 'plus1_plus1_plus1') {
+      setSelectionMode(validExistingChoices.mode)
+      setPrimaryASI(null)
+      setSecondaryASI(null)
+      setTripleASI([
+        validExistingChoices.abilities[0],
+        validExistingChoices.abilities[1],
+        validExistingChoices.abilities[2],
+      ])
       return
     }
 
@@ -138,7 +141,7 @@ export default function BackgroundSelector() {
     setPrimaryASI(null)
     setSecondaryASI(null)
     setTripleASI([null, null, null])
-  }, [background?.id])
+  }, [availableModes, background, state.creationDraft.backgroundAbilityChoices])
 
   useEffect(() => {
     if (!background) {
