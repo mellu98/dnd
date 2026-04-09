@@ -102,7 +102,7 @@ export function HomePage() {
                       </span>
                       <button
                         onClick={(e) => handleDeleteRequest(e, char.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary/40 hover:text-accent-red hover:bg-accent-red/10 opacity-0 group-hover:opacity-100 transition-all"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary/40 hover:text-accent-red hover:bg-accent-red/10 transition-all"
                         title={it.delete_character}
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
