@@ -1,4 +1,4 @@
-import type { Character } from '../types'
+import type { ASIChoice, AbilityName, Character, CurrencyPouch, SkillName } from '../types'
 
 interface StorageSchemaV1 {
   version: 1
@@ -30,15 +30,50 @@ interface StorageSchemaV1 {
   activeCharacterId: string | null
 }
 
+type LegacyCharacter = Omit<
+  Partial<Character>,
+  | 'equipment'
+  | 'knownSpells'
+  | 'preparedSpells'
+  | 'expendedSpellSlots'
+  | 'asiChoices'
+  | 'deathSaves'
+  | 'isStabilized'
+  | 'spentHitDice'
+  | 'expertiseSkills'
+  | 'activeConditions'
+  | 'exhaustionLevel'
+  | 'inspiration'
+  | 'currency'
+  | 'initiativeTracker'
+  | 'activeInitiativeId'
+> & {
+  equipment?: unknown
+  knownSpells?: unknown
+  preparedSpells?: unknown
+  expendedSpellSlots?: unknown
+  asiChoices?: unknown
+  deathSaves?: unknown
+  isStabilized?: unknown
+  spentHitDice?: unknown
+  expertiseSkills?: unknown
+  activeConditions?: unknown
+  exhaustionLevel?: unknown
+  inspiration?: unknown
+  currency?: unknown
+  initiativeTracker?: unknown
+  activeInitiativeId?: unknown
+}
+
 interface StorageSchemaV3 {
   version: 3
-  characters: any[]
+  characters: LegacyCharacter[]
   activeCharacterId: string | null
 }
 
 interface StorageSchemaV4 {
   version: 4
-  characters: any[]
+  characters: LegacyCharacter[]
   activeCharacterId: string | null
 }
 
@@ -60,188 +95,388 @@ interface StorageSchemaV7 {
   activeCharacterId: string | null
 }
 
+interface StorageSchemaV8 {
+  version: 8
+  characters: Character[]
+  activeCharacterId: string | null
+}
+
+interface StorageSchemaV9 {
+  version: 9
+  characters: Character[]
+  activeCharacterId: string | null
+}
+
 const STORAGE_KEY = 'dnd5e-characters'
 
-const defaultStorage: StorageSchemaV7 = {
-  version: 7,
+const EMPTY_CURRENCY: CurrencyPouch = {
+  cp: 0,
+  sp: 0,
+  ep: 0,
+  gp: 0,
+  pp: 0,
+}
+
+const defaultStorage: StorageSchemaV9 = {
+  version: 9,
   characters: [],
   activeCharacterId: null,
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function normalizeCurrency(value: unknown): CurrencyPouch {
+  if (!isRecord(value)) return { ...EMPTY_CURRENCY }
+
+  return {
+    cp: typeof value.cp === 'number' ? value.cp : 0,
+    sp: typeof value.sp === 'number' ? value.sp : 0,
+    ep: typeof value.ep === 'number' ? value.ep : 0,
+    gp: typeof value.gp === 'number' ? value.gp : 0,
+    pp: typeof value.pp === 'number' ? value.pp : 0,
+  }
+}
+
+function normalizeEquipment(equipment: unknown): Character['equipment'] {
+  if (!Array.isArray(equipment)) return []
+
+  return equipment.map((item, index) => {
+    if (isRecord(item) && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.category === 'string') {
+      return {
+        id: item.id,
+        name: item.name,
+        nameIT: typeof item.nameIT === 'string' ? item.nameIT : item.name,
+        category: item.category as Character['equipment'][number]['category'],
+        quantity: typeof item.quantity === 'number' ? item.quantity : 1,
+        weight: typeof item.weight === 'number' ? item.weight : undefined,
+        value: typeof item.value === 'number' ? item.value : undefined,
+        ac: typeof item.ac === 'number' ? item.ac : undefined,
+        dexModifier: typeof item.dexModifier === 'number' ? item.dexModifier : undefined,
+        strength: typeof item.strength === 'number' ? item.strength : undefined,
+        stealthDisadvantage: item.stealthDisadvantage === true,
+        shieldBonus: typeof item.shieldBonus === 'number' ? item.shieldBonus : undefined,
+        equipped: item.equipped === true,
+        magicalBonus: typeof item.magicalBonus === 'number' ? item.magicalBonus : undefined,
+        ammoCount: typeof item.ammoCount === 'number' ? item.ammoCount : undefined,
+        source: typeof item.source === 'string' ? item.source : undefined,
+        isLegacy: item.isLegacy === true,
+      }
+    }
+
+    return {
+      id: `gear-${index}`,
+      name: String(item),
+      nameIT: String(item),
+      category: 'gear' as const,
+      quantity: 1,
+      equipped: false,
+    }
+  })
+}
+
+function normalizeExpendedSpellSlots(value: unknown): Record<number, number> {
+  if (!isRecord(value)) return {}
+
+  const normalized: Record<number, number> = {}
+  for (const [key, amount] of Object.entries(value)) {
+    const level = Number(key)
+    if (Number.isInteger(level) && typeof amount === 'number') {
+      normalized[level] = amount
+    }
+  }
+
+  return normalized
+}
+
+function normalizeInitiativeTracker(value: unknown): Character['initiativeTracker'] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((entry, index) => {
+    if (!isRecord(entry) || typeof entry.name !== 'string' || typeof entry.initiative !== 'number') {
+      return []
+    }
+
+    return [{
+      id: typeof entry.id === 'string' ? entry.id : `initiative-${index}`,
+      name: entry.name,
+      initiative: entry.initiative,
+      notes: typeof entry.notes === 'string' ? entry.notes : '',
+    }]
+  })
+}
+
+function normalizeASIChoices(value: unknown): ASIChoice[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((choice) => {
+    if (!isRecord(choice) || typeof choice.level !== 'number' || (choice.type !== 'ability' && choice.type !== 'feat')) {
+      return []
+    }
+
+    const normalized: ASIChoice = {
+      level: choice.level,
+      type: choice.type,
+    }
+
+    if (Array.isArray(choice.abilityBonuses)) {
+      normalized.abilityBonuses = choice.abilityBonuses.flatMap((bonus) => {
+        if (!isRecord(bonus) || typeof bonus.ability !== 'string' || typeof bonus.value !== 'number') {
+          return []
+        }
+
+        return [{ ability: bonus.ability as AbilityName, value: bonus.value }]
+      })
+    }
+
+    if (typeof choice.featId === 'string') {
+      normalized.featId = choice.featId
+    }
+
+    return [normalized]
+  })
+}
+
+function normalizeExpertiseSkills(value: unknown): SkillName[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((skill): skill is SkillName => typeof skill === 'string')
+}
+
+function withCharacterDefaults(character: LegacyCharacter): Character {
+  const normalizedKnownSpells = Array.isArray(character.knownSpells)
+    ? character.knownSpells.filter((spellId): spellId is string => typeof spellId === 'string')
+    : []
+
+  const normalizedPreparedSpells = Array.isArray(character.preparedSpells)
+    ? character.preparedSpells.filter((spellId): spellId is string => typeof spellId === 'string')
+    : normalizedKnownSpells
+
+  return {
+    ...(character as Character),
+    equipment: normalizeEquipment(character.equipment),
+    knownSpells: normalizedKnownSpells,
+    preparedSpells: normalizedPreparedSpells,
+    expendedSpellSlots: normalizeExpendedSpellSlots(character.expendedSpellSlots),
+    asiChoices: normalizeASIChoices(character.asiChoices),
+    deathSaves:
+      isRecord(character.deathSaves)
+        && typeof character.deathSaves.successes === 'number'
+        && typeof character.deathSaves.failures === 'number'
+        ? {
+            successes: character.deathSaves.successes,
+            failures: character.deathSaves.failures,
+          }
+        : { successes: 0, failures: 0 },
+    activeConditions: Array.isArray(character.activeConditions)
+      ? character.activeConditions.filter((condition): condition is string => typeof condition === 'string')
+      : [],
+    exhaustionLevel:
+      typeof character.exhaustionLevel === 'number'
+        ? Math.max(0, Math.min(6, character.exhaustionLevel))
+        : 0,
+    inspiration: character.inspiration === true,
+    isStabilized: character.isStabilized === true,
+    spentHitDice: typeof character.spentHitDice === 'number' ? character.spentHitDice : 0,
+    expertiseSkills: normalizeExpertiseSkills(character.expertiseSkills),
+    currency: normalizeCurrency(character.currency),
+    initiativeTracker: normalizeInitiativeTracker(character.initiativeTracker),
+    activeInitiativeId: typeof character.activeInitiativeId === 'string' ? character.activeInitiativeId : null,
+  }
 }
 
 function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
   return {
     version: 3,
-    characters: old.characters.map((c) => ({
-      id: c.id,
-      name: c.name,
-      raceId: c.raceId,
-      classId: c.classId,
-      subclassId: c.subclassId,
-      backgroundId: c.backgroundId,
+    characters: old.characters.map((character) => ({
+      id: character.id,
+      name: character.name,
+      raceId: character.raceId,
+      classId: character.classId,
+      subclassId: character.subclassId,
+      backgroundId: character.backgroundId,
       backgroundAbilityChoices: null,
-      level: c.level,
-      abilityScores: c.abilityScores,
-      hp: c.hp,
-      skillProficiencies: c.skillProficiencies,
-      chosenLanguages: c.chosenLanguages,
-      alignment: c.alignment,
-      personalityTraits: c.personalityTraits,
-      ideals: c.ideals,
-      bonds: c.bonds,
-      flaws: c.flaws,
-      equipment: c.equipment.map((s: string, i: number) => ({
-        id: `gear-${i}`,
-        name: s,
-        nameIT: s,
-        category: 'gear' as const,
-        quantity: 1,
-        equipped: false,
-      })),
+      level: character.level,
+      abilityScores: character.abilityScores,
+      hp: character.hp,
+      skillProficiencies: character.skillProficiencies,
+      chosenLanguages: character.chosenLanguages,
+      alignment: character.alignment,
+      personalityTraits: character.personalityTraits,
+      ideals: character.ideals,
+      bonds: character.bonds,
+      flaws: character.flaws,
+      equipment: character.equipment,
       equippedArmorId: null,
       equippedShieldId: null,
       knownSpells: [],
+      preparedSpells: [],
       expendedSpellSlots: {},
       asiChoices: [],
-      notes: c.notes,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-      imageUrl: c.imageUrl,
+      deathSaves: { successes: 0, failures: 0 },
+      activeConditions: [],
+      exhaustionLevel: 0,
+      inspiration: false,
+      isStabilized: false,
+      spentHitDice: 0,
+      expertiseSkills: [],
+      currency: { ...EMPTY_CURRENCY },
+      notes: character.notes,
+      createdAt: character.createdAt,
+      updatedAt: character.updatedAt,
+      imageUrl: character.imageUrl,
     })),
     activeCharacterId: old.activeCharacterId,
   }
 }
 
-/**
- * Migrates v3 data to v4.
- * Key changes:
- * - equipment: string[] → EquipmentItem[]  (strings become gear items)
- * - equippedArmorId, equippedShieldId, knownSpells added with safe defaults
- */
 function migrateV3toV4(v3: StorageSchemaV3): StorageSchemaV4 {
   return {
     version: 4,
-    characters: v3.characters.map((c: any) => ({
-      ...c,
-      equipment: Array.isArray(c.equipment)
-        ? c.equipment.map((item: unknown, i: number) => {
-            // Already an EquipmentItem object — pass through
-            if (typeof item === 'object' && item !== null && 'category' in item) {
-              return item
-            }
-            // Legacy string → convert to gear EquipmentItem
-            return {
-              id: `gear-${i}`,
-              name: String(item),
-              nameIT: String(item),
-              category: 'gear' as const,
-              quantity: 1,
-              equipped: false,
-            }
-          })
-        : [],
-      equippedArmorId: c.equippedArmorId ?? null,
-      equippedShieldId: c.equippedShieldId ?? null,
-      knownSpells: Array.isArray(c.knownSpells) ? c.knownSpells : [],
-      expendedSpellSlots:
-        c.expendedSpellSlots != null && typeof c.expendedSpellSlots === 'object' ? c.expendedSpellSlots : {},
-      asiChoices: [],
+    characters: v3.characters.map((character) => ({
+      ...character,
+      equipment: normalizeEquipment(character.equipment),
+      equippedArmorId: character.equippedArmorId ?? null,
+      equippedShieldId: character.equippedShieldId ?? null,
+      knownSpells: Array.isArray(character.knownSpells) ? character.knownSpells : [],
+      preparedSpells: Array.isArray(character.preparedSpells) ? character.preparedSpells : [],
+      expendedSpellSlots: normalizeExpendedSpellSlots(character.expendedSpellSlots),
+      asiChoices: Array.isArray(character.asiChoices) ? character.asiChoices : [],
+      activeConditions: Array.isArray(character.activeConditions) ? character.activeConditions : [],
+      exhaustionLevel: typeof character.exhaustionLevel === 'number' ? character.exhaustionLevel : 0,
+      inspiration: character.inspiration === true,
+      currency: normalizeCurrency(character.currency),
     })),
     activeCharacterId: v3.activeCharacterId,
   }
 }
 
-/**
- * Migrates v4 data to v5.
- * Key changes:
- * - asiChoices: [] added to all characters
- */
 function migrateV4toV5(v4: StorageSchemaV4): StorageSchemaV5 {
   return {
     version: 5,
-    characters: v4.characters.map((c: any) => ({
-      ...c,
-      asiChoices: Array.isArray(c.asiChoices) ? c.asiChoices : [],
-    })) as Character[],
+    characters: v4.characters.map(withCharacterDefaults),
     activeCharacterId: v4.activeCharacterId,
   }
 }
 
-/**
- * Migrates v5 data to v6.
- * Key changes:
- * - deathSaves, isStabilized, spentHitDice added to all characters
- */
 function migrateV5toV6(v5: StorageSchemaV5): StorageSchemaV6 {
   return {
     version: 6,
-    characters: v5.characters.map((c: any) => ({
-      ...c,
-      deathSaves: { successes: 0, failures: 0 },
-      isStabilized: false,
-      spentHitDice: 0,
-    })),
+    characters: v5.characters.map((character) =>
+      withCharacterDefaults({
+        ...character,
+        deathSaves: character.deathSaves,
+        isStabilized: character.isStabilized,
+        spentHitDice: character.spentHitDice,
+      }),
+    ),
     activeCharacterId: v5.activeCharacterId,
   }
 }
 
-/**
- * Migrates v6 data to v7.
- * Key changes:
- * - expertiseSkills array added to all characters
- */
 function migrateV6toV7(v6: StorageSchemaV6): StorageSchemaV7 {
   return {
     version: 7,
-    characters: v6.characters.map((c: any) => ({
-      ...c,
-      expertiseSkills: Array.isArray(c.expertiseSkills) ? c.expertiseSkills : [],
-    })),
+    characters: v6.characters.map((character) =>
+      withCharacterDefaults({
+        ...character,
+        expertiseSkills: character.expertiseSkills,
+      }),
+    ),
     activeCharacterId: v6.activeCharacterId,
   }
 }
 
-export function loadStorage(): StorageSchemaV7 {
+function migrateV7toV8(v7: StorageSchemaV7): StorageSchemaV8 {
+  return {
+    version: 8,
+    characters: v7.characters.map(withCharacterDefaults),
+    activeCharacterId: v7.activeCharacterId,
+  }
+}
+
+function migrateV8toV9(v8: StorageSchemaV8): StorageSchemaV9 {
+  return {
+    version: 9,
+    characters: v8.characters.map(withCharacterDefaults),
+    activeCharacterId: v8.activeCharacterId,
+  }
+}
+
+export function loadStorage(): StorageSchemaV9 {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultStorage
-    const parsed = JSON.parse(raw)
+
+    const parsed: unknown = JSON.parse(raw)
+    if (!isRecord(parsed) || typeof parsed.version !== 'number') return defaultStorage
 
     if (parsed.version === 1) {
-      const v3 = migrateV1toV3(parsed as StorageSchemaV1)
+      const v3 = migrateV1toV3(parsed as unknown as StorageSchemaV1)
       const v4 = migrateV3toV4(v3)
       const v5 = migrateV4toV5(v4)
       const v6 = migrateV5toV6(v5)
-      return migrateV6toV7(v6)
+      const v7 = migrateV6toV7(v6)
+      const v8 = migrateV7toV8(v7)
+      return migrateV8toV9(v8)
     }
+
     if (parsed.version === 3) {
-      const v4 = migrateV3toV4(parsed as StorageSchemaV3)
+      const v4 = migrateV3toV4(parsed as unknown as StorageSchemaV3)
       const v5 = migrateV4toV5(v4)
       const v6 = migrateV5toV6(v5)
-      return migrateV6toV7(v6)
+      const v7 = migrateV6toV7(v6)
+      const v8 = migrateV7toV8(v7)
+      return migrateV8toV9(v8)
     }
+
     if (parsed.version === 4) {
-      const v5 = migrateV4toV5(parsed as StorageSchemaV4)
+      const v5 = migrateV4toV5(parsed as unknown as StorageSchemaV4)
       const v6 = migrateV5toV6(v5)
-      return migrateV6toV7(v6)
+      const v7 = migrateV6toV7(v6)
+      const v8 = migrateV7toV8(v7)
+      return migrateV8toV9(v8)
     }
+
     if (parsed.version === 5) {
-      const v6 = migrateV5toV6(parsed as StorageSchemaV5)
-      return migrateV6toV7(v6)
+      const v6 = migrateV5toV6(parsed as unknown as StorageSchemaV5)
+      const v7 = migrateV6toV7(v6)
+      const v8 = migrateV7toV8(v7)
+      return migrateV8toV9(v8)
     }
+
     if (parsed.version === 6) {
-      return migrateV6toV7(parsed as StorageSchemaV6)
+      const v7 = migrateV6toV7(parsed as unknown as StorageSchemaV6)
+      const v8 = migrateV7toV8(v7)
+      return migrateV8toV9(v8)
     }
+
     if (parsed.version === 7) {
-      return parsed as StorageSchemaV7
+      const v8 = migrateV7toV8(parsed as unknown as StorageSchemaV7)
+      return migrateV8toV9(v8)
     }
-    // Unknown version — return default (safe fallback)
+
+    if (parsed.version === 8) {
+      return migrateV8toV9(parsed as unknown as StorageSchemaV8)
+    }
+
+    if (parsed.version === 9) {
+      return {
+        version: 9,
+        characters: Array.isArray(parsed.characters)
+          ? parsed.characters.map((character) => withCharacterDefaults(character as LegacyCharacter))
+          : [],
+        activeCharacterId: typeof parsed.activeCharacterId === 'string' ? parsed.activeCharacterId : null,
+      }
+    }
+
     return defaultStorage
   } catch {
     return defaultStorage
   }
 }
 
-export function saveStorage(data: StorageSchemaV7): void {
+export function saveStorage(data: StorageSchemaV9): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 }
 

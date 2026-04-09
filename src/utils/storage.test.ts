@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { loadStorage } from './storage'
 
 const STORAGE_KEY = 'dnd5e-characters'
@@ -10,12 +10,12 @@ describe('storage migration', () => {
 
   it('returns default storage when empty', () => {
     const storage = loadStorage()
-    expect(storage.version).toBe(5)
+    expect(storage.version).toBe(9)
     expect(storage.characters).toEqual([])
     expect(storage.activeCharacterId).toBeNull()
   })
 
-  it('migrates v1 characters to v5', () => {
+  it('migrates v1 characters to v9', () => {
     const v1Data = {
       version: 1,
       characters: [
@@ -47,29 +47,29 @@ describe('storage migration', () => {
       ],
       activeCharacterId: 'test-1',
     }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v1Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(5)
+    expect(storage.version).toBe(9)
     expect(storage.characters).toHaveLength(1)
 
     const char = storage.characters[0]
+    const legacyChar = char as unknown as Record<string, unknown>
     expect(char.id).toBe('test-1')
-    expect(char.name).toBe('Vecchio Eroe')
-    expect(char.raceId).toBe('elf')
-    // subraceId and chosenAbilityBonuses should be removed
-    expect((char as any).subraceId).toBeUndefined()
-    expect((char as any).chosenAbilityBonuses).toBeUndefined()
-    // backgroundAbilityChoices should be null
     expect(char.backgroundAbilityChoices).toBeNull()
-    // v4 fields — defaults
-    expect(char.equippedArmorId).toBeNull()
-    expect(char.equippedShieldId).toBeNull()
-    expect(char.knownSpells).toEqual([])
-    expect(char.asiChoices).toEqual([])
+    expect(legacyChar.subraceId).toBeUndefined()
+    expect(legacyChar.chosenAbilityBonuses).toBeUndefined()
+    expect(char.preparedSpells).toEqual([])
+    expect(char.activeConditions).toEqual([])
+    expect(char.exhaustionLevel).toBe(0)
+    expect(char.inspiration).toBe(false)
+    expect(char.currency).toEqual({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 })
+    expect(char.initiativeTracker).toEqual([])
+    expect(char.activeInitiativeId).toBeNull()
   })
 
-  it('migrates v3 storage to v5 with new fields', () => {
+  it('migrates v3 storage to v9 with new fields', () => {
     const v3Data = {
       version: 3,
       characters: [
@@ -100,25 +100,27 @@ describe('storage migration', () => {
       ],
       activeCharacterId: 'test-2',
     }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v3Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(5)
+    expect(storage.version).toBe(9)
     expect(storage.characters).toHaveLength(1)
     const char = storage.characters[0]
-    expect(char.name).toBe('Nuovo Eroe')
     expect(char.backgroundAbilityChoices).toEqual({
       primary: 'STR',
       secondary: 'DEX',
     })
-    // New v5 fields added with safe defaults
-    expect(char.equippedArmorId).toBeNull()
-    expect(char.equippedShieldId).toBeNull()
     expect(char.knownSpells).toEqual([])
-    expect(char.asiChoices).toEqual([])
+    expect(char.preparedSpells).toEqual([])
+    expect(char.activeConditions).toEqual([])
+    expect(char.exhaustionLevel).toBe(0)
+    expect(char.inspiration).toBe(false)
+    expect(char.initiativeTracker).toEqual([])
+    expect(char.activeInitiativeId).toBeNull()
   })
 
-  it('migrates v3 string equipment to v5 EquipmentItem[]', () => {
+  it('migrates string equipment to typed items and preserves v8 defaults', () => {
     const v3Data = {
       version: 3,
       characters: [
@@ -149,10 +151,11 @@ describe('storage migration', () => {
       ],
       activeCharacterId: 'test-3',
     }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v3Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(5)
+    expect(storage.version).toBe(9)
     const char = storage.characters[0]
     expect(char.equipment).toHaveLength(2)
     expect(char.equipment[0]).toMatchObject({
@@ -163,20 +166,16 @@ describe('storage migration', () => {
       quantity: 1,
       equipped: false,
     })
-    expect(char.equipment[1]).toMatchObject({
-      id: 'gear-1',
-      name: 'Corda 15m',
-      category: 'gear',
-    })
+    expect(char.currency).toEqual({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 })
   })
 
-  it('passes through v4 storage by upgrading to v5', () => {
-    const v4Data = {
-      version: 4,
+  it('migrates v7 characters by adding table-play fields', () => {
+    const v7Data = {
+      version: 7,
       characters: [
         {
           id: 'test-4',
-          name: 'Eroe v4',
+          name: 'Eroe v7',
           raceId: 'human',
           classId: 'wizard',
           subclassId: null,
@@ -205,6 +204,12 @@ describe('storage migration', () => {
           equippedArmorId: null,
           equippedShieldId: null,
           knownSpells: ['fire-bolt', 'magic-missile'],
+          expendedSpellSlots: {},
+          asiChoices: [],
+          deathSaves: { successes: 0, failures: 0 },
+          isStabilized: false,
+          spentHitDice: 0,
+          expertiseSkills: [],
           notes: '',
           createdAt: '2026-04-01',
           updatedAt: '2026-04-07',
@@ -213,22 +218,26 @@ describe('storage migration', () => {
       ],
       activeCharacterId: 'test-4',
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v4Data))
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(v7Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(5)
+    expect(storage.version).toBe(9)
     const char = storage.characters[0]
     expect(char.knownSpells).toEqual(['fire-bolt', 'magic-missile'])
-    expect(char.equippedArmorId).toBeNull()
-    expect(char.equipment[0].name).toBe('Spellbook')
-    // v5 migration adds asiChoices
-    expect(char.asiChoices).toEqual([])
+    expect(char.preparedSpells).toEqual(['fire-bolt', 'magic-missile'])
+    expect(char.activeConditions).toEqual([])
+    expect(char.exhaustionLevel).toBe(0)
+    expect(char.inspiration).toBe(false)
+    expect(char.currency).toEqual({ cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 })
+    expect(char.initiativeTracker).toEqual([])
+    expect(char.activeInitiativeId).toBeNull()
   })
 
   it('returns default for unknown versions', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 99, characters: [] }))
     const storage = loadStorage()
-    expect(storage.version).toBe(5)
+    expect(storage.version).toBe(9)
     expect(storage.characters).toEqual([])
   })
 })

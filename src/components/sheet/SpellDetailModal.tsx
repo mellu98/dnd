@@ -41,6 +41,17 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
 export function SpellDetailModal({ spell, onClose, characterLevel = 1 }: SpellDetailModalProps) {
   const cantripTier = getCantripTier(characterLevel)
   const scaledDamage = spell.level === 0 && spell.cantripScaling ? spell.cantripScaling.damageTiers[cantripTier] : null
+  const levelLabels: Record<number, string> = {
+    1: it.spell_level_1,
+    2: it.spell_level_2,
+    3: it.spell_level_3,
+    4: it.spell_level_4,
+    5: it.spell_level_5,
+    6: it.spell_level_6,
+    7: it.spell_level_7,
+    8: it.spell_level_8,
+    9: it.spell_level_9,
+  }
   return (
     /* Overlay */
     <div
@@ -75,7 +86,7 @@ export function SpellDetailModal({ spell, onClose, characterLevel = 1 }: SpellDe
               </span>
             ) : (
               <span className="px-2.5 py-1 rounded-full bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">
-                {spell.level === 1 ? it.spell_level_1 : spell.level === 2 ? it.spell_level_2 : it.spell_level_3}
+                {levelLabels[spell.level] ?? `Livello ${spell.level}`}
               </span>
             )}
             <span className="px-2.5 py-1 rounded-full bg-bg-primary/60 text-text-secondary text-xs border border-border">

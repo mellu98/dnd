@@ -36,6 +36,8 @@ export function CharacterSheet() {
     dispatch({ type: 'SET_LEVEL', level: newLevel })
   }
 
+  const canQuickSwitch = state.savedCharacters.length > 1
+
   return (
     <div className="min-h-screen bg-bg-primary relative">
       {/* Background decoration */}
@@ -73,28 +75,54 @@ export function CharacterSheet() {
               </div>
             </div>
 
-            {/* Level Stepper */}
-            <div className="flex items-center gap-2 bg-bg-card/80 border border-border rounded-xl px-3 py-1.5">
-              <button
-                onClick={() => handleLevelChange(-1)}
-                disabled={character.level <= 1}
-                className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
-              >
-                −
-              </button>
-              <div className="text-center min-w-[60px]">
-                <span className="text-[10px] text-text-muted uppercase tracking-wider block leading-none">
-                  {it.level}
-                </span>
-                <span className="text-2xl font-black text-accent-gold tabular-nums">{character.level}</span>
+            <div className="flex items-center gap-3 flex-wrap justify-end">
+              {canQuickSwitch && (
+                <label className="flex flex-col gap-1 min-w-[220px]">
+                  <span className="text-[10px] text-text-muted uppercase tracking-wider">
+                    {it.quick_switch_label}
+                  </span>
+                  <select
+                    value={character.id}
+                    onChange={(event) => {
+                      const nextCharacter = state.savedCharacters.find((saved) => saved.id === event.target.value)
+                      if (nextCharacter) {
+                        dispatch({ type: 'LOAD_CHARACTER', character: nextCharacter })
+                      }
+                    }}
+                    className="bg-bg-card/80 border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-blue/40"
+                  >
+                    {state.savedCharacters.map((saved) => (
+                      <option key={saved.id} value={saved.id}>
+                        {saved.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {/* Level Stepper */}
+              <div className="flex items-center gap-2 bg-bg-card/80 border border-border rounded-xl px-3 py-1.5">
+                <button
+                  onClick={() => handleLevelChange(-1)}
+                  disabled={character.level <= 1}
+                  className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
+                >
+                  −
+                </button>
+                <div className="text-center min-w-[60px]">
+                  <span className="text-[10px] text-text-muted uppercase tracking-wider block leading-none">
+                    {it.level}
+                  </span>
+                  <span className="text-2xl font-black text-accent-gold tabular-nums">{character.level}</span>
+                </div>
+                <button
+                  onClick={() => handleLevelChange(1)}
+                  disabled={character.level >= 20}
+                  className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
+                >
+                  +
+                </button>
               </div>
-              <button
-                onClick={() => handleLevelChange(1)}
-                disabled={character.level >= 20}
-                className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
-              >
-                +
-              </button>
             </div>
           </div>
         </div>

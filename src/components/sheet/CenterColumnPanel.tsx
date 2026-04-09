@@ -23,7 +23,7 @@ export function CenterColumnPanel({ stats }: Props) {
       {/* Equipment */}
       <div className="bg-bg-card/60 border border-border/50 rounded-xl p-4">
         <h3 className="text-xs font-semibold text-accent-gold uppercase tracking-wider mb-3">{it.tab_equipment}</h3>
-        <EquipmentPanel />
+        <EquipmentPanel stats={stats} />
       </div>
     </div>
   )

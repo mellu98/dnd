@@ -6,6 +6,9 @@ import { getClassById } from '../../data/classes'
 export function RestButtons() {
   const { state, dispatch } = useCharacterContext()
   const character = state.character
+  const [showShortRest, setShowShortRest] = useState(false)
+  const [diceToSpend, setDiceToSpend] = useState(1)
+
   if (!character) return null
 
   const cls = getClassById(character.classId)
@@ -14,17 +17,10 @@ export function RestButtons() {
   const spentDice = character.spentHitDice ?? 0
   const remainingDice = totalHitDice - spentDice
 
-  const [showShortRest, setShowShortRest] = useState(false)
-  const [diceToSpend, setDiceToSpend] = useState(1)
-
   const handleShortRest = () => {
     dispatch({ type: 'SHORT_REST', hitDiceToSpend: diceToSpend })
     setShowShortRest(false)
     setDiceToSpend(1)
-  }
-
-  const handleLongRest = () => {
-    dispatch({ type: 'LONG_REST' })
   }
 
   return (
@@ -34,38 +30,37 @@ export function RestButtons() {
       </h3>
 
       <div className="space-y-2">
-        {/* Short Rest */}
         <button
-          onClick={() => setShowShortRest(!showShortRest)}
+          onClick={() => setShowShortRest((value) => !value)}
           className="w-full py-2 rounded-lg bg-accent-blue/10 text-accent-blue border border-accent-blue/30 text-sm font-semibold hover:bg-accent-blue/20 transition-all"
         >
-          Riposo Breve
+          {it.rest_short}
         </button>
 
         {showShortRest && (
           <div className="bg-bg-secondary rounded-lg border border-border p-3 space-y-3 animate-fade-in">
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-muted">
-                Dadi vita: {remainingDice}/{totalHitDice} ({hitDieType})
+                {it.rest_hit_dice_remaining}: {remainingDice}/{totalHitDice} ({hitDieType})
               </span>
             </div>
 
             {remainingDice > 0 ? (
               <>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-text-muted">Dadi da spendere:</span>
+                  <span className="text-xs text-text-muted">{it.rest_spend_hit_dice}:</span>
                   <div className="flex gap-1">
-                    {Array.from({ length: Math.min(remainingDice, 10) }).map((_, i) => (
+                    {Array.from({ length: Math.min(remainingDice, 10) }).map((_, index) => (
                       <button
-                        key={i}
-                        onClick={() => setDiceToSpend(i + 1)}
+                        key={index}
+                        onClick={() => setDiceToSpend(index + 1)}
                         className={`w-7 h-7 rounded text-xs font-bold transition-all ${
-                          i + 1 === diceToSpend
+                          index + 1 === diceToSpend
                             ? 'bg-accent-emerald text-white border-accent-emerald'
                             : 'bg-bg-card text-text-secondary border-border'
                         } border`}
                       >
-                        {i + 1}
+                        {index + 1}
                       </button>
                     ))}
                     {remainingDice > 10 && (
@@ -77,21 +72,20 @@ export function RestButtons() {
                   onClick={handleShortRest}
                   className="w-full py-1.5 rounded-lg bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30 text-xs font-semibold hover:bg-accent-emerald/25 transition-all"
                 >
-                  Cura con {diceToSpend}x {hitDieType}
+                  {it.rest_heal_with} {diceToSpend}x {hitDieType}
                 </button>
               </>
             ) : (
-              <p className="text-xs text-text-muted text-center italic">Nessun dado vita rimanente</p>
+              <p className="text-xs text-text-muted text-center italic">{it.rest_no_hit_dice}</p>
             )}
           </div>
         )}
 
-        {/* Long Rest */}
         <button
-          onClick={handleLongRest}
+          onClick={() => dispatch({ type: 'LONG_REST' })}
           className="w-full py-2 rounded-lg bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/30 text-sm font-semibold hover:bg-accent-emerald/20 transition-all"
         >
-          Riposo Lungo
+          {it.rest_long}
         </button>
       </div>
     </div>

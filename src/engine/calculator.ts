@@ -53,6 +53,7 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
 export function calculateAllStats(character: Character): CalculatedStats {
   // Resolve species size (sizeIT) — defaults to "Media" if species not found
   const race = getRaceById(character.raceId)
+  const cls = getClassById(character.classId)
   const sizeIT = race?.sizeIT ?? 'Media'
 
   const aggregated = aggregateBonuses({
@@ -86,6 +87,16 @@ export function calculateAllStats(character: Character): CalculatedStats {
 
   // Proficiency bonus
   const profBonus = proficiencyBonus(character.level)
+
+  const spellcasting = cls?.spellcasting
+    ? {
+        ability: cls.spellcasting.ability,
+        modifier: abilityModifiers[cls.spellcasting.ability],
+        attackBonus: abilityModifiers[cls.spellcasting.ability] + profBonus,
+        saveDC: 8 + abilityModifiers[cls.spellcasting.ability] + profBonus,
+        knownType: cls.spellcasting.knownType,
+      }
+    : null
 
   // Collect all skill proficiencies from character choices + background
   const skillProfSet = new Set<SkillName>(character.skillProficiencies)
@@ -140,7 +151,6 @@ export function calculateAllStats(character: Character): CalculatedStats {
   // currentHp is recalculated below after applying feat bonuses
 
   // Spell slot tracker
-  const cls = getClassById(character.classId)
   const slotArray = cls?.spellSlotTable?.[character.level] ?? []
   const spellSlots = slotArray.map((max, idx) => {
     const spellLevel = idx + 1
@@ -222,5 +232,6 @@ export function calculateAllStats(character: Character): CalculatedStats {
     darkvision: aggregated.darkvision,
     sizeIT,
     spellSlots,
+    spellcasting,
   }
 }

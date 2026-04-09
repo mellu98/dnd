@@ -2,106 +2,181 @@ import { useMemo, useState } from 'react'
 import { getSpellsByClass } from '../../data/spells'
 import type { Spell } from '../../types'
 import { useCharacterDispatch } from '../../context/CharacterContext'
+import { it } from '../../i18n/it'
 
 interface SpellPickerModalProps {
   classId: string
-  /** Maximum spell level the character can cast (0 = cantrips only, -1 = no spellcasting) */
   maxSpellLevel: number
   knownSpells: string[]
+  preparedSpells: string[]
+  spellcastingMode: 'prepared' | 'known' | 'all'
   onClose: () => void
 }
 
-function SpellRow({ spell, isKnown, onToggle }: { spell: Spell; isKnown: boolean; onToggle: () => void }) {
-  return (
-    <li
-      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 border transition-all cursor-pointer group ${
-        isKnown
-          ? 'bg-accent-purple/10 border-accent-purple/30 hover:bg-accent-purple/20'
-          : 'bg-bg-card/50 border-border/50 hover:bg-bg-card hover:border-border-light'
-      }`}
-      onClick={onToggle}
-    >
-      {/* Checkbox */}
-      <span
-        className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-          isKnown
-            ? 'bg-accent-purple border-accent-purple'
-            : 'bg-transparent border-border/60 group-hover:border-accent-purple/50'
-        }`}
-      >
-        {isKnown && (
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
-          </svg>
-        )}
-      </span>
+function SpellRow({
+  spell,
+  known,
+  prepared,
+  mode,
+  onToggleKnown,
+  onTogglePrepared,
+}: {
+  spell: Spell
+  known: boolean
+  prepared: boolean
+  mode: 'prepared' | 'known' | 'all'
+  onToggleKnown: () => void
+  onTogglePrepared: () => void
+}) {
+  const isCantrip = spell.level === 0
 
-      {/* Spell info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span
-            className={`text-sm font-semibold truncate transition-colors ${
-              isKnown ? 'text-accent-purple' : 'text-text-primary group-hover:text-accent-gold'
+  return (
+    <li className="rounded-lg px-3 py-2.5 border bg-bg-card/50 border-border/50">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-text-primary truncate">{spell.nameIT}</span>
+            {spell.concentration && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-red/15 text-accent-red/80 border border-accent-red/30 font-medium">
+                C
+              </span>
+            )}
+            {spell.ritual && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-emerald/15 text-accent-emerald/80 border border-accent-emerald/30 font-medium">
+                R
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-[11px] text-text-muted">{spell.schoolIT}</span>
+            <span className="text-text-muted/40">Â·</span>
+            <span className="text-[11px] text-text-muted">{spell.castingTimeIT}</span>
+          </div>
+        </div>
+
+        {mode === 'known' && (
+          <button
+            onClick={onToggleKnown}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+              known
+                ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/40'
+                : 'bg-bg-secondary text-text-secondary border-border hover:text-text-primary'
             }`}
           >
-            {spell.nameIT}
-          </span>
-          {spell.concentration && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-red/15 text-accent-red/80 border border-accent-red/30 font-medium shrink-0">
-              C
-            </span>
-          )}
-          {spell.ritual && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-emerald/15 text-accent-emerald/80 border border-accent-emerald/30 font-medium shrink-0">
-              R
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-[11px] text-text-muted">{spell.schoolIT}</span>
-          <span className="text-text-muted/40">·</span>
-          <span className="text-[11px] text-text-muted">{spell.castingTimeIT}</span>
-        </div>
+            {known ? it.known_short : it.learn_spell_label}
+          </button>
+        )}
+
+        {mode === 'prepared' && (
+          <button
+            onClick={isCantrip ? onToggleKnown : onTogglePrepared}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+              (isCantrip ? known : prepared)
+                ? 'bg-accent-emerald/20 text-accent-emerald border-accent-emerald/40'
+                : 'bg-bg-secondary text-text-secondary border-border hover:text-text-primary'
+            }`}
+          >
+            {isCantrip
+              ? (known ? it.known_short : it.learn_spell_label)
+              : (prepared ? it.prepared_short : it.prepare_spell_label)}
+          </button>
+        )}
+
+        {mode === 'all' && (
+          <div className="flex flex-col gap-1 shrink-0">
+            <button
+              onClick={onToggleKnown}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                known
+                  ? 'bg-accent-purple/20 text-accent-purple border-accent-purple/40'
+                  : 'bg-bg-secondary text-text-secondary border-border hover:text-text-primary'
+              }`}
+            >
+              {known ? it.known_short : it.learn_spell_label}
+            </button>
+            {!isCantrip && (
+              <button
+                onClick={onTogglePrepared}
+                disabled={!known}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                  prepared
+                    ? 'bg-accent-emerald/20 text-accent-emerald border-accent-emerald/40'
+                    : 'bg-bg-secondary text-text-secondary border-border hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed'
+                }`}
+              >
+                {prepared ? it.prepared_short : it.prepare_spell_label}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </li>
   )
 }
 
-export function SpellPickerModal({ classId, maxSpellLevel, knownSpells, onClose }: SpellPickerModalProps) {
+export function SpellPickerModal({
+  classId,
+  maxSpellLevel,
+  knownSpells,
+  preparedSpells,
+  spellcastingMode,
+  onClose,
+}: SpellPickerModalProps) {
   const dispatch = useCharacterDispatch()
   const [search, setSearch] = useState('')
 
   const allSpells = useMemo(() => getSpellsByClass(classId), [classId])
+  const castableSpells = useMemo(
+    () => allSpells.filter((spell) => spell.level === 0 || spell.level <= maxSpellLevel),
+    [allSpells, maxSpellLevel],
+  )
 
-  // Filter by max spell level the character can cast
-  const castableSpells = useMemo(() => allSpells.filter((s) => s.level <= maxSpellLevel), [allSpells, maxSpellLevel])
-
-  // Apply search filter
   const filteredSpells = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return castableSpells
+    const query = search.trim().toLowerCase()
+    if (!query) return castableSpells
+
     return castableSpells.filter(
-      (s) =>
-        s.nameIT.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.schoolIT.toLowerCase().includes(q),
+      (spell) =>
+        spell.nameIT.toLowerCase().includes(query)
+        || spell.name.toLowerCase().includes(query)
+        || spell.schoolIT.toLowerCase().includes(query),
     )
   }, [castableSpells, search])
 
-  // Group by level
   const grouped = useMemo(() => {
     const map = new Map<number, Spell[]>()
     for (const spell of filteredSpells) {
-      const arr = map.get(spell.level) ?? []
-      arr.push(spell)
-      map.set(spell.level, arr)
+      const bucket = map.get(spell.level) ?? []
+      bucket.push(spell)
+      map.set(spell.level, bucket)
     }
-    // Sort levels ascending
     return Array.from(map.entries()).sort(([a], [b]) => a - b)
   }, [filteredSpells])
 
-  const knownCount = knownSpells.length
+  const knownSpellSet = new Set(knownSpells)
+  const preparedSpellSet = new Set(preparedSpells)
 
-  const handleToggle = (spellId: string) => {
-    dispatch({ type: 'TOGGLE_SPELL', spellId })
+  const toggleKnown = (spellId: string) => {
+    const next = knownSpellSet.has(spellId)
+      ? knownSpells.filter((id) => id !== spellId)
+      : [...knownSpells, spellId]
+
+    dispatch({ type: 'SET_KNOWN_SPELLS', spellIds: next })
+
+    if (spellcastingMode === 'all' && knownSpellSet.has(spellId)) {
+      dispatch({
+        type: 'SET_PREPARED_SPELLS',
+        spellIds: preparedSpells.filter((id) => id !== spellId),
+      })
+    }
+  }
+
+  const togglePrepared = (spellId: string) => {
+    const next = preparedSpellSet.has(spellId)
+      ? preparedSpells.filter((id) => id !== spellId)
+      : [...preparedSpells, spellId]
+
+    dispatch({ type: 'SET_PREPARED_SPELLS', spellIds: next })
   }
 
   return (
@@ -110,17 +185,16 @@ export function SpellPickerModal({ classId, maxSpellLevel, knownSpells, onClose 
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg bg-bg-secondary border border-border-light rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in"
-        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl bg-bg-secondary border border-border-light rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in"
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* Header */}
         <div className="bg-bg-card/60 border-b border-border px-5 py-4 shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-text-primary leading-tight">Gestisci Incantesimi</h2>
+              <h2 className="text-base font-bold text-text-primary leading-tight">{it.manage_spells}</h2>
               <p className="text-xs text-text-muted mt-0.5">
-                {knownCount} conosciut{knownCount === 1 ? 'o' : 'i'} · livello max:{' '}
-                {maxSpellLevel === 0 ? 'solo trucchi' : `${maxSpellLevel}°`}
+                {it.spells_known_label}: {knownSpells.length}
+                {spellcastingMode !== 'known' ? ` Â· ${it.spells_prepared_label}: ${preparedSpells.length}` : ''}
               </p>
             </div>
             <button
@@ -132,32 +206,29 @@ export function SpellPickerModal({ classId, maxSpellLevel, knownSpells, onClose 
             </button>
           </div>
 
-          {/* Search */}
           <div className="mt-3 relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">
-              🔍
+              ðŸ”
             </span>
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cerca incantesimo..."
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={it.search_spell_placeholder}
               className="w-full bg-bg-primary border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-purple/60 transition-colors"
             />
           </div>
         </div>
 
-        {/* Body — scrollable */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           {grouped.length === 0 && (
             <p className="text-text-secondary text-sm italic text-center py-6">
-              {search ? `Nessun risultato per "${search}"` : 'Nessun incantesimo disponibile'}
+              {search ? `${it.no_results_prefix} "${search}"` : it.no_spells}
             </p>
           )}
 
           {grouped.map(([level, spells]) => (
             <div key={level}>
-              {/* Level heading */}
               <div className="flex items-center gap-2 mb-2">
                 <span
                   className={`text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${
@@ -166,21 +237,21 @@ export function SpellPickerModal({ classId, maxSpellLevel, knownSpells, onClose 
                       : 'text-accent-blue bg-accent-blue/10 border-accent-blue/25'
                   }`}
                 >
-                  {level === 0 ? 'Trucchi' : `${level}° Livello`}
+                  {level === 0 ? 'Trucchi' : `${level}Â° Livello`}
                 </span>
-                <span className="text-[11px] text-text-muted">
-                  {spells.filter((s) => knownSpells.includes(s.id)).length}/{spells.length}
-                </span>
+                <span className="text-[11px] text-text-muted">{spells.length}</span>
               </div>
 
-              {/* Spell list */}
               <ul className="space-y-1.5">
                 {spells.map((spell) => (
                   <SpellRow
                     key={spell.id}
                     spell={spell}
-                    isKnown={knownSpells.includes(spell.id)}
-                    onToggle={() => handleToggle(spell.id)}
+                    known={knownSpellSet.has(spell.id)}
+                    prepared={preparedSpellSet.has(spell.id)}
+                    mode={spellcastingMode}
+                    onToggleKnown={() => toggleKnown(spell.id)}
+                    onTogglePrepared={() => togglePrepared(spell.id)}
                   />
                 ))}
               </ul>
@@ -188,13 +259,12 @@ export function SpellPickerModal({ classId, maxSpellLevel, knownSpells, onClose 
           ))}
         </div>
 
-        {/* Footer */}
         <div className="border-t border-border px-5 py-3 shrink-0">
           <button
             onClick={onClose}
             className="w-full py-2 rounded-lg bg-bg-card border border-border text-sm text-text-secondary hover:text-text-primary hover:border-border-light transition-all font-medium"
           >
-            Chiudi
+            {it.spell_picker_close}
           </button>
         </div>
       </div>

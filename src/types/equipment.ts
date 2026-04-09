@@ -20,6 +20,7 @@ export interface EquipmentItem extends Sourced {
   // General
   equipped: boolean
   magicalBonus?: number
+  ammoCount?: number
 }
 
 export interface ArmorData extends Sourced {

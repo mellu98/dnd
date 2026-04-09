@@ -3,8 +3,52 @@ import { aggregateBonuses } from './bonus-aggregator'
 import { abilityModifier } from '../utils/modifiers'
 import { proficiencyBonus } from '../utils/proficiency-bonus'
 import { calculateAllStats } from './calculator'
-import type { SkillName } from '../types'
+import type { Character, SkillName } from '../types'
 import { it as translations } from '../i18n/it'
+
+function makeCharacter(overrides: Partial<Character>): Character {
+  return {
+    id: 'test',
+    name: 'Test',
+    raceId: 'human',
+    classId: 'fighter',
+    subclassId: null,
+    backgroundId: 'guard',
+    backgroundAbilityChoices: null,
+    level: 1,
+    abilityScores: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+    hp: { max: 0, current: 0, temporary: 0 },
+    skillProficiencies: [],
+    chosenLanguages: [],
+    alignment: '',
+    personalityTraits: '',
+    ideals: '',
+    bonds: '',
+    flaws: '',
+    equipment: [],
+    equippedArmorId: null,
+    equippedShieldId: null,
+    knownSpells: [],
+    preparedSpells: [],
+    expendedSpellSlots: {},
+    asiChoices: [],
+    deathSaves: { successes: 0, failures: 0 },
+    activeConditions: [],
+    exhaustionLevel: 0,
+    inspiration: false,
+    isStabilized: false,
+    spentHitDice: 0,
+    expertiseSkills: [],
+    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+    initiativeTracker: [],
+    activeInitiativeId: null,
+    notes: '',
+    createdAt: '2024-01-01',
+    updatedAt: '2024-01-01',
+    imageUrl: null,
+    ...overrides,
+  }
+}
 
 describe('aggregateBonuses', () => {
   it('aggregates species features (no ability bonuses)', () => {
@@ -66,39 +110,15 @@ describe('utility functions', () => {
 
 describe('calculateAllStats', () => {
   it('returns a complete stats object', () => {
-    const stats = calculateAllStats({
-      id: 'test',
+    const stats = calculateAllStats(makeCharacter({
       raceId: 'elf',
       classId: 'barbarian',
       backgroundId: 'acolyte',
       backgroundAbilityChoices: { primary: 'WIS', secondary: 'INT' },
-      level: 1,
       abilityScores: { STR: 14, DEX: 16, CON: 12, INT: 10, WIS: 10, CHA: 8 },
-      hp: { max: 0, current: 0, temporary: 0 },
       skillProficiencies: ['acrobatics', 'perception'],
       chosenLanguages: ['Elvish'],
-      name: 'Test',
-      subclassId: null,
-      alignment: '',
-      personalityTraits: '',
-      ideals: '',
-      bonds: '',
-      flaws: '',
-      equipment: [],
-      equippedArmorId: null,
-      equippedShieldId: null,
-      knownSpells: [],
-      expendedSpellSlots: {},
-      asiChoices: [],
-      deathSaves: { successes: 0, failures: 0 },
-      isStabilized: false,
-      spentHitDice: 0,
-      expertiseSkills: [],
-      notes: '',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-      imageUrl: null,
-    })
+    }))
     expect(stats.speed).toBeGreaterThanOrEqual(25)
     expect(stats.passivePerception).toBeGreaterThanOrEqual(10)
     expect(stats.armorClass).toBeGreaterThanOrEqual(10)
@@ -106,39 +126,14 @@ describe('calculateAllStats', () => {
   })
 
   it('adds proficiency bonus to proficient skills', () => {
-    const stats = calculateAllStats({
-      id: 'test',
-      name: 'Test',
+    const stats = calculateAllStats(makeCharacter({
       raceId: 'human',
       classId: 'fighter',
-      subclassId: null,
       backgroundId: 'criminal', // criminal gives stealth + deception, no perception
       backgroundAbilityChoices: { primary: 'DEX', secondary: 'INT' },
-      level: 1,
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
-      hp: { max: 0, current: 0, temporary: 0 },
       skillProficiencies: ['acrobatics'],
-      chosenLanguages: [],
-      alignment: '',
-      personalityTraits: '',
-      ideals: '',
-      bonds: '',
-      flaws: '',
-      equipment: [],
-      equippedArmorId: null,
-      equippedShieldId: null,
-      knownSpells: [],
-      expendedSpellSlots: {},
-      asiChoices: [],
-      deathSaves: { successes: 0, failures: 0 },
-      isStabilized: false,
-      spentHitDice: 0,
-      expertiseSkills: [],
-      notes: '',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-      imageUrl: null,
-    })
+    }))
     // acrobatics is DEX-based, DEX 12 + 2 (background primary DEX) = 14 → mod +2, prof +2 → +4
     expect(stats.skillModifiers['acrobatics']).toBe(4)
     // perception without prof, WIS 10 → mod +0 (no ASI to WIS in this build)
@@ -146,39 +141,13 @@ describe('calculateAllStats', () => {
   })
 
   it('applies background ASI to final ability scores', () => {
-    const stats = calculateAllStats({
-      id: 'test',
-      name: 'Test',
+    const stats = calculateAllStats(makeCharacter({
       raceId: 'human',
       classId: 'fighter',
-      subclassId: null,
       backgroundId: 'guard',
       backgroundAbilityChoices: { primary: 'STR', secondary: 'WIS' },
-      level: 1,
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
-      hp: { max: 0, current: 0, temporary: 0 },
-      skillProficiencies: [],
-      chosenLanguages: [],
-      alignment: '',
-      personalityTraits: '',
-      ideals: '',
-      bonds: '',
-      flaws: '',
-      equipment: [],
-      equippedArmorId: null,
-      equippedShieldId: null,
-      knownSpells: [],
-      expendedSpellSlots: {},
-      asiChoices: [],
-      deathSaves: { successes: 0, failures: 0 },
-      isStabilized: false,
-      spentHitDice: 0,
-      expertiseSkills: [],
-      notes: '',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-      imageUrl: null,
-    })
+    }))
     // STR 14 + 2 (background primary) = 16 → mod +3
     expect(stats.finalAbilityScores.STR).toBe(16)
     expect(stats.abilityModifiers.STR).toBe(3)

@@ -26,6 +26,29 @@ export interface BackgroundAbilityChoices {
   secondary: AbilityName
 }
 
+export interface CurrencyPouch {
+  cp: number
+  sp: number
+  ep: number
+  gp: number
+  pp: number
+}
+
+export interface SpellcastingStats {
+  ability: AbilityName
+  modifier: number
+  attackBonus: number
+  saveDC: number
+  knownType: 'prepared' | 'known' | 'all'
+}
+
+export interface InitiativeEntry {
+  id: string
+  name: string
+  initiative: number
+  notes: string
+}
+
 export interface Character {
   id: string
   name: string
@@ -48,18 +71,28 @@ export interface Character {
   equippedArmorId: string | null
   equippedShieldId: string | null
   knownSpells: string[]
+  preparedSpells: string[]
   /** Tracks how many slots have been expended per spell level (key = spell level 1-9) */
   expendedSpellSlots: Record<number, number>
   /** ASI choices made at class feature levels */
   asiChoices: ASIChoice[]
   /** Death saving throws (only relevant when hp.current === 0) */
   deathSaves: DeathSaves
+  /** Active combat conditions on the character */
+  activeConditions: string[]
+  /** Exhaustion level from 0 to 6 */
+  exhaustionLevel: number
+  /** D&D Inspiration is binary */
+  inspiration: boolean
   /** Whether the character is stabilized */
   isStabilized: boolean
   /** Hit dice spent (used for short rest recovery) */
   spentHitDice: number
   /** Skills with Expertise (double proficiency bonus) */
   expertiseSkills: SkillName[]
+  currency: CurrencyPouch
+  initiativeTracker: InitiativeEntry[]
+  activeInitiativeId: string | null
   notes: string
   createdAt: string
   updatedAt: string
@@ -86,4 +119,5 @@ export interface CalculatedStats {
   sizeIT: string
   /** Spell slot tracker per spell level */
   spellSlots: { level: number; max: number; expended: number }[]
+  spellcasting: SpellcastingStats | null
 }

@@ -66,11 +66,21 @@ type Action =
   | { type: 'ADD_EQUIPMENT_ITEM'; item: EquipmentItem }
   | { type: 'REMOVE_EQUIPMENT_ITEM'; itemId: string }
   | { type: 'TOGGLE_EQUIPMENT'; itemId: string }
+  | { type: 'UPDATE_ITEM_AMMO'; itemId: string; amount: number }
   | { type: 'SET_KNOWN_SPELLS'; spellIds: string[] }
   | { type: 'TOGGLE_SPELL'; spellId: string }
+  | { type: 'SET_PREPARED_SPELLS'; spellIds: string[] }
+  | { type: 'TOGGLE_PREPARED_SPELL'; spellId: string }
   | { type: 'EXPEND_SPELL_SLOT'; level: number }
   | { type: 'RESTORE_SPELL_SLOT'; level: number }
   | { type: 'RESTORE_ALL_SPELL_SLOTS' }
+  | { type: 'SET_ACTIVE_CONDITIONS'; conditions: string[] }
+  | { type: 'SET_EXHAUSTION_LEVEL'; level: number }
+  | { type: 'TOGGLE_INSPIRATION' }
+  | { type: 'SET_INSPIRATION'; value: boolean }
+  | { type: 'UPDATE_CURRENCY'; denomination: keyof Character['currency']; amount: number }
+  | { type: 'SET_INITIATIVE_TRACKER'; entries: Character['initiativeTracker'] }
+  | { type: 'SET_ACTIVE_INITIATIVE'; entryId: string | null }
   | { type: 'UPDATE_HP_MAX'; max: number }
   | { type: 'LOAD_CHARACTER'; character: Character }
   | { type: 'NEW_CHARACTER' }
@@ -111,6 +121,26 @@ function deduplicateFeatures(features: Feature[]): Feature[] {
     seen.add(key)
     return true
   })
+}
+
+function upsertSavedCharacter(savedCharacters: Character[], character: Character): Character[] {
+  const index = savedCharacters.findIndex((saved) => saved.id === character.id)
+  if (index === -1) return [...savedCharacters, character]
+
+  const next = [...savedCharacters]
+  next[index] = character
+  return next
+}
+
+function withUpdatedCharacter(state: CharacterState, updater: (character: Character) => Character): CharacterState {
+  if (!state.character) return state
+
+  const updatedCharacter = updater(state.character)
+  return {
+    ...state,
+    character: updatedCharacter,
+    savedCharacters: upsertSavedCharacter(state.savedCharacters, updatedCharacter),
+  }
 }
 
 function reducer(state: CharacterState, action: Action): CharacterState {
@@ -159,171 +189,239 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         },
       }
     case 'TAKE_DAMAGE': {
-      if (!state.character) return state
-      const hp = { ...state.character.hp }
-      let remaining = action.amount
-      if (hp.temporary > 0) {
-        if (remaining <= hp.temporary) {
-          hp.temporary -= remaining
-          remaining = 0
-        } else {
-          remaining -= hp.temporary
-          hp.temporary = 0
+      return withUpdatedCharacter(state, (character) => {
+        const hp = { ...character.hp }
+        let remaining = action.amount
+        if (hp.temporary > 0) {
+          if (remaining <= hp.temporary) {
+            hp.temporary -= remaining
+            remaining = 0
+          } else {
+            remaining -= hp.temporary
+            hp.temporary = 0
+          }
         }
-      }
-      hp.current = Math.max(0, hp.current - remaining)
-      return { ...state, character: { ...state.character, hp, updatedAt: new Date().toISOString() } }
+        hp.current = Math.max(0, hp.current - remaining)
+        return { ...character, hp, updatedAt: new Date().toISOString() }
+      })
     }
     case 'HEAL': {
-      if (!state.character) return state
-      const hp = { ...state.character.hp }
-      hp.current = Math.min(hp.max, hp.current + action.amount)
-      return { ...state, character: { ...state.character, hp, updatedAt: new Date().toISOString() } }
+      return withUpdatedCharacter(state, (character) => {
+        const hp = { ...character.hp, current: Math.min(character.hp.max, character.hp.current + action.amount) }
+        return { ...character, hp, updatedAt: new Date().toISOString() }
+      })
     }
     case 'SET_TEMP_HP': {
-      if (!state.character) return state
-      const hp = { ...state.character.hp }
-      hp.temporary = Math.max(hp.temporary, action.amount)
-      return { ...state, character: { ...state.character, hp, updatedAt: new Date().toISOString() } }
+      return withUpdatedCharacter(state, (character) => {
+        const hp = { ...character.hp, temporary: Math.max(character.hp.temporary, action.amount) }
+        return { ...character, hp, updatedAt: new Date().toISOString() }
+      })
     }
     case 'SET_LEVEL': {
-      if (!state.character) return state
-      return { ...state, character: { ...state.character, level: action.level, updatedAt: new Date().toISOString() } }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        level: action.level,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'UPDATE_HP_MAX': {
-      if (!state.character) return state
-      const hp = { ...state.character.hp, max: action.max }
-      hp.current = Math.min(hp.current, hp.max)
-      return { ...state, character: { ...state.character, hp, updatedAt: new Date().toISOString() } }
+      return withUpdatedCharacter(state, (character) => {
+        const hp = { ...character.hp, max: action.max }
+        hp.current = Math.min(hp.current, hp.max)
+        return { ...character, hp, updatedAt: new Date().toISOString() }
+      })
     }
     case 'UPDATE_EQUIPMENT': {
       // Legacy action: converts string[] to EquipmentItem[] for backward compat
-      if (!state.character) return state
-      const items = action.equipment.map((s, i) => ({
-        id: `gear-legacy-${i}`,
-        name: s,
-        nameIT: s,
-        category: 'gear' as const,
-        quantity: 1,
-        equipped: false,
-      }))
-      return { ...state, character: { ...state.character, equipment: items, updatedAt: new Date().toISOString() } }
+      return withUpdatedCharacter(state, (character) => {
+        const items = action.equipment.map((s, i) => ({
+          id: `gear-legacy-${i}`,
+          name: s,
+          nameIT: s,
+          category: 'gear' as const,
+          quantity: 1,
+          equipped: false,
+        }))
+        return { ...character, equipment: items, updatedAt: new Date().toISOString() }
+      })
     }
     case 'UPDATE_NOTES': {
-      if (!state.character) return state
-      return { ...state, character: { ...state.character, notes: action.notes, updatedAt: new Date().toISOString() } }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        notes: action.notes,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'SET_EQUIPPED_ARMOR': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: { ...state.character, equippedArmorId: action.armorId, updatedAt: new Date().toISOString() },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        equippedArmorId: action.armorId,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'SET_EQUIPPED_SHIELD': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          equippedShieldId: action.shieldId,
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        equippedShieldId: action.shieldId,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'ADD_EQUIPMENT_ITEM': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          equipment: [...state.character.equipment, action.item],
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        equipment: [...character.equipment, action.item],
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'REMOVE_EQUIPMENT_ITEM': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          equipment: state.character.equipment.filter((e) => e.id !== action.itemId),
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        equipment: character.equipment.filter((item) => item.id !== action.itemId),
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'TOGGLE_EQUIPMENT': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          equipment: state.character.equipment.map((e) =>
-            e.id === action.itemId ? { ...e, equipped: !e.equipped } : e,
-          ),
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        equipment: character.equipment.map((item) =>
+          item.id === action.itemId ? { ...item, equipped: !item.equipped } : item,
+        ),
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'UPDATE_ITEM_AMMO': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        equipment: character.equipment.map((item) =>
+          item.id === action.itemId
+            ? { ...item, ammoCount: Math.max(0, action.amount) }
+            : item,
+        ),
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'SET_KNOWN_SPELLS': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: { ...state.character, knownSpells: action.spellIds, updatedAt: new Date().toISOString() },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        knownSpells: action.spellIds,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'TOGGLE_SPELL': {
-      if (!state.character) return state
-      const spells = state.character.knownSpells.includes(action.spellId)
-        ? state.character.knownSpells.filter((id) => id !== action.spellId)
-        : [...state.character.knownSpells, action.spellId]
-      return {
-        ...state,
-        character: { ...state.character, knownSpells: spells, updatedAt: new Date().toISOString() },
-      }
+      return withUpdatedCharacter(state, (character) => {
+        const spells = character.knownSpells.includes(action.spellId)
+          ? character.knownSpells.filter((id) => id !== action.spellId)
+          : [...character.knownSpells, action.spellId]
+
+        return { ...character, knownSpells: spells, updatedAt: new Date().toISOString() }
+      })
+    }
+    case 'SET_PREPARED_SPELLS': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        preparedSpells: action.spellIds,
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'TOGGLE_PREPARED_SPELL': {
+      return withUpdatedCharacter(state, (character) => {
+        const spells = character.preparedSpells.includes(action.spellId)
+          ? character.preparedSpells.filter((id) => id !== action.spellId)
+          : [...character.preparedSpells, action.spellId]
+
+        return { ...character, preparedSpells: spells, updatedAt: new Date().toISOString() }
+      })
     }
     case 'EXPEND_SPELL_SLOT': {
-      if (!state.character) return state
-      const current = state.character.expendedSpellSlots[action.level] ?? 0
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          expendedSpellSlots: { ...state.character.expendedSpellSlots, [action.level]: current + 1 },
+      return withUpdatedCharacter(state, (character) => {
+        const current = character.expendedSpellSlots[action.level] ?? 0
+        return {
+          ...character,
+          expendedSpellSlots: { ...character.expendedSpellSlots, [action.level]: current + 1 },
           updatedAt: new Date().toISOString(),
-        },
-      }
+        }
+      })
     }
     case 'RESTORE_SPELL_SLOT': {
-      if (!state.character) return state
-      const current = state.character.expendedSpellSlots[action.level] ?? 0
-      const next = Math.max(0, current - 1)
-      const updated = { ...state.character.expendedSpellSlots }
-      if (next === 0) {
-        delete updated[action.level]
-      } else {
-        updated[action.level] = next
-      }
-      return {
-        ...state,
-        character: {
-          ...state.character,
+      return withUpdatedCharacter(state, (character) => {
+        const current = character.expendedSpellSlots[action.level] ?? 0
+        const next = Math.max(0, current - 1)
+        const updated = { ...character.expendedSpellSlots }
+        if (next === 0) {
+          delete updated[action.level]
+        } else {
+          updated[action.level] = next
+        }
+
+        return {
+          ...character,
           expendedSpellSlots: updated,
           updatedAt: new Date().toISOString(),
-        },
-      }
+        }
+      })
     }
     case 'RESTORE_ALL_SPELL_SLOTS': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          expendedSpellSlots: {},
-          updatedAt: new Date().toISOString(),
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        expendedSpellSlots: {},
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'SET_ACTIVE_CONDITIONS': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        activeConditions: action.conditions,
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'SET_EXHAUSTION_LEVEL': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        exhaustionLevel: Math.max(0, Math.min(6, action.level)),
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'TOGGLE_INSPIRATION': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        inspiration: !character.inspiration,
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'SET_INSPIRATION': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        inspiration: action.value,
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'UPDATE_CURRENCY': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        currency: {
+          ...character.currency,
+          [action.denomination]: Math.max(0, action.amount),
         },
-      }
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'SET_INITIATIVE_TRACKER': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        initiativeTracker: action.entries,
+        activeInitiativeId:
+          action.entries.some((entry) => entry.id === character.activeInitiativeId)
+            ? character.activeInitiativeId
+            : null,
+        updatedAt: new Date().toISOString(),
+      }))
+    }
+    case 'SET_ACTIVE_INITIATIVE': {
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        activeInitiativeId: action.entryId,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'LOAD_CHARACTER':
       return { ...state, character: action.character, creationStep: 0 }
@@ -354,12 +452,19 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         equippedArmorId: null,
         equippedShieldId: null,
         knownSpells: [],
+        preparedSpells: [],
         expendedSpellSlots: {},
         asiChoices: [],
         deathSaves: { successes: 0, failures: 0 },
+        activeConditions: [],
+        exhaustionLevel: 0,
+        inspiration: false,
         isStabilized: false,
         spentHitDice: 0,
         expertiseSkills: [],
+        currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+        initiativeTracker: [],
+        activeInitiativeId: null,
         notes: '',
         createdAt: now,
         updatedAt: now,
@@ -396,147 +501,128 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'PREV_STEP':
       return { ...state, creationStep: Math.max(state.creationStep - 1, 1) }
     case 'GO_HOME':
-      return { ...state, character: null, creationStep: 0, creationDraft: {} }
+      return {
+        ...state,
+        character: null,
+        creationStep: 0,
+        creationDraft: {},
+        savedCharacters: state.character
+          ? upsertSavedCharacter(state.savedCharacters, state.character)
+          : state.savedCharacters,
+      }
     case 'SET_CHARACTER_IMAGE': {
-      if (!state.character || state.character.id !== action.id) return state
-      const updated = { ...state.character, imageUrl: action.imageUrl }
-      return { ...state, character: updated }
+      return withUpdatedCharacter(state, (character) =>
+        character.id !== action.id
+          ? character
+          : { ...character, imageUrl: action.imageUrl, updatedAt: new Date().toISOString() },
+      )
     }
     case 'SET_GENERATING_IMAGE': {
       return state
     }
     case 'SAVE_ASI_CHOICE': {
-      if (!state.character) return state
-      // Replace existing choice at same level or append new one
-      const existing = state.character.asiChoices ?? []
-      const filtered = existing.filter((c) => c.level !== action.choice.level)
-      return {
-        ...state,
-        character: {
-          ...state.character,
+      return withUpdatedCharacter(state, (character) => {
+        const existing = character.asiChoices ?? []
+        const filtered = existing.filter((choice) => choice.level !== action.choice.level)
+        return {
+          ...character,
           asiChoices: [...filtered, action.choice],
           updatedAt: new Date().toISOString(),
-        },
-      }
+        }
+      })
     }
     case 'REMOVE_ASI_CHOICE': {
-      if (!state.character) return state
-      const remaining = (state.character.asiChoices ?? []).filter((c) => c.level !== action.level)
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          asiChoices: remaining,
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        asiChoices: (character.asiChoices ?? []).filter((choice) => choice.level !== action.level),
+        updatedAt: new Date().toISOString(),
+      }))
     }
     // ═══ Death Saves ═══
     case 'ROLL_DEATH_SAVE': {
-      if (!state.character) return state
-      const ds = { ...state.character.deathSaves }
-      if (action.result === 'success') {
-        ds.successes = Math.min(3, ds.successes + 1)
-      } else {
-        ds.failures = Math.min(3, ds.failures + 1)
-      }
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          deathSaves: ds,
-          isStabilized: ds.successes >= 3,
+      return withUpdatedCharacter(state, (character) => {
+        const deathSaves = { ...character.deathSaves }
+        if (action.result === 'success') {
+          deathSaves.successes = Math.min(3, deathSaves.successes + 1)
+        } else {
+          deathSaves.failures = Math.min(3, deathSaves.failures + 1)
+        }
+
+        return {
+          ...character,
+          deathSaves,
+          isStabilized: deathSaves.successes >= 3,
           updatedAt: new Date().toISOString(),
-        },
-      }
+        }
+      })
     }
     case 'RESET_DEATH_SAVES': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          deathSaves: { successes: 0, failures: 0 },
-          isStabilized: false,
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        deathSaves: { successes: 0, failures: 0 },
+        isStabilized: false,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     case 'STABILIZE': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          isStabilized: true,
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        isStabilized: true,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     // ═══ Rest System ═══
     case 'SHORT_REST': {
-      if (!state.character) return state
-      const hitDiceSpent = action.hitDiceToSpend ?? 0
-      const cls = getClassById(state.character.classId)
-      const hitDieValue = cls ? parseInt(cls.hitDie.slice(1), 10) : 8
-      const conMod = abilityModifier(state.character.abilityScores.CON)
-      let newHp = state.character.hp.current
-      let remainingDice = state.character.level - (state.character.spentHitDice ?? 0)
+      return withUpdatedCharacter(state, (character) => {
+        const hitDiceSpent = action.hitDiceToSpend ?? 0
+        const cls = getClassById(character.classId)
+        const hitDieValue = cls ? parseInt(cls.hitDie.slice(1), 10) : 8
+        const conMod = abilityModifier(character.abilityScores.CON)
+        let newHp = character.hp.current
+        let remainingDice = character.level - (character.spentHitDice ?? 0)
 
-      // Spend hit dice to heal
-      if (hitDiceSpent > 0 && hitDiceSpent <= remainingDice) {
-        const healAmount = hitDiceSpent * (Math.floor(hitDieValue / 2) + 1 + conMod)
-        newHp = Math.min(state.character.hp.max, newHp + healAmount)
-        remainingDice -= hitDiceSpent
-      }
+        if (hitDiceSpent > 0 && hitDiceSpent <= remainingDice) {
+          const healAmount = hitDiceSpent * (Math.floor(hitDieValue / 2) + 1 + conMod)
+          newHp = Math.min(character.hp.max, newHp + healAmount)
+          remainingDice -= hitDiceSpent
+        }
 
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          hp: { ...state.character.hp, current: newHp },
-          spentHitDice: state.character.level - remainingDice,
-          expendedSpellSlots: {}, // Some class features reset on short rest
+        return {
+          ...character,
+          hp: { ...character.hp, current: newHp },
+          spentHitDice: character.level - remainingDice,
+          expendedSpellSlots: character.classId === 'warlock' ? {} : character.expendedSpellSlots,
           updatedAt: new Date().toISOString(),
-        },
-      }
+        }
+      })
     }
     case 'LONG_REST': {
-      if (!state.character) return state
-      const cls = getClassById(state.character.classId)
-      const conMod = abilityModifier(state.character.abilityScores.CON)
-      // Restore HP: recover half character level in hit dice (minimum 1), then heal
-      const diceRecovered = Math.max(1, Math.floor(state.character.level / 2))
-      const spentDice = state.character.spentHitDice ?? 0
-      const remainingAfterRest = Math.min(state.character.level, spentDice - diceRecovered)
+      return withUpdatedCharacter(state, (character) => {
+        const cls = getClassById(character.classId)
+        const conMod = abilityModifier(character.abilityScores.CON)
+        const diceRecovered = Math.max(1, Math.floor(character.level / 2))
+        const spentDice = character.spentHitDice ?? 0
+        const remainingAfterRest = Math.min(character.level, spentDice - diceRecovered)
+        const maxHp = computeMaxHp(cls?.hitDie ?? 'd8', conMod, character.level)
 
-      // Heal to full HP on long rest
-      const maxHp = computeMaxHp(cls?.hitDie ?? 'd8', conMod, state.character.level)
-
-      return {
-        ...state,
-        character: {
-          ...state.character,
+        return {
+          ...character,
           hp: { max: maxHp, current: maxHp, temporary: 0 },
           expendedSpellSlots: {},
           spentHitDice: Math.max(0, remainingAfterRest),
           deathSaves: { successes: 0, failures: 0 },
           isStabilized: false,
           updatedAt: new Date().toISOString(),
-        },
-      }
+        }
+      })
     }
     // ═══ Expertise Skills ═══
     case 'SET_EXPERTISE_SKILLS': {
-      if (!state.character) return state
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          expertiseSkills: action.skills,
-          updatedAt: new Date().toISOString(),
-        },
-      }
+      return withUpdatedCharacter(state, (character) => ({
+        ...character,
+        expertiseSkills: action.skills,
+        updatedAt: new Date().toISOString(),
+      }))
     }
     default:
       return state
@@ -557,7 +643,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     saveTimerRef.current = setTimeout(() => {
       // Start from persisted state to avoid stale data
       const storage = loadStorage()
-      let updatedChars = [...storage.characters]
+      const updatedChars = [...storage.characters]
 
       if (char) {
         const idx = updatedChars.findIndex((c) => c.id === char.id)
@@ -581,7 +667,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 7,
+        version: 9,
         characters: updatedChars,
         activeCharacterId: char?.id ?? null,
       })
@@ -609,7 +695,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     if (now - createdTime > 10_000) return
 
     lastCreatedCharId.current = char.id
-    ;(async () => {
+    void (async () => {
       const { generateCharacterImage } = await import('../services/image-generator')
       const { getRaceById } = await import('../data/races')
       const { getClassById } = await import('../data/classes')

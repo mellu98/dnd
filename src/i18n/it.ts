@@ -25,7 +25,7 @@ export const it = {
   hp_label: 'PF',
 
   // Tabs
-  tab_features: 'Capacita',
+  tab_features: 'Capacità',
   tab_actions: 'Azioni',
   tab_equipment: 'Equipaggiamento',
   tab_spells: 'Incantesimi',
@@ -45,7 +45,7 @@ export const it = {
   complete: 'Completa',
   choose_subrace: 'Scegli Sottorazza',
   choose_subclass: 'Scegli Sottoclasse',
-  choose_skills: 'Scegli Abilita',
+  choose_skills: 'Scegli Abilità',
   points_remaining: 'Punti Rimanenti',
 
   // Skills
@@ -64,8 +64,8 @@ export const it = {
   skill_performance: 'Intrattenere',
   skill_persuasion: 'Persuasione',
   skill_religion: 'Religione',
-  skill_sleight_of_hand: 'Rapidita di Mano',
-  skill_stealth: 'Furtivita',
+  skill_sleight_of_hand: 'Rapidità di Mano',
+  skill_stealth: 'Furtività',
   skill_survival: 'Sopravvivenza',
 
   // General labels
@@ -73,12 +73,12 @@ export const it = {
   proficiency_bonus: 'Bonus di Competenza',
   armor_class: 'Classe Armatura',
   initiative: 'Iniziativa',
-  speed: 'Velocita',
+  speed: 'Velocità',
   passive_perception: 'Percezione Passiva',
   saving_throws: 'Tiri Salvezza',
   darkvision: 'Scurovisione',
   languages: 'Lingue',
-  features_traits: 'Capacita e Tratti',
+  features_traits: 'Capacità e Tratti',
   proficiencies: 'Competenze',
   hit_die: 'Dado Vita',
   ability_bonuses: 'Bonus ai Punteggi',
@@ -88,7 +88,7 @@ export const it = {
   // Character details
   char_name: 'Nome Personaggio',
   alignment: 'Allineamento',
-  personality_traits: 'Tratti della Personalita',
+  personality_traits: 'Tratti della Personalità',
   ideals: 'Ideali',
   bonds: 'Legami',
   flaws: 'Difetti',
@@ -103,7 +103,7 @@ export const it = {
   no_characters: 'Nessun personaggio creato',
 
   // Proficiency types
-  prof_skill: 'Abilita',
+  prof_skill: 'Abilità',
   prof_saving_throw: 'Tiro Salvezza',
   prof_armor: 'Armature',
   prof_weapon: 'Armi',
@@ -122,6 +122,17 @@ export const it = {
   feats: 'Talenti',
   prof_and_languages: 'Competenze e Lingue',
   inspiration: 'Ispirazione',
+  inspiration_available: 'Disponibile per il prossimo tiro importante',
+  inspiration_empty: 'Non disponibile',
+  exhaustion_label: 'Sfinimento',
+  quick_switch_label: 'Cambia personaggio',
+  initiative_tracker: 'Iniziativa di gruppo',
+  initiative_next_turn: 'Prossimo turno',
+  initiative_active: 'In turno',
+  initiative_name_placeholder: 'Nome creatura o PG',
+  initiative_value_placeholder: 'Iniziativa',
+  initiative_notes_placeholder: 'Note rapide',
+  initiative_empty: 'Aggiungi partecipanti per gestire l’ordine dei turni.',
 
   // Misc
   ft: 'ft',
@@ -141,6 +152,8 @@ export const it = {
   value_label: 'Valore',
   stealth_disadvantage: 'Svantaggio su Furtività',
   strength_requirement: 'Forza Richiesta',
+  currency_label: 'Monete',
+  add_item_placeholder: 'Aggiungi oggetto...',
 
   // Spell schools
   school_abjuration: 'Abiurazione',
@@ -175,7 +188,20 @@ export const it = {
   // Spell filters
   filter_spells: 'Filtra Incantesimi',
   no_spells: 'Nessun incantesimo disponibile',
+  no_spells_ready: 'Nessun incantesimo pronto da usare',
   spell_detail: 'Dettaglio Incantesimo',
+  spell_attack_bonus: 'Attacco Incantesimi',
+  spell_save_dc: 'CD Tiro Salvezza',
+  spellcasting_ability_label: 'Caratteristica',
+  spells_known_label: 'Conosciuti',
+  spells_prepared_label: 'Preparati',
+  spells_ready_label: 'Pronti',
+  prepared_short: 'Preparato',
+  known_short: 'Conosciuto',
+  learn_spell_label: 'Impara',
+  prepare_spell_label: 'Prepara',
+  search_spell_placeholder: 'Cerca incantesimo...',
+  no_results_prefix: 'Nessun risultato per',
 
   // Spell picker modal
   manage_spells: 'Gestisci Incantesimi',
@@ -183,6 +209,14 @@ export const it = {
   spell_picker_subtitle: 'Seleziona gli incantesimi da aggiungere al tuo grimorio',
   no_spells_for_level: 'Nessun incantesimo disponibile per questo livello',
   spell_picker_close: 'Chiudi',
+
+  // Rest
+  rest_short: 'Riposo Breve',
+  rest_long: 'Riposo Lungo',
+  rest_hit_dice_remaining: 'Dadi vita',
+  rest_spend_hit_dice: 'Dadi da spendere',
+  rest_heal_with: 'Cura con',
+  rest_no_hit_dice: 'Nessun dado vita rimanente',
 } as const
 
 export type TranslationKey = keyof typeof it

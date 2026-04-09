@@ -5,6 +5,8 @@ import { NotesPanel } from './NotesPanel'
 import { DeathSavesPanel } from './DeathSavesPanel'
 import { RestButtons } from './RestButtons'
 import { ConditionsTracker } from './ConditionsTracker'
+import { InspirationTracker } from './InspirationTracker'
+import { InitiativeTracker } from './InitiativeTracker'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { getClassById } from '../../data/classes'
 import { getRaceById } from '../../data/races'
@@ -36,8 +38,14 @@ export function RightColumnPanel({ stats }: Props) {
       {/* Death Saves (only when at 0 HP) */}
       {character && <DeathSavesPanel />}
 
+      {/* Inspiration */}
+      {character && <InspirationTracker />}
+
       {/* Conditions */}
       <ConditionsTracker />
+
+      {/* Group initiative tracker */}
+      {character && <InitiativeTracker />}
 
       {/* Rest System */}
       {character && <RestButtons />}
@@ -83,8 +91,10 @@ export function RightColumnPanel({ stats }: Props) {
           <SpellsPanel
             classId={character.classId}
             knownSpells={character.knownSpells}
+            preparedSpells={character.preparedSpells}
             characterLevel={character.level}
             spellSlots={stats.spellSlots}
+            spellcasting={stats.spellcasting}
           />
         </div>
       )}

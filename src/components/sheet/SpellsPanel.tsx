@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { getSpellsByClass } from '../../data/spells'
-import type { Spell } from '../../types'
+import type { Spell, SpellcastingStats } from '../../types'
 import { it } from '../../i18n/it'
+import { getAbilityFull } from '../../i18n/lookup'
 import { SpellDetailModal } from './SpellDetailModal'
 import { SpellPickerModal } from './SpellPickerModal'
 import { useCharacterDispatch } from '../../context/CharacterContext'
@@ -15,8 +16,10 @@ interface SpellSlot {
 interface SpellsPanelProps {
   classId: string
   knownSpells: string[]
+  preparedSpells: string[]
   characterLevel: number
   spellSlots: SpellSlot[]
+  spellcasting: SpellcastingStats | null
 }
 
 const LEVEL_FILTERS = [
@@ -33,7 +36,6 @@ const LEVEL_FILTERS = [
   { value: 9, label: () => it.spell_level_9 },
 ]
 
-/** Returns cantrip tier index (0-3) based on character level */
 function getCantripTier(level: number): 0 | 1 | 2 | 3 {
   if (level >= 17) return 3
   if (level >= 11) return 2
@@ -58,27 +60,39 @@ function SpellLevelBadge({ level }: { level: number }) {
       </span>
     )
   }
+
+  const labels: Record<number, string> = {
+    1: it.spell_level_1,
+    2: it.spell_level_2,
+    3: it.spell_level_3,
+    4: it.spell_level_4,
+    5: it.spell_level_5,
+    6: it.spell_level_6,
+    7: it.spell_level_7,
+    8: it.spell_level_8,
+    9: it.spell_level_9,
+  }
+
   return (
     <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-blue/15 text-accent-blue font-semibold border border-accent-blue/30">
-      Lvl {level}
+      {labels[level] ?? `Lvl ${level}`}
     </span>
   )
 }
 
-/** Spell slot bubbles for a single spell level row */
 function SlotRow({ slot }: { slot: SpellSlot }) {
   const dispatch = useCharacterDispatch()
   const available = slot.max - slot.expended
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-text-muted w-14 shrink-0">{slot.level}° liv.</span>
+      <span className="text-[11px] text-text-muted w-14 shrink-0">{slot.level}Â° liv.</span>
       <div className="flex gap-1 flex-wrap">
-        {Array.from({ length: slot.max }).map((_, i) => {
-          const isExpended = i >= available
+        {Array.from({ length: slot.max }).map((_, index) => {
+          const isExpended = index >= available
           return (
             <button
-              key={i}
+              key={index}
               title={isExpended ? 'Ripristina slot' : 'Usa slot'}
               onClick={() =>
                 dispatch(
@@ -103,7 +117,6 @@ function SlotRow({ slot }: { slot: SpellSlot }) {
   )
 }
 
-/** Full spell slot tracker section */
 function SpellSlotTracker({ spellSlots }: { spellSlots: SpellSlot[] }) {
   const dispatch = useCharacterDispatch()
 
@@ -127,103 +140,158 @@ function SpellSlotTracker({ spellSlots }: { spellSlots: SpellSlot[] }) {
   )
 }
 
-/** Derive the highest spell level available from spellSlots */
 function getMaxSpellLevel(spellSlots: SpellSlot[]): number {
   if (spellSlots.length === 0) return 0
-  return Math.max(...spellSlots.map((s) => s.level))
+  return Math.max(...spellSlots.map((slot) => slot.level))
 }
 
-export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }: SpellsPanelProps) {
+export function SpellsPanel({
+  classId,
+  knownSpells,
+  preparedSpells,
+  characterLevel,
+  spellSlots,
+  spellcasting,
+}: SpellsPanelProps) {
   const [levelFilter, setLevelFilter] = useState<number>(-1)
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null)
   const [showPicker, setShowPicker] = useState(false)
 
-  const allClassSpells = getSpellsByClass(classId)
+  const cantripTier = getCantripTier(characterLevel)
+  const allClassSpells = useMemo(() => getSpellsByClass(classId), [classId])
+  const maxSpellLevel = useMemo(() => getMaxSpellLevel(spellSlots), [spellSlots])
+  const castableSpells = useMemo(
+    () => allClassSpells.filter((spell) => spell.level === 0 || spell.level <= maxSpellLevel),
+    [allClassSpells, maxSpellLevel],
+  )
+  const castableMap = useMemo(
+    () => new Map(castableSpells.map((spell) => [spell.id, spell])),
+    [castableSpells],
+  )
+  const knownSpellSet = useMemo(
+    () => new Set(knownSpells.filter((spellId) => castableMap.has(spellId))),
+    [knownSpells, castableMap],
+  )
+  const preparedSpellSet = useMemo(
+    () => new Set(preparedSpells.filter((spellId) => castableMap.has(spellId))),
+    [preparedSpells, castableMap],
+  )
+
+  const activeSpellIds = useMemo(() => {
+    if (!spellcasting) return []
+
+    if (spellcasting.knownType === 'known') {
+      return Array.from(knownSpellSet)
+    }
+
+    const active = new Set<string>()
+    for (const spellId of knownSpellSet) {
+      if (castableMap.get(spellId)?.level === 0) active.add(spellId)
+    }
+    for (const spellId of preparedSpellSet) {
+      active.add(spellId)
+    }
+
+    return Array.from(active)
+  }, [castableMap, knownSpellSet, preparedSpellSet, spellcasting])
+
+  const activeSpells = useMemo(
+    () => castableSpells.filter((spell) => activeSpellIds.includes(spell.id)),
+    [activeSpellIds, castableSpells],
+  )
+  const filteredSpells = useMemo(
+    () => (
+      levelFilter === -1
+        ? activeSpells
+        : activeSpells.filter((spell) => spell.level === levelFilter)
+    ),
+    [activeSpells, levelFilter],
+  )
 
   if (allClassSpells.length === 0) {
     return <p className="text-text-secondary text-sm italic px-1">{it.no_spells}</p>
   }
 
-  const cantripTier = getCantripTier(characterLevel)
-  const maxSpellLevel = getMaxSpellLevel(spellSlots)
-
-  // Only show spells the character can actually access at their current level
-  const allSpells = allClassSpells.filter((s) => s.level <= maxSpellLevel || s.level === 0)
-  const filteredSpells = levelFilter === -1 ? allSpells : allSpells.filter((s) => s.level === levelFilter)
-
-  // Count unknown spells available at current max spell level (for notification)
-  const unknownSpellCount = allSpells.filter(
-    (s) => s.level <= maxSpellLevel && !knownSpells.includes(s.id),
-  ).length
-  const hasUnknownSpells = unknownSpellCount > 0
-
   return (
     <div className="space-y-3">
-      {/* Spell slot tracker */}
-      <SpellSlotTracker spellSlots={spellSlots} />
+      {spellcasting && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-bg-primary/40 border border-border/50 rounded-xl px-3 py-2.5">
+            <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">{it.spell_attack_bonus}</p>
+            <p className="text-lg font-black text-accent-purple">
+              {spellcasting.attackBonus >= 0 ? '+' : ''}
+              {spellcasting.attackBonus}
+            </p>
+            <p className="text-[11px] text-text-secondary">
+              {getAbilityFull(spellcasting.ability)}
+            </p>
+          </div>
 
-      {/* Level-up spell learning notification */}
-      {hasUnknownSpells && maxSpellLevel > 0 && (
-        <div className="bg-accent-purple/10 border border-accent-purple/30 rounded-xl px-3 py-2.5 flex items-center gap-2">
-          <span className="text-accent-purple text-sm">✦</span>
-          <p className="text-xs text-accent-purple font-medium flex-1">
-            {unknownSpellCount} incantesim{unknownSpellCount === 1 ? 'o' : 'i'} disponibile
-            {unknownSpellCount === 1 ? '' : 'i'} da imparare
-          </p>
-          <button
-            onClick={() => setShowPicker(true)}
-            className="shrink-0 px-3 py-1 rounded-lg bg-accent-purple/20 text-accent-purple text-xs font-semibold border border-accent-purple/40 hover:bg-accent-purple/30 transition-all"
-          >
-            Impara
-          </button>
+          <div className="bg-bg-primary/40 border border-border/50 rounded-xl px-3 py-2.5">
+            <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">{it.spell_save_dc}</p>
+            <p className="text-lg font-black text-accent-gold">{spellcasting.saveDC}</p>
+            <p className="text-[11px] text-text-secondary">
+              {it.spellcasting_ability_label}: {getAbilityFull(spellcasting.ability)}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Header row: filter buttons + manage button */}
+      <div className="bg-bg-primary/40 border border-border/50 rounded-xl px-3 py-2.5 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+        <span>
+          <strong className="text-text-primary">{it.spells_known_label}:</strong> {knownSpellSet.size}
+        </span>
+        {spellcasting && spellcasting.knownType !== 'known' && (
+          <span>
+            <strong className="text-text-primary">{it.spells_prepared_label}:</strong> {preparedSpellSet.size}
+          </span>
+        )}
+        <span>
+          <strong className="text-text-primary">{it.spells_ready_label}:</strong> {activeSpells.length}
+        </span>
+      </div>
+
+      <SpellSlotTracker spellSlots={spellSlots} />
+
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex gap-1.5 flex-wrap flex-1">
-          {LEVEL_FILTERS.filter(({ value }) => value === -1 || value === 0 || (value >= 1 && value <= maxSpellLevel)).map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setLevelFilter(value)}
-              className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-all border ${
-                levelFilter === value
-                  ? 'bg-accent-gold/25 text-accent-gold border-accent-gold/50 shadow-sm'
-                  : 'bg-bg-card/60 text-text-secondary border-border/50 hover:text-text-primary hover:bg-bg-card'
-              }`}
-            >
-              {label()}
-            </button>
-          ))}
+          {LEVEL_FILTERS
+            .filter(({ value }) => value === -1 || value === 0 || (value >= 1 && value <= maxSpellLevel))
+            .map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setLevelFilter(value)}
+                className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold transition-all border ${
+                  levelFilter === value
+                    ? 'bg-accent-gold/25 text-accent-gold border-accent-gold/50 shadow-sm'
+                    : 'bg-bg-card/60 text-text-secondary border-border/50 hover:text-text-primary hover:bg-bg-card'
+                }`}
+              >
+                {label()}
+              </button>
+            ))}
         </div>
-        {/* Manage spells button */}
+
         <button
           onClick={() => setShowPicker(true)}
           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold border transition-all bg-accent-purple/10 text-accent-purple border-accent-purple/30 hover:bg-accent-purple/20 hover:border-accent-purple/50"
         >
-          <span>✦</span>
+          <span>âœ¦</span>
           <span>{it.manage_spells}</span>
-          {hasUnknownSpells && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent-purple text-white text-[10px] font-bold">
-              {unknownSpellCount}
-            </span>
-          )}
         </button>
       </div>
 
-      {/* Spell count */}
       <p className="text-xs text-text-muted px-0.5">
-        {filteredSpells.length} incantesim{filteredSpells.length === 1 ? 'o' : 'i'}
+        {filteredSpells.length} incantesim{filteredSpells.length === 1 ? 'o' : 'i'} pront{filteredSpells.length === 1 ? 'o' : 'i'}
       </p>
 
-      {/* Spell list */}
       {filteredSpells.length === 0 ? (
-        <p className="text-text-secondary text-sm italic px-1">{it.no_spells}</p>
+        <p className="text-text-secondary text-sm italic px-1">{it.no_spells_ready}</p>
       ) : (
         <ul className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
           {filteredSpells.map((spell) => {
-            const isKnown = knownSpells.includes(spell.id)
-            // Cantrip scaling: show current damage tier in the list
+            const isKnown = knownSpellSet.has(spell.id)
+            const isPrepared = preparedSpellSet.has(spell.id)
             const scaledDamage =
               spell.level === 0 && spell.cantripScaling ? spell.cantripScaling.damageTiers[cantripTier] : null
 
@@ -231,21 +299,26 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
               <li
                 key={spell.id}
                 onClick={() => setSelectedSpell(spell)}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 cursor-pointer border transition-all group ${
-                  isKnown
-                    ? 'bg-accent-purple/10 border-accent-purple/30 hover:bg-accent-purple/20'
-                    : 'bg-bg-card/50 border-border/50 hover:bg-bg-card hover:border-border-light'
-                }`}
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 cursor-pointer border transition-all group bg-bg-card/50 border-border/50 hover:bg-bg-card hover:border-border-light"
               >
-                {/* Spell name + school */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    {isKnown && (
-                      <span className="text-accent-purple text-xs shrink-0">✓</span>
-                    )}
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-text-primary truncate group-hover:text-accent-gold transition-colors">
                       {spell.nameIT}
                     </span>
+
+                    {isPrepared && spell.level > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30 font-medium">
+                        {it.prepared_short}
+                      </span>
+                    )}
+
+                    {isKnown && spell.level === 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-purple/15 text-accent-purple border border-accent-purple/30 font-medium">
+                        {it.known_short}
+                      </span>
+                    )}
+
                     {spell.concentration && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-red/15 text-accent-red/80 border border-accent-red/30 font-medium shrink-0">
                         C
@@ -257,20 +330,20 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
                       </span>
                     )}
                   </div>
+
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-[11px] text-text-muted">{spell.schoolIT}</span>
-                    <span className="text-text-muted/40">·</span>
+                    <span className="text-text-muted/40">Â·</span>
                     <span className="text-[11px] text-text-muted">{spell.castingTimeIT}</span>
                     {scaledDamage && (
                       <>
-                        <span className="text-text-muted/40">·</span>
+                        <span className="text-text-muted/40">Â·</span>
                         <span className="text-[11px] text-accent-gold font-semibold">{scaledDamage}</span>
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* Right side: components + level */}
                 <div className="flex items-center gap-1 shrink-0">
                   <ComponentBadge label="V" active={spell.components.v} />
                   <ComponentBadge label="S" active={spell.components.s} />
@@ -285,7 +358,6 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
         </ul>
       )}
 
-      {/* Detail modal */}
       {selectedSpell && (
         <SpellDetailModal
           spell={selectedSpell}
@@ -294,12 +366,13 @@ export function SpellsPanel({ classId, knownSpells, characterLevel, spellSlots }
         />
       )}
 
-      {/* Spell picker modal */}
-      {showPicker && (
+      {showPicker && spellcasting && (
         <SpellPickerModal
           classId={classId}
           maxSpellLevel={maxSpellLevel}
-          knownSpells={knownSpells}
+          knownSpells={Array.from(knownSpellSet)}
+          preparedSpells={Array.from(preparedSpellSet)}
+          spellcastingMode={spellcasting.knownType}
           onClose={() => setShowPicker(false)}
         />
       )}
