@@ -13,7 +13,7 @@ function makeCharacter(overrides: Partial<Character>): Character {
     classId: 'wizard',
     subclassId: null,
     backgroundId: 'acolyte',
-    backgroundAbilityChoices: { primary: 'INT', secondary: 'WIS' },
+    backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'INT', secondary: 'WIS' },
     level: 5,
     abilityScores: { STR: 10, DEX: 14, CON: 12, INT: 16, WIS: 13, CHA: 10 },
     hp: { max: 24, current: 18, temporary: 0 },

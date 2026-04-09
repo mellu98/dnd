@@ -1,4 +1,4 @@
-import type { AbilityName, Feature, Proficiency, Sourced } from './common'
+import type { AbilityName, BackgroundAbilityChoiceMode, Feature, Proficiency, Sourced } from './common'
 
 export interface Background extends Sourced {
   id: string
@@ -6,11 +6,13 @@ export interface Background extends Sourced {
   nameIT: string
   description: string
   descriptionIT: string
-  /** ASI: choose 1 from primary for +2, choose 1 from secondary for +1 */
+  /** ASI: choose +2/+1 or +1/+1/+1 from the allowed pools */
   abilityScoreOptions: {
     primary: AbilityName[]
     secondary: AbilityName[]
+    triple?: AbilityName[]
   }
+  abilityScoreModes?: BackgroundAbilityChoiceMode[]
   skillProficiencies: Proficiency[]
   toolProficiency: Proficiency
   originFeat: Feature

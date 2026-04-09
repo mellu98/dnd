@@ -66,7 +66,7 @@ describe('aggregateBonuses', () => {
   it('aggregates background proficiencies and ASI', () => {
     const agg = aggregateBonuses({
       backgroundId: 'acolyte',
-      backgroundAbilityChoices: { primary: 'WIS', secondary: 'INT' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'WIS', secondary: 'INT' },
     })
     expect(agg.proficiencies.length).toBeGreaterThanOrEqual(2)
     expect(agg.backgroundAbilityBonuses.length).toBe(2)
@@ -84,10 +84,29 @@ describe('aggregateBonuses', () => {
       raceId: 'elf',
       classId: 'fighter',
       backgroundId: 'guard',
-      backgroundAbilityChoices: { primary: 'STR', secondary: 'WIS' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'STR', secondary: 'WIS' },
     })
     expect(agg.backgroundAbilityBonuses.length).toBe(2)
     expect(agg.features.length).toBeGreaterThan(0)
+  })
+
+  it('supports the 2024 +1/+1/+1 background distribution', () => {
+    const agg = aggregateBonuses({
+      backgroundId: 'acolyte',
+      backgroundAbilityChoices: { mode: 'plus1_plus1_plus1', abilities: ['WIS', 'INT', 'CHA'] },
+    })
+
+    expect(agg.backgroundAbilityBonuses).toEqual([
+      { ability: 'WIS', value: 1 },
+      { ability: 'INT', value: 1 },
+      { ability: 'CHA', value: 1 },
+    ])
+  })
+
+  it('uses Lucky as the Wayfarer origin feat', () => {
+    const agg = aggregateBonuses({ backgroundId: 'wayfarer' })
+
+    expect(agg.features.some((feature) => feature.name === 'Lucky')).toBe(true)
   })
 })
 
@@ -114,7 +133,7 @@ describe('calculateAllStats', () => {
       raceId: 'elf',
       classId: 'barbarian',
       backgroundId: 'acolyte',
-      backgroundAbilityChoices: { primary: 'WIS', secondary: 'INT' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'WIS', secondary: 'INT' },
       abilityScores: { STR: 14, DEX: 16, CON: 12, INT: 10, WIS: 10, CHA: 8 },
       skillProficiencies: ['acrobatics', 'perception'],
       chosenLanguages: ['Elvish'],
@@ -130,7 +149,7 @@ describe('calculateAllStats', () => {
       raceId: 'human',
       classId: 'fighter',
       backgroundId: 'criminal', // criminal gives stealth + deception, no perception
-      backgroundAbilityChoices: { primary: 'DEX', secondary: 'INT' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'DEX', secondary: 'INT' },
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
       skillProficiencies: ['acrobatics'],
     }))
@@ -187,7 +206,7 @@ describe('calculateAllStats', () => {
       raceId: 'human',
       classId: 'fighter',
       backgroundId: 'guard',
-      backgroundAbilityChoices: { primary: 'STR', secondary: 'WIS' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'STR', secondary: 'WIS' },
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
     }))
     // STR 14 + 2 (background primary) = 16 → mod +3
@@ -202,7 +221,7 @@ describe('calculateAllStats', () => {
       raceId: 'human',
       classId: 'fighter',
       backgroundId: 'guard',
-      backgroundAbilityChoices: { primary: 'DEX', secondary: 'WIS' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'DEX', secondary: 'WIS' },
       abilityScores: { STR: 10, DEX: 14, CON: 12, INT: 10, WIS: 10, CHA: 8 },
       equippedArmorId: null,
       equippedShieldId: 'shield',
@@ -217,7 +236,7 @@ describe('calculateAllStats', () => {
       raceId: 'human',
       classId: 'monk',
       backgroundId: 'guard',
-      backgroundAbilityChoices: { primary: 'DEX', secondary: 'WIS' },
+      backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'DEX', secondary: 'WIS' },
       abilityScores: { STR: 10, DEX: 14, CON: 12, INT: 10, WIS: 14, CHA: 8 },
       equippedArmorId: null,
       equippedShieldId: 'shield',

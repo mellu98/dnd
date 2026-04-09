@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react'
 import { it } from '../../i18n/it'
 import { aggregateBonuses } from '../../engine/bonus-aggregator'
-import type { AbilityName } from '../../types'
+import type { AbilityName, BackgroundAbilityChoices } from '../../types'
 import { feetToMeters } from '../../utils/units'
+import { toMetricRuleText } from '../../utils/rules-text'
 
 interface Props {
   raceId?: string
   classId?: string
   subclassId?: string
   backgroundId?: string
-  backgroundAbilityChoices?: { primary: AbilityName; secondary: AbilityName }
+  backgroundAbilityChoices?: BackgroundAbilityChoices
 }
 
 const abilityLabel: Record<AbilityName, string> = {
@@ -167,7 +168,7 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
                   <span className="text-xs text-text-secondary">Lv. {f.level}</span>
                 </div>
                 {expandedFeature === i && (
-                  <p className="text-xs text-text-secondary mt-2 leading-relaxed">{f.descriptionIT}</p>
+                  <p className="text-xs text-text-secondary mt-2 leading-relaxed">{toMetricRuleText(f.descriptionIT)}</p>
                 )}
               </div>
             ))}

@@ -1,14 +1,22 @@
-import type { AbilityName, AbilityScoreBonus, DieType, Feature, Proficiency, SkillName } from '../types'
+import type {
+  AbilityScoreBonus,
+  BackgroundAbilityChoices,
+  DieType,
+  Feature,
+  Proficiency,
+  SkillName,
+} from '../types'
 import { getRaceById } from '../data/races'
 import { getClassById } from '../data/classes'
 import { getBackgroundById } from '../data/backgrounds'
+import { getBackgroundAbilityBonuses } from '../utils/background-ability-choices'
 
 export interface AggregateParams {
   raceId?: string
   classId?: string
   subclassId?: string
   backgroundId?: string
-  backgroundAbilityChoices?: { primary: AbilityName; secondary: AbilityName } | null
+  backgroundAbilityChoices?: BackgroundAbilityChoices | null
   level?: number
 }
 
@@ -89,17 +97,9 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
       }
       result.features.push(bg.originFeat)
 
-      // Derive ASI bonuses from backgroundAbilityChoices
-      if (params.backgroundAbilityChoices) {
-        result.backgroundAbilityBonuses.push({
-          ability: params.backgroundAbilityChoices.primary,
-          value: 2,
-        })
-        result.backgroundAbilityBonuses.push({
-          ability: params.backgroundAbilityChoices.secondary,
-          value: 1,
-        })
-      }
+      result.backgroundAbilityBonuses.push(
+        ...getBackgroundAbilityBonuses(bg, params.backgroundAbilityChoices),
+      )
     }
   }
 

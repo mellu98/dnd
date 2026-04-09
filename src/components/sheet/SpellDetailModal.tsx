@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import type { Spell } from '../../types'
 import { it } from '../../i18n/it'
+import { toMetricRuleText } from '../../utils/rules-text'
 
 interface SpellDetailModalProps {
   spell: Spell
@@ -125,7 +126,7 @@ export function SpellDetailModal({ spell, onClose, characterLevel = 1 }: SpellDe
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <InfoRow label="Tempo di Lancio" value={spell.castingTimeIT} />
-            <InfoRow label="Gittata" value={spell.rangeIT} />
+            <InfoRow label="Gittata" value={toMetricRuleText(spell.rangeIT)} />
             <InfoRow label="Durata" value={spell.durationIT} />
           </div>
 
@@ -152,7 +153,7 @@ export function SpellDetailModal({ spell, onClose, characterLevel = 1 }: SpellDe
 
           <div>
             <p className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Descrizione</p>
-            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{spell.descriptionIT}</p>
+            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{toMetricRuleText(spell.descriptionIT)}</p>
           </div>
         </div>
 

@@ -108,6 +108,7 @@ describe('storage migration', () => {
     expect(storage.characters).toHaveLength(1)
     const char = storage.characters[0]
     expect(char.backgroundAbilityChoices).toEqual({
+      mode: 'plus2_plus1',
       primary: 'STR',
       secondary: 'DEX',
     })

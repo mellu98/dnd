@@ -61,7 +61,7 @@ export default function AbilityScoreAssigner() {
     <div>
       <h2 className="text-xl font-semibold text-accent-gold mb-2">{it.step_abilities}</h2>
       <p className="text-sm text-text-muted mb-4">
-        Assegna 27 punti alle tue caratteristiche (min 8, max 15). I bonus del tuo Background (+2/+1) verranno applicati dopo.
+        Assegna 27 punti alle tue caratteristiche (min 8, max 15). I bonus del tuo Background (+2/+1 oppure +1/+1/+1) verranno applicati dopo.
       </p>
 
       <div className="bg-bg-secondary/80 rounded-xl p-4 border border-border mb-4">

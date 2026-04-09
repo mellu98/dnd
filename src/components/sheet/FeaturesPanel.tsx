@@ -4,6 +4,7 @@ import { it } from '../../i18n/it'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { feats } from '../../data/feats'
 import type { AbilityName, Feature } from '../../types'
+import { toMetricRuleText } from '../../utils/rules-text'
 
 const ABILITY_LABELS: Record<AbilityName, string> = {
   STR: 'Forza',
@@ -45,13 +46,13 @@ export function FeaturesPanel({ stats, features = stats.allFeatures, emptyMessag
         const asiChoice = isASI ? asiChoices.find((c) => c.level === feature.level) : undefined
 
         let displayName = feature.nameIT
-        let displayDescription = feature.descriptionIT
+        let displayDescription = toMetricRuleText(feature.descriptionIT)
 
         if (isASI && asiChoice) {
           if (asiChoice.type === 'feat') {
             const feat = feats.find((f) => f.id === asiChoice.featId)
             displayName = `Talento: ${feat?.nameIT ?? asiChoice.featId}`
-            displayDescription = feat?.descriptionIT
+            displayDescription = toMetricRuleText(feat?.descriptionIT)
           } else {
             const parts = (asiChoice.abilityBonuses ?? []).map(
               (b) => `+${b.value} ${ABILITY_LABELS[b.ability] ?? b.ability}`,

@@ -43,7 +43,7 @@ type Action =
   | { type: 'SET_RACE'; raceId: string }
   | { type: 'SET_CLASS'; classId: string; subclassId: string | null }
   | { type: 'SET_BACKGROUND'; backgroundId: string }
-  | { type: 'SET_BACKGROUND_ABILITY_CHOICES'; choices: BackgroundAbilityChoices }
+  | { type: 'SET_BACKGROUND_ABILITY_CHOICES'; choices: BackgroundAbilityChoices | null }
   | { type: 'SET_ABILITY_SCORES'; scores: CharacterAbilityScores }
   | { type: 'SET_SKILL_PROFICIENCIES'; skills: SkillName[] }
   | {
@@ -158,7 +158,11 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'SET_BACKGROUND':
       return {
         ...state,
-        creationDraft: { ...state.creationDraft, backgroundId: action.backgroundId },
+        creationDraft: {
+          ...state.creationDraft,
+          backgroundId: action.backgroundId,
+          backgroundAbilityChoices: null,
+        },
       }
     case 'SET_BACKGROUND_ABILITY_CHOICES':
       return {

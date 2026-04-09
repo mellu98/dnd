@@ -4,5 +4,6 @@
  */
 export const feetToMeters = (ft: number): string => {
   const m = ft * 0.3
-  return `${Number.isInteger(m) ? m : m.toFixed(1)} m`
+  const formatted = Number.isInteger(m) ? String(m) : m.toFixed(1).replace('.', ',')
+  return `${formatted} m`
 }

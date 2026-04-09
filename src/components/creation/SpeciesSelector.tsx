@@ -4,6 +4,7 @@ import { useCharacterContext } from '../../context/CharacterContext'
 import { SelectionCard } from '../ui/SelectionCard'
 import { it } from '../../i18n/it'
 import { feetToMeters } from '../../utils/units'
+import { toMetricRuleText } from '../../utils/rules-text'
 
 export default function SpeciesSelector() {
   const { state, dispatch } = useCharacterContext()
@@ -56,7 +57,7 @@ export default function SpeciesSelector() {
                 {race.features.map((f, i) => (
                   <div key={i}>
                     <span className="text-xs font-medium text-accent-emerald">{f.nameIT}</span>
-                    <p className="text-xs text-text-secondary mt-0.5">{f.descriptionIT}</p>
+                    <p className="text-xs text-text-secondary mt-0.5">{toMetricRuleText(f.descriptionIT)}</p>
                   </div>
                 ))}
               </div>

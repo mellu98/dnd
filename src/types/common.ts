@@ -1,4 +1,5 @@
 export type AbilityName = 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'CHA'
+export type BackgroundAbilityChoiceMode = 'plus2_plus1' | 'plus1_plus1_plus1'
 
 export type SourceBook = 'PHB 2024' | 'XGE' | 'TCE' | 'MPMM' | 'PHB 2014' | 'DMG' | string
 
