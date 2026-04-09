@@ -64,15 +64,15 @@ export function CharacterSheet() {
                       {raceVariant.nameIT}
                     </span>
                   )}
-                  <span className="text-text-muted">?</span>
+                  <span className="text-text-muted"> · </span>
                   <span className="text-accent-blue">{cls?.nameIT ?? character.classId}</span>
                   {bg && (
                     <>
-                      <span className="text-text-muted">?</span>
+                      <span className="text-text-muted"> · </span>
                       <span className="text-accent-purple">{bg.nameIT}</span>
                     </>
                   )}
-                  <span className="text-text-muted">?</span>
+                  <span className="text-text-muted"> · </span>
                   <span className="text-accent-purple/80 text-xs">{stats.sizeIT}</span>
                 </p>
               </div>
@@ -109,7 +109,7 @@ export function CharacterSheet() {
                   disabled={character.level <= 1}
                   className="w-11 h-11 rounded-lg bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center font-bold"
                 >
-                  ?
+                  −
                 </button>
                 <div className="text-center min-w-[60px]">
                   <span className="text-[10px] text-text-muted uppercase tracking-wider block leading-none">
@@ -167,7 +167,7 @@ export function CharacterSheet() {
             onClick={() => dispatch({ type: 'GO_HOME' })}
             className="px-8 py-2.5 bg-bg-secondary/60 backdrop-blur-sm border border-border rounded-xl text-text-secondary hover:text-accent-red hover:border-accent-red/50 hover:bg-accent-red/5 transition-all duration-200 font-medium"
           >
-            ? {it.my_characters}
+            ← {it.my_characters}
           </button>
         </div>
       </main>
