@@ -1,9 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { backgrounds } from '../../data/backgrounds'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
 import { SelectionCard } from '../ui/SelectionCard'
-import type { AbilityName } from '../../types'
+import type {
+  AbilityName,
+  BackgroundAbilityChoiceMode,
+  BackgroundAbilityChoices,
+} from '../../types'
+import {
+  getBackgroundAbilityModes,
+  getBackgroundTripleOptions,
+  isBackgroundAbilityChoicesValid,
+} from '../../utils/background-ability-choices'
+import { toMetricRuleText } from '../../utils/rules-text'
 
 const abilityMap: Record<AbilityName, string> = {
   STR: it.STR_full,
@@ -14,34 +24,54 @@ const abilityMap: Record<AbilityName, string> = {
   CHA: it.CHA_full,
 }
 
+const abilityShortMap: Record<AbilityName, string> = {
+  STR: it.STR,
+  DEX: it.DEX,
+  CON: it.CON,
+  INT: it.INT,
+  WIS: it.WIS,
+  CHA: it.CHA,
+}
+
+function formatAbilityList(options: AbilityName[]): string {
+  return Array.from(new Set(options)).map((ability) => abilityShortMap[ability]).join('/')
+}
+
 function AbilityPoolSelector({
   label,
   value,
   options,
+  disabledOptions = [],
   onChange,
 }: {
   label: string
   value: AbilityName | null
   options: AbilityName[]
+  disabledOptions?: AbilityName[]
   onChange: (a: AbilityName) => void
 }) {
   return (
     <div className="mb-2">
       <span className="text-xs font-medium text-text-muted">{label}</span>
-      <div className="flex flex-wrap gap-1.5 mt-1">
-        {options.map(a => (
-          <button
-            key={a}
-            onClick={() => onChange(a)}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
-              value === a
-                ? 'border-accent-gold bg-accent-gold/20 text-accent-gold'
-                : 'border-border text-text-secondary hover:bg-bg-card'
-            }`}
-          >
-            {abilityMap[a]}
-          </button>
-        ))}
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {options.map((ability) => {
+          const disabled = disabledOptions.includes(ability) && value !== ability
+          return (
+            <button
+              key={ability}
+              type="button"
+              onClick={() => onChange(ability)}
+              disabled={disabled}
+              className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-all ${
+                value === ability
+                  ? 'border-accent-gold bg-accent-gold/20 text-accent-gold'
+                  : 'border-border text-text-secondary hover:bg-bg-card'
+              } ${disabled ? 'cursor-not-allowed opacity-40 hover:bg-transparent' : ''}`}
+            >
+              {abilityMap[ability]}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -50,109 +80,263 @@ function AbilityPoolSelector({
 export default function BackgroundSelector() {
   const { state, dispatch } = useCharacterContext()
   const [selected, setSelected] = useState(state.creationDraft.backgroundId || '')
+  const [selectionMode, setSelectionMode] = useState<BackgroundAbilityChoiceMode>('plus2_plus1')
   const [primaryASI, setPrimaryASI] = useState<AbilityName | null>(null)
   const [secondaryASI, setSecondaryASI] = useState<AbilityName | null>(null)
+  const [tripleASI, setTripleASI] = useState<Array<AbilityName | null>>([null, null, null])
 
-  const bg = backgrounds.find(b => b.id === selected)
+  const background = useMemo(
+    () => backgrounds.find((item) => item.id === selected),
+    [selected],
+  )
+  const availableModes = useMemo(
+    () => getBackgroundAbilityModes(background),
+    [background],
+  )
+  const tripleOptions = useMemo(
+    () => getBackgroundTripleOptions(background),
+    [background],
+  )
 
   useEffect(() => {
-    if (selected) {
-      dispatch({ type: 'SET_BACKGROUND', backgroundId: selected })
-    }
-  }, [selected, dispatch])
+    setSelected(state.creationDraft.backgroundId || '')
+  }, [state.creationDraft.backgroundId])
 
   useEffect(() => {
-    if (primaryASI && secondaryASI) {
-      dispatch({ type: 'SET_BACKGROUND_ABILITY_CHOICES', choices: { primary: primaryASI, secondary: secondaryASI } })
+    if (!background) {
+      setSelectionMode('plus2_plus1')
+      setPrimaryASI(null)
+      setSecondaryASI(null)
+      setTripleASI([null, null, null])
+      return
     }
-  }, [primaryASI, secondaryASI, dispatch])
+
+    const existingChoices = state.creationDraft.backgroundAbilityChoices ?? null
+    const defaultMode = availableModes[0] ?? 'plus2_plus1'
+
+    if (isBackgroundAbilityChoicesValid(background, existingChoices)) {
+      setSelectionMode(existingChoices.mode)
+
+      if (existingChoices.mode === 'plus2_plus1') {
+        setPrimaryASI(existingChoices.primary)
+        setSecondaryASI(existingChoices.secondary)
+        setTripleASI([null, null, null])
+      } else {
+        setPrimaryASI(null)
+        setSecondaryASI(null)
+        setTripleASI([
+          existingChoices.abilities[0],
+          existingChoices.abilities[1],
+          existingChoices.abilities[2],
+        ])
+      }
+
+      return
+    }
+
+    setSelectionMode(defaultMode)
+    setPrimaryASI(null)
+    setSecondaryASI(null)
+    setTripleASI([null, null, null])
+  }, [background?.id])
+
+  useEffect(() => {
+    if (!background) {
+      dispatch({ type: 'SET_BACKGROUND_ABILITY_CHOICES', choices: null })
+      return
+    }
+
+    let nextChoices: BackgroundAbilityChoices | null = null
+
+    if (
+      selectionMode === 'plus2_plus1'
+      && primaryASI
+      && secondaryASI
+      && primaryASI !== secondaryASI
+    ) {
+      nextChoices = {
+        mode: 'plus2_plus1',
+        primary: primaryASI,
+        secondary: secondaryASI,
+      }
+    }
+
+    if (
+      selectionMode === 'plus1_plus1_plus1'
+      && tripleASI.every(Boolean)
+      && new Set(tripleASI).size === 3
+    ) {
+      nextChoices = {
+        mode: 'plus1_plus1_plus1',
+        abilities: tripleASI as [AbilityName, AbilityName, AbilityName],
+      }
+    }
+
+    dispatch({ type: 'SET_BACKGROUND_ABILITY_CHOICES', choices: nextChoices })
+  }, [background?.id, dispatch, primaryASI, secondaryASI, selectionMode, tripleASI])
 
   const handleBackgroundSelect = useCallback((id: string) => {
     setSelected(id)
     setPrimaryASI(null)
     setSecondaryASI(null)
+    setTripleASI([null, null, null])
+    dispatch({ type: 'SET_BACKGROUND', backgroundId: id })
+  }, [dispatch])
+
+  const handleTripleChange = useCallback((slotIndex: number, ability: AbilityName) => {
+    setTripleASI((current) => {
+      const next = [...current]
+      next[slotIndex] = ability
+      return next
+    })
   }, [])
+
+  const selectedSummary = background
+    ? formatAbilityList(
+        getBackgroundTripleOptions(background).length > 0
+          ? getBackgroundTripleOptions(background)
+          : [...background.abilityScoreOptions.primary, ...background.abilityScoreOptions.secondary],
+      )
+    : ''
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-accent-gold mb-2">{it.step_background}</h2>
-      <p className="text-sm text-text-muted mb-4">
-        Il tuo background definisce la tua storia e le tue competenze meccaniche: bonus alle caratteristiche, abilità, strumenti e un talento di origine.
+      <h2 className="mb-2 text-xl font-semibold text-accent-gold">{it.step_background}</h2>
+      <p className="mb-4 text-sm text-text-muted">
+        Il tuo background definisce storia, competenze, talento iniziale e bonus alle caratteristiche.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {backgrounds.map(b => (
-          <SelectionCard
-            key={b.id}
-            selected={selected === b.id}
-            onClick={() => handleBackgroundSelect(b.id)}
-            title={b.nameIT}
-            badges={
-              <div className="flex flex-wrap gap-1">
-                <span className="text-xs bg-accent-gold/20 text-accent-gold px-1.5 py-0.5 rounded">
-                  +2 {b.abilityScoreOptions.primary.map(a => abilityMap[a].replace('Saggezza', 'SAG').replace('Intelligenza', 'INT').replace('Carisma', 'CAR').replace('Forza', 'FOR').replace('Destrezza', 'DES').replace('Costituzione', 'COS')).join('/')}
-                </span>
-                <span className="text-xs bg-accent-blue/20 text-accent-blue px-1.5 py-0.5 rounded">
-                  +1 {b.abilityScoreOptions.secondary.map(a => abilityMap[a].replace('Saggezza', 'SAG').replace('Intelligenza', 'INT').replace('Carisma', 'CAR').replace('Forza', 'FOR').replace('Destrezza', 'DES').replace('Costituzione', 'COS')).join('/')}
-                </span>
-              </div>
-            }
-          >
-            <div className="mt-2 space-y-1">
-              <div className="flex flex-wrap gap-1">
-                {b.skillProficiencies.map((sp, i) => (
-                  <span key={i} className="text-xs bg-accent-emerald/20 text-accent-emerald px-1.5 py-0.5 rounded">
-                    {sp.valueIT}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {backgrounds.map((item) => {
+          const modes = getBackgroundAbilityModes(item)
+          const summary = formatAbilityList(
+            getBackgroundTripleOptions(item).length > 0
+              ? getBackgroundTripleOptions(item)
+              : [...item.abilityScoreOptions.primary, ...item.abilityScoreOptions.secondary],
+          )
+
+          return (
+            <SelectionCard
+              key={item.id}
+              selected={selected === item.id}
+              onClick={() => handleBackgroundSelect(item.id)}
+              title={item.nameIT}
+              badges={(
+                <div className="flex flex-wrap gap-1">
+                  <span className="rounded bg-accent-gold/20 px-1.5 py-0.5 text-xs text-accent-gold">
+                    {summary}
                   </span>
-                ))}
+                  <span className="rounded bg-accent-blue/20 px-1.5 py-0.5 text-xs text-accent-blue">
+                    {modes.includes('plus1_plus1_plus1') ? '+2/+1 o +1/+1/+1' : '+2/+1'}
+                  </span>
+                </div>
+              )}
+            >
+              <div className="mt-2 space-y-1">
+                <div className="flex flex-wrap gap-1">
+                  {item.skillProficiencies.map((proficiency, index) => (
+                    <span key={index} className="rounded bg-accent-emerald/20 px-1.5 py-0.5 text-xs text-accent-emerald">
+                      {proficiency.valueIT}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs font-medium text-accent-purple">{item.originFeat.nameIT}</p>
               </div>
-              <p className="text-xs text-accent-purple font-medium">{b.originFeat.nameIT}</p>
-            </div>
-          </SelectionCard>
-        ))}
+            </SelectionCard>
+          )
+        })}
       </div>
 
-      {bg && (
-        <div className="mt-4 p-4 bg-bg-secondary/80 rounded-xl border border-border space-y-4">
-          {/* ASI Selection */}
+      {background && (
+        <div className="mt-4 space-y-4 rounded-xl border border-border bg-bg-secondary/80 p-4">
           <div>
-            <h3 className="text-sm font-semibold text-accent-gold mb-3">Bonus alle Caratteristiche</h3>
-            <AbilityPoolSelector
-              label="+2 a una caratteristica"
-              value={primaryASI}
-              options={bg.abilityScoreOptions.primary}
-              onChange={setPrimaryASI}
-            />
-            <AbilityPoolSelector
-              label="+1 a una caratteristica"
-              value={secondaryASI}
-              options={bg.abilityScoreOptions.secondary}
-              onChange={setSecondaryASI}
-            />
+            <h3 className="mb-2 text-sm font-semibold text-accent-gold">Bonus alle Caratteristiche</h3>
+            <p className="mb-3 text-xs text-text-secondary">
+              Questo background usa {selectedSummary}. Scegli una delle distribuzioni valide del ruleset 2024.
+            </p>
+
+            {availableModes.length > 1 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectionMode('plus2_plus1')}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                    selectionMode === 'plus2_plus1'
+                      ? 'border-accent-gold bg-accent-gold/20 text-accent-gold'
+                      : 'border-border text-text-secondary hover:bg-bg-card'
+                  }`}
+                >
+                  +2 / +1
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectionMode('plus1_plus1_plus1')}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                    selectionMode === 'plus1_plus1_plus1'
+                      ? 'border-accent-gold bg-accent-gold/20 text-accent-gold'
+                      : 'border-border text-text-secondary hover:bg-bg-card'
+                  }`}
+                >
+                  +1 / +1 / +1
+                </button>
+              </div>
+            )}
+
+            {selectionMode === 'plus2_plus1' ? (
+              <>
+                <AbilityPoolSelector
+                  label="+2 a una caratteristica"
+                  value={primaryASI}
+                  options={background.abilityScoreOptions.primary}
+                  onChange={setPrimaryASI}
+                />
+                <AbilityPoolSelector
+                  label="+1 a una caratteristica diversa"
+                  value={secondaryASI}
+                  options={background.abilityScoreOptions.secondary}
+                  disabledOptions={primaryASI ? [primaryASI] : []}
+                  onChange={setSecondaryASI}
+                />
+              </>
+            ) : (
+              <>
+                {[0, 1, 2].map((slotIndex) => (
+                  <AbilityPoolSelector
+                    key={slotIndex}
+                    label={`+1 caratteristica ${slotIndex + 1}`}
+                    value={tripleASI[slotIndex]}
+                    options={tripleOptions}
+                    disabledOptions={
+                      tripleASI
+                        .filter((ability, index): ability is AbilityName => index !== slotIndex && ability !== null)
+                    }
+                    onChange={(ability) => handleTripleChange(slotIndex, ability)}
+                  />
+                ))}
+              </>
+            )}
           </div>
 
-          {/* Skills */}
           <div>
-            <h3 className="text-sm font-semibold text-accent-gold mb-2">Competenze</h3>
+            <h3 className="mb-2 text-sm font-semibold text-accent-gold">Competenze</h3>
             <div className="flex flex-wrap gap-1.5">
-              {bg.skillProficiencies.map((sp, i) => (
-                <span key={i} className="text-xs bg-accent-emerald/20 text-accent-emerald px-2 py-1 rounded">
-                  {sp.valueIT}
+              {background.skillProficiencies.map((proficiency, index) => (
+                <span key={index} className="rounded bg-accent-emerald/20 px-2 py-1 text-xs text-accent-emerald">
+                  {proficiency.valueIT}
                 </span>
               ))}
-              {bg.toolProficiency.value !== 'None' && (
-                <span className="text-xs bg-accent-blue/20 text-accent-blue px-2 py-1 rounded">
-                  {bg.toolProficiency.valueIT}
+              {background.toolProficiency.value !== 'None' && (
+                <span className="rounded bg-accent-blue/20 px-2 py-1 text-xs text-accent-blue">
+                  {background.toolProficiency.valueIT}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Origin Feat */}
           <div>
-            <h3 className="text-sm font-semibold text-accent-gold mb-2">{it.origin_feat || 'Talento di Origine'}</h3>
-            <p className="text-xs font-medium text-accent-purple">{bg.originFeat.nameIT}</p>
-            <p className="text-xs text-text-secondary mt-1">{bg.originFeat.descriptionIT}</p>
+            <h3 className="mb-2 text-sm font-semibold text-accent-gold">{it.origin_feat || 'Talento di Origine'}</h3>
+            <p className="text-xs font-medium text-accent-purple">{background.originFeat.nameIT}</p>
+            <p className="mt-1 text-xs text-text-secondary">{toMetricRuleText(background.originFeat.descriptionIT)}</p>
           </div>
         </div>
       )}

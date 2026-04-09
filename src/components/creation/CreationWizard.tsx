@@ -7,6 +7,8 @@ import ClassSelector from './ClassSelector'
 import AbilityScoreAssigner from './AbilityScoreAssigner'
 import CharacterDetails from './CharacterDetails'
 import BonusPreview from './BonusPreview'
+import { getBackgroundById } from '../../data/backgrounds'
+import { isBackgroundAbilityChoicesValid } from '../../utils/background-ability-choices'
 
 const steps = [
   { num: 1, label: it.step_background, icon: '📜' },
@@ -23,7 +25,10 @@ export default function CreationWizard() {
 
   const canNext = () => {
     switch (creationStep) {
-      case 1: return !!creationDraft.backgroundId
+      case 1: {
+        const background = creationDraft.backgroundId ? getBackgroundById(creationDraft.backgroundId) : null
+        return isBackgroundAbilityChoicesValid(background, creationDraft.backgroundAbilityChoices ?? null)
+      }
       case 2: return !!creationDraft.raceId
       case 3: return !!creationDraft.classId
       case 4: return !!creationDraft.abilityScores

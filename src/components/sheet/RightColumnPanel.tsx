@@ -10,6 +10,7 @@ import { InitiativeTracker } from './InitiativeTracker'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { getClassById } from '../../data/classes'
 import { getRaceById } from '../../data/races'
+import { toMetricRuleText } from '../../utils/rules-text'
 
 interface Props {
   stats: CalculatedStats
@@ -59,7 +60,7 @@ export function RightColumnPanel({ stats }: Props) {
               <div key={`${f.name}-${i}`} className="text-sm">
                 <span className="font-semibold text-text-primary">{f.nameIT}</span>
                 {f.descriptionIT && (
-                  <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">{f.descriptionIT}</p>
+                  <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">{toMetricRuleText(f.descriptionIT)}</p>
                 )}
               </div>
             ))}
@@ -76,7 +77,7 @@ export function RightColumnPanel({ stats }: Props) {
               <div key={`${f.name}-${i}`} className="text-sm">
                 <span className="font-semibold text-text-primary">{f.nameIT}</span>
                 {f.descriptionIT && (
-                  <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">{f.descriptionIT}</p>
+                  <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">{toMetricRuleText(f.descriptionIT)}</p>
                 )}
               </div>
             ))}

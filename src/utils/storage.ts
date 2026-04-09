@@ -1,4 +1,5 @@
 import type { ASIChoice, AbilityName, Character, CurrencyPouch, SkillName } from '../types'
+import { normalizeBackgroundAbilityChoices } from './background-ability-choices'
 
 interface StorageSchemaV1 {
   version: 1
@@ -254,6 +255,7 @@ function withCharacterDefaults(character: LegacyCharacter): Character {
 
   return {
     ...(character as Character),
+    backgroundAbilityChoices: normalizeBackgroundAbilityChoices(character.backgroundAbilityChoices),
     equipment: normalizeEquipment(character.equipment),
     knownSpells: normalizedKnownSpells,
     preparedSpells: normalizedPreparedSpells,

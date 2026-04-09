@@ -1,4 +1,4 @@
-import type { AbilityName, ASIChoice, Feature, Proficiency, SkillName } from './common'
+import type { AbilityName, ASIChoice, BackgroundAbilityChoiceMode, Feature, Proficiency, SkillName } from './common'
 import type { EquipmentItem } from './equipment'
 
 export interface CharacterAbilityScores {
@@ -21,10 +21,18 @@ export interface DeathSaves {
   failures: number
 }
 
-export interface BackgroundAbilityChoices {
-  primary: AbilityName
-  secondary: AbilityName
-}
+export type BackgroundAbilityChoices =
+  | {
+      mode: 'plus2_plus1'
+      primary: AbilityName
+      secondary: AbilityName
+    }
+  | {
+      mode: 'plus1_plus1_plus1'
+      abilities: [AbilityName, AbilityName, AbilityName]
+    }
+
+export type { BackgroundAbilityChoiceMode }
 
 export interface CurrencyPouch {
   cp: number
