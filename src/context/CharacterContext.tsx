@@ -12,6 +12,7 @@ import type {
   ASIChoice,
   Character,
   CharacterAbilityScores,
+  ClassFeatureChoiceSelection,
   SkillName,
   Feature,
   BackgroundAbilityChoices,
@@ -41,7 +42,9 @@ export interface GenerationState {
 
 type Action =
   | { type: 'SET_RACE'; raceId: string }
+  | { type: 'SET_RACE_VARIANT'; raceVariantId: string | null }
   | { type: 'SET_CLASS'; classId: string; subclassId: string | null }
+  | { type: 'SET_CLASS_FEATURE_CHOICE'; selection: ClassFeatureChoiceSelection }
   | { type: 'SET_BACKGROUND'; backgroundId: string }
   | { type: 'SET_BACKGROUND_ABILITY_CHOICES'; choices: BackgroundAbilityChoices | null }
   | { type: 'SET_ABILITY_SCORES'; scores: CharacterAbilityScores }
@@ -148,13 +151,36 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'SET_RACE':
       return {
         ...state,
-        creationDraft: { ...state.creationDraft, raceId: action.raceId },
+        creationDraft: { ...state.creationDraft, raceId: action.raceId, raceVariantId: null },
       }
-    case 'SET_CLASS':
+    case 'SET_RACE_VARIANT':
       return {
         ...state,
-        creationDraft: { ...state.creationDraft, classId: action.classId, subclassId: action.subclassId },
+        creationDraft: { ...state.creationDraft, raceVariantId: action.raceVariantId },
       }
+    case 'SET_CLASS': {
+      const shouldResetClassChoices = state.creationDraft.classId !== action.classId
+      return {
+        ...state,
+        creationDraft: {
+          ...state.creationDraft,
+          classId: action.classId,
+          subclassId: action.subclassId,
+          classFeatureChoices: shouldResetClassChoices ? [] : (state.creationDraft.classFeatureChoices ?? []),
+        },
+      }
+    }
+    case 'SET_CLASS_FEATURE_CHOICE': {
+      const existingSelections = state.creationDraft.classFeatureChoices ?? []
+      const filtered = existingSelections.filter((selection) => selection.groupId !== action.selection.groupId)
+      return {
+        ...state,
+        creationDraft: {
+          ...state.creationDraft,
+          classFeatureChoices: [...filtered, action.selection],
+        },
+      }
+    }
     case 'SET_BACKGROUND':
       return {
         ...state,
@@ -438,8 +464,10 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         id: generateId(),
         name: draft.name || 'Senza Nome',
         raceId: draft.raceId || '',
+        raceVariantId: draft.raceVariantId ?? null,
         classId: draft.classId || '',
         subclassId: draft.subclassId ?? null,
+        classFeatureChoices: draft.classFeatureChoices ?? [],
         backgroundId: draft.backgroundId || '',
         backgroundAbilityChoices: draft.backgroundAbilityChoices ?? null,
         level: 1,
@@ -476,8 +504,10 @@ function reducer(state: CharacterState, action: Action): CharacterState {
       }
       const agg = aggregateBonuses({
         raceId: character.raceId,
+        raceVariantId: character.raceVariantId ?? undefined,
         classId: character.classId,
         subclassId: character.subclassId ?? undefined,
+        classFeatureChoices: character.classFeatureChoices,
         backgroundId: character.backgroundId,
         backgroundAbilityChoices: character.backgroundAbilityChoices,
       })
@@ -671,7 +701,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
       saveStorage({
-        version: 9,
+        version: 10,
         characters: updatedChars,
         activeCharacterId: char?.id ?? null,
       })

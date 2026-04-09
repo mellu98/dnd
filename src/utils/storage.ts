@@ -1,4 +1,11 @@
-import type { ASIChoice, AbilityName, Character, CurrencyPouch, SkillName } from '../types'
+import type {
+  ASIChoice,
+  AbilityName,
+  Character,
+  ClassFeatureChoiceSelection,
+  CurrencyPouch,
+  SkillName,
+} from '../types'
 import { normalizeBackgroundAbilityChoices } from './background-ability-choices'
 
 interface StorageSchemaV1 {
@@ -48,6 +55,7 @@ type LegacyCharacter = Omit<
   | 'currency'
   | 'initiativeTracker'
   | 'activeInitiativeId'
+  | 'classFeatureChoices'
 > & {
   equipment?: unknown
   knownSpells?: unknown
@@ -64,6 +72,8 @@ type LegacyCharacter = Omit<
   currency?: unknown
   initiativeTracker?: unknown
   activeInitiativeId?: unknown
+  subraceId?: unknown
+  classFeatureChoices?: unknown
 }
 
 interface StorageSchemaV3 {
@@ -108,6 +118,12 @@ interface StorageSchemaV9 {
   activeCharacterId: string | null
 }
 
+interface StorageSchemaV10 {
+  version: 10
+  characters: Character[]
+  activeCharacterId: string | null
+}
+
 const STORAGE_KEY = 'dnd5e-characters'
 
 const EMPTY_CURRENCY: CurrencyPouch = {
@@ -118,8 +134,8 @@ const EMPTY_CURRENCY: CurrencyPouch = {
   pp: 0,
 }
 
-const defaultStorage: StorageSchemaV9 = {
-  version: 9,
+const defaultStorage: StorageSchemaV10 = {
+  version: 10,
   characters: [],
   activeCharacterId: null,
 }
@@ -244,6 +260,18 @@ function normalizeExpertiseSkills(value: unknown): SkillName[] {
   return value.filter((skill): skill is SkillName => typeof skill === 'string')
 }
 
+function normalizeClassFeatureChoices(value: unknown): ClassFeatureChoiceSelection[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((selection) => {
+    if (!isRecord(selection) || typeof selection.groupId !== 'string' || typeof selection.optionId !== 'string') {
+      return []
+    }
+
+    return [{ groupId: selection.groupId, optionId: selection.optionId }]
+  })
+}
+
 function withCharacterDefaults(character: LegacyCharacter): Character {
   const normalizedKnownSpells = Array.isArray(character.knownSpells)
     ? character.knownSpells.filter((spellId): spellId is string => typeof spellId === 'string')
@@ -253,8 +281,16 @@ function withCharacterDefaults(character: LegacyCharacter): Character {
     ? character.preparedSpells.filter((spellId): spellId is string => typeof spellId === 'string')
     : normalizedKnownSpells
 
+  const raceVariantId = typeof character.raceVariantId === 'string'
+    ? character.raceVariantId
+    : typeof character.subraceId === 'string'
+      ? character.subraceId
+      : null
+
   return {
     ...(character as Character),
+    raceVariantId,
+    classFeatureChoices: normalizeClassFeatureChoices(character.classFeatureChoices),
     backgroundAbilityChoices: normalizeBackgroundAbilityChoices(character.backgroundAbilityChoices),
     equipment: normalizeEquipment(character.equipment),
     knownSpells: normalizedKnownSpells,
@@ -294,8 +330,10 @@ function migrateV1toV3(old: StorageSchemaV1): StorageSchemaV3 {
       id: character.id,
       name: character.name,
       raceId: character.raceId,
+      raceVariantId: character.subraceId,
       classId: character.classId,
       subclassId: character.subclassId,
+      classFeatureChoices: [],
       backgroundId: character.backgroundId,
       backgroundAbilityChoices: null,
       level: character.level,
@@ -405,7 +443,15 @@ function migrateV8toV9(v8: StorageSchemaV8): StorageSchemaV9 {
   }
 }
 
-export function loadStorage(): StorageSchemaV9 {
+function migrateV9toV10(v9: StorageSchemaV9): StorageSchemaV10 {
+  return {
+    version: 10,
+    characters: v9.characters.map((character) => withCharacterDefaults(character as LegacyCharacter)),
+    activeCharacterId: v9.activeCharacterId,
+  }
+}
+
+export function loadStorage(): StorageSchemaV10 {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultStorage
@@ -420,7 +466,8 @@ export function loadStorage(): StorageSchemaV9 {
       const v6 = migrateV5toV6(v5)
       const v7 = migrateV6toV7(v6)
       const v8 = migrateV7toV8(v7)
-      return migrateV8toV9(v8)
+      const v9 = migrateV8toV9(v8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 3) {
@@ -429,7 +476,8 @@ export function loadStorage(): StorageSchemaV9 {
       const v6 = migrateV5toV6(v5)
       const v7 = migrateV6toV7(v6)
       const v8 = migrateV7toV8(v7)
-      return migrateV8toV9(v8)
+      const v9 = migrateV8toV9(v8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 4) {
@@ -437,34 +485,43 @@ export function loadStorage(): StorageSchemaV9 {
       const v6 = migrateV5toV6(v5)
       const v7 = migrateV6toV7(v6)
       const v8 = migrateV7toV8(v7)
-      return migrateV8toV9(v8)
+      const v9 = migrateV8toV9(v8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 5) {
       const v6 = migrateV5toV6(parsed as unknown as StorageSchemaV5)
       const v7 = migrateV6toV7(v6)
       const v8 = migrateV7toV8(v7)
-      return migrateV8toV9(v8)
+      const v9 = migrateV8toV9(v8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 6) {
       const v7 = migrateV6toV7(parsed as unknown as StorageSchemaV6)
       const v8 = migrateV7toV8(v7)
-      return migrateV8toV9(v8)
+      const v9 = migrateV8toV9(v8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 7) {
       const v8 = migrateV7toV8(parsed as unknown as StorageSchemaV7)
-      return migrateV8toV9(v8)
+      const v9 = migrateV8toV9(v8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 8) {
-      return migrateV8toV9(parsed as unknown as StorageSchemaV8)
+      const v9 = migrateV8toV9(parsed as unknown as StorageSchemaV8)
+      return migrateV9toV10(v9)
     }
 
     if (parsed.version === 9) {
+      return migrateV9toV10(parsed as unknown as StorageSchemaV9)
+    }
+
+    if (parsed.version === 10) {
       return {
-        version: 9,
+        version: 10,
         characters: Array.isArray(parsed.characters)
           ? parsed.characters.map((character) => withCharacterDefaults(character as LegacyCharacter))
           : [],
@@ -478,7 +535,7 @@ export function loadStorage(): StorageSchemaV9 {
   }
 }
 
-export function saveStorage(data: StorageSchemaV9): void {
+export function saveStorage(data: StorageSchemaV10): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 }
 

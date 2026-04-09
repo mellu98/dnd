@@ -2,6 +2,7 @@ import type {
   AbilityName,
   AbilityScoreBonus,
   BackgroundAbilityChoices,
+  ClassFeatureChoiceSelection,
   DieType,
   Feature,
   Proficiency,
@@ -11,11 +12,15 @@ import { getRaceById } from '../data/races'
 import { getClassById } from '../data/classes'
 import { getBackgroundById } from '../data/backgrounds'
 import { getBackgroundAbilityBonuses } from '../utils/background-ability-choices'
+import { resolveSpecies } from '../utils/species-resolution'
+import { resolveClassFeatureChoiceEffects } from '../utils/class-feature-choices'
 
 export interface AggregateParams {
   raceId?: string
+  raceVariantId?: string
   classId?: string
   subclassId?: string
+  classFeatureChoices?: ClassFeatureChoiceSelection[] | null
   backgroundId?: string
   backgroundAbilityChoices?: BackgroundAbilityChoices | null
   level?: number
@@ -24,6 +29,10 @@ export interface AggregateParams {
 export interface AggregatedBonuses {
   proficiencies: Proficiency[]
   features: Feature[]
+  speciesFeatures: Feature[]
+  classFeatures: Feature[]
+  subclassFeatures: Feature[]
+  featFeatures: Feature[]
   languages: string[]
   languagesIT: string[]
   speed: number
@@ -34,10 +43,24 @@ export interface AggregatedBonuses {
   backgroundAbilityBonuses: AbilityScoreBonus[]
 }
 
+function dedupeByKey<T>(items: T[], getKey: (item: T) => string): T[] {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const key = getKey(item)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
   const result: AggregatedBonuses = {
     proficiencies: [],
     features: [],
+    speciesFeatures: [],
+    classFeatures: [],
+    subclassFeatures: [],
+    featFeatures: [],
     languages: [],
     languagesIT: [],
     speed: 30,
@@ -50,20 +73,20 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
 
   const level = params.level ?? 1
 
-  // Species (race) traits — no ability bonuses in 2024
   if (params.raceId) {
     const race = getRaceById(params.raceId)
-    if (race) {
-      result.features.push(...race.features)
-      result.proficiencies.push(...(race as any).proficiencies || [])
-      result.speed = race.speed
-      result.darkvision = race.darkvision
-      result.languages = [...race.languages]
-      result.languagesIT = [...race.languagesIT]
+    const resolvedSpecies = resolveSpecies(race, params.raceVariantId)
+
+    if (resolvedSpecies) {
+      result.speciesFeatures.push(...resolvedSpecies.features)
+      result.proficiencies.push(...resolvedSpecies.proficiencies)
+      result.speed = resolvedSpecies.speed
+      result.darkvision = resolvedSpecies.darkvision
+      result.languages = [...resolvedSpecies.languages]
+      result.languagesIT = [...resolvedSpecies.languagesIT]
     }
   }
 
-  // Class bonuses
   if (params.classId) {
     const cls = getClassById(params.classId)
     if (cls) {
@@ -71,38 +94,61 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
       result.savingThrows = [...cls.savingThrows]
       result.skillChoices = cls.skillChoices
       result.proficiencies.push(
-        ...(cls as any).armorProficiencies || [],
-        ...(cls as any).weaponProficiencies || [],
-        ...(cls as any).toolProficiencies || [],
+        ...cls.armorProficiencies,
+        ...cls.weaponProficiencies,
+        ...cls.toolProficiencies,
       )
-      result.features.push(...cls.features.filter(f => f.level <= level))
+      result.classFeatures.push(...cls.features.filter((feature) => feature.level <= level))
 
-      // Subclass bonuses
+      const classFeatureChoiceEffects = resolveClassFeatureChoiceEffects({
+        classDefinition: cls,
+        selections: params.classFeatureChoices,
+        level,
+      })
+      result.classFeatures.push(...classFeatureChoiceEffects.features)
+      result.proficiencies.push(...classFeatureChoiceEffects.proficiencies)
+
       if (params.subclassId) {
-        const subclass = cls.subclasses.find(s => s.id === params.subclassId)
+        const subclass = cls.subclasses.find((candidate) => candidate.id === params.subclassId)
         if (subclass) {
-          result.features.push(...subclass.features.filter(f => f.level <= level))
-          result.proficiencies.push(...(subclass as any).proficiencies || [])
+          result.subclassFeatures.push(...subclass.features.filter((feature) => feature.level <= level))
+          result.proficiencies.push(...subclass.proficiencies)
         }
       }
     }
   }
 
-  // Background bonuses — includes ASI, skills, tool, origin feat
   if (params.backgroundId) {
-    const bg = getBackgroundById(params.backgroundId)
-    if (bg) {
-      result.proficiencies.push(...bg.skillProficiencies)
-      if (bg.toolProficiency && bg.toolProficiency.value !== 'None') {
-        result.proficiencies.push(bg.toolProficiency)
+    const background = getBackgroundById(params.backgroundId)
+    if (background) {
+      result.proficiencies.push(...background.skillProficiencies)
+      if (background.toolProficiency && background.toolProficiency.value !== 'None') {
+        result.proficiencies.push(background.toolProficiency)
       }
-      result.features.push(bg.originFeat)
-
+      result.featFeatures.push(background.originFeat)
       result.backgroundAbilityBonuses.push(
-        ...getBackgroundAbilityBonuses(bg, params.backgroundAbilityChoices),
+        ...getBackgroundAbilityBonuses(background, params.backgroundAbilityChoices),
       )
     }
   }
+
+  result.speciesFeatures = dedupeByKey(result.speciesFeatures, (feature) => `${feature.name}-${feature.level}`)
+  result.classFeatures = dedupeByKey(result.classFeatures, (feature) => `${feature.name}-${feature.level}`)
+  result.subclassFeatures = dedupeByKey(result.subclassFeatures, (feature) => `${feature.name}-${feature.level}`)
+  result.featFeatures = dedupeByKey(result.featFeatures, (feature) => `${feature.name}-${feature.level}`)
+  result.features = [
+    ...result.speciesFeatures,
+    ...result.classFeatures,
+    ...result.subclassFeatures,
+    ...result.featFeatures,
+  ]
+  result.proficiencies = dedupeByKey(result.proficiencies, (proficiency) => `${proficiency.type}-${proficiency.value}`)
+  result.languages = dedupeByKey(result.languages, (language) => language)
+  result.languagesIT = dedupeByKey(result.languagesIT, (language) => language)
+  result.backgroundAbilityBonuses = dedupeByKey(
+    result.backgroundAbilityBonuses,
+    (bonus) => `${bonus.ability}-${bonus.value}`,
+  )
 
   return result
 }

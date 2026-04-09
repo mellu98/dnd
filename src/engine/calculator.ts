@@ -7,8 +7,12 @@ import { computeMaxHp } from './hp-calculator'
 import { getArmorById, getShieldById } from '../data/equipment'
 import { getRaceById } from '../data/races'
 import { getClassById } from '../data/classes'
+import { feats } from '../data/feats'
+import { resolveSpecies } from '../utils/species-resolution'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
+const featById = new Map(feats.map((feat) => [feat.id, feat]))
+const featByName = new Map(feats.map((feat) => [feat.name, feat]))
 
 function getEquippedShieldBonus(character: Character): number {
   const shieldId = character.equippedShieldId
@@ -33,23 +37,20 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
 
   let ac: number
 
-  // No armor equipped -> Unarmored Defense variants
   if (!armorId) {
     if (classId === 'barbarian') {
       ac = 10 + modifiers.DEX + modifiers.CON
     } else if (classId === 'monk') {
       ac = shieldBonus === 0 ? 10 + modifiers.DEX + modifiers.WIS : 10 + modifiers.DEX
-    // Sorcerer: Draconic Bloodline -> Draconic Resilience
     } else if (classId === 'sorcerer' && subclassId === 'draconic') {
       ac = 13 + modifiers.DEX
     } else {
       ac = 10 + modifiers.DEX
     }
   } else {
-    // Armor equipped
     const armor = getArmorById(armorId)
     if (!armor) {
-      ac = 10 + modifiers.DEX // fallback -> unknown armor id
+      ac = 10 + modifiers.DEX
     } else {
       ac = armor.ac
       const dexCap = armor.dexModifier ?? Infinity
@@ -57,52 +58,58 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
     }
   }
 
-  // Shield bonus (data-driven)
   ac += shieldBonus
 
-  // Magical armor bonus (equipped item in category 'armor' with magicalBonus)
-  const magicalItem = character.equipment.find((e) => e.equipped && e.magicalBonus != null && e.category === 'armor')
+  const magicalItem = character.equipment.find((equipmentItem) => equipmentItem.equipped && equipmentItem.magicalBonus != null && equipmentItem.category === 'armor')
   if (magicalItem?.magicalBonus) ac += magicalItem.magicalBonus
 
   return ac
 }
 
+function dedupeByKey<T>(items: T[], getKey: (item: T) => string): T[] {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const key = getKey(item)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function calculateAllStats(character: Character): CalculatedStats {
-  // Resolve species size (sizeIT) — defaults to "Media" if species not found
   const race = getRaceById(character.raceId)
   const cls = getClassById(character.classId)
-  const sizeIT = race?.sizeIT ?? 'Media'
+  const resolvedSpecies = resolveSpecies(race, character.raceVariantId)
+  const sizeIT = resolvedSpecies?.sizeIT ?? race?.sizeIT ?? 'Media'
 
   const aggregated = aggregateBonuses({
     raceId: character.raceId,
+    raceVariantId: character.raceVariantId ?? undefined,
     classId: character.classId,
     subclassId: character.subclassId ?? undefined,
+    classFeatureChoices: character.classFeatureChoices,
     backgroundId: character.backgroundId,
     level: character.level,
     backgroundAbilityChoices: character.backgroundAbilityChoices,
   })
 
-  // Compute final ability scores (base + background ASI bonuses + class ASI choices)
   const finalAbilityScores = { ...character.abilityScores } as CharacterAbilityScores
   for (const bonus of aggregated.backgroundAbilityBonuses) {
     finalAbilityScores[bonus.ability] += bonus.value
   }
-  // Apply ASI ability bonuses from explicit character choices (level-up ASIs)
   for (const choice of character.asiChoices ?? []) {
     if (choice.type === 'ability' && choice.abilityBonuses) {
-      for (const b of choice.abilityBonuses) {
-        finalAbilityScores[b.ability] = Math.min(20, finalAbilityScores[b.ability] + b.value)
+      for (const bonus of choice.abilityBonuses) {
+        finalAbilityScores[bonus.ability] = Math.min(20, finalAbilityScores[bonus.ability] + bonus.value)
       }
     }
   }
 
-  // Compute modifiers
   const abilityModifiers = {} as Record<AbilityName, number>
   for (const ability of allAbilities) {
     abilityModifiers[ability] = abilityModifier(finalAbilityScores[ability])
   }
 
-  // Proficiency bonus
   const profBonus = proficiencyBonus(character.level)
 
   const spellcasting = cls?.spellcasting
@@ -115,22 +122,17 @@ export function calculateAllStats(character: Character): CalculatedStats {
       }
     : null
 
-  // Collect all skill proficiencies from character choices + background
   const skillProfSet = new Set<SkillName>(character.skillProficiencies)
-  for (const prof of aggregated.proficiencies) {
-    if (prof.type === 'skill') {
-      const skillId = prof.value.toLowerCase().replace(/\s+/g, '_') as SkillName
+  for (const proficiency of aggregated.proficiencies) {
+    if (proficiency.type === 'skill') {
+      const skillId = proficiency.value.toLowerCase().replace(/\s+/g, '_') as SkillName
       skillProfSet.add(skillId)
     }
   }
   const skillProficiencies = Array.from(skillProfSet)
 
-  // Detect Jack of All Trades (Bard level 2 feature)
-  const hasJackOfAllTrades = aggregated.features.some(
-    (f) => f.name === 'Jack of All Trades',
-  )
+  const hasJackOfAllTrades = aggregated.classFeatures.some((feature) => feature.name === 'Jack of All Trades')
 
-  // Compute skill modifiers with Expertise and Jack of All Trades
   const expertiseSet = new Set<SkillName>(character.expertiseSkills)
   const skillModifiers = {} as Record<SkillName, number>
   for (const skill of skills) {
@@ -139,19 +141,16 @@ export function calculateAllStats(character: Character): CalculatedStats {
     const hasExpertise = expertiseSet.has(skill.id)
 
     if (hasExpertise) {
-      // Expertise: double proficiency bonus
       skillModifiers[skill.id] = mod + profBonus * 2
     } else if (isProficient) {
       skillModifiers[skill.id] = mod + profBonus
     } else if (hasJackOfAllTrades) {
-      // Jack of All Trades: half proficiency (rounded down) on non-proficient skills
       skillModifiers[skill.id] = mod + Math.floor(profBonus / 2)
     } else {
       skillModifiers[skill.id] = mod
     }
   }
 
-  // Saving throws
   const savingThrowProficiencies = aggregated.savingThrows
   const savingThrowModifiers = {} as Record<AbilityName, number>
   for (const ability of allAbilities) {
@@ -160,14 +159,11 @@ export function calculateAllStats(character: Character): CalculatedStats {
     savingThrowModifiers[ability] = mod + (isProficient ? profBonus : 0)
   }
 
-  // HP
   let maxHp = character.hp.max
   if (aggregated.hitDie) {
     maxHp = computeMaxHp(aggregated.hitDie, abilityModifiers.CON, character.level)
   }
-  // currentHp is recalculated below after applying feat bonuses
 
-  // Spell slot tracker
   const slotArray = cls?.spellSlotTable?.[character.level] ?? []
   const spellSlots = slotArray.map((max, idx) => {
     const spellLevel = idx + 1
@@ -175,13 +171,10 @@ export function calculateAllStats(character: Character): CalculatedStats {
     return { level: spellLevel, max, expended: Math.min(expended, max) }
   })
 
-  // Apply feat bonuses from ASI choices + background origin feat
   let initiativeBonus = abilityModifiers.DEX
   let speed = aggregated.speed
   let toughBonus = 0
 
-  // Monk Unarmored Movement — speed bonus when no armor equipped
-  // PHB 2024 scaling: lvl 2 +10ft, lvl 6 +15ft, lvl 10 +20ft, lvl 14 +25ft, lvl 18 +30ft
   if (character.classId === 'monk' && !character.equippedArmorId) {
     const monkSpeedBonus = character.level >= 18 ? 30
       : character.level >= 14 ? 25
@@ -192,33 +185,15 @@ export function calculateAllStats(character: Character): CalculatedStats {
     speed += monkSpeedBonus
   }
 
-  // Collect all active feat IDs: from ASI choices + background origin feat (if mechanical)
-  const activeFeatIds: string[] = []
+  const activeFeatIds = new Set<string>()
   for (const choice of character.asiChoices ?? []) {
     if (choice.type === 'feat' && choice.featId) {
-      activeFeatIds.push(choice.featId)
+      activeFeatIds.add(choice.featId)
     }
   }
-  // Background origin feat — map known feat names to ids
-  const bgOriginFeatNameToId: Record<string, string> = {
-    Alert: 'alert',
-    Tough: 'tough',
-    Mobile: 'mobile',
-    Musician: 'musician',
-    Crafter: 'crafter',
-    Skilled: 'skilled',
-    Healer: 'healer',
-    'Tavern Brawler': 'tavern_brawler',
-    'Savage Attacker': 'savage_attacker',
-    Skulker: 'skulker',
-    'Fey Touched': 'fey_touched',
-    'Magic Initiate (Cleric)': 'magic_initiate_cleric',
-    'Magic Initiate (Wizard)': 'magic_initiate_wizard',
-  }
-  for (const feat of aggregated.features) {
-    if (feat.name in bgOriginFeatNameToId) {
-      activeFeatIds.push(bgOriginFeatNameToId[feat.name])
-    }
+  for (const feature of aggregated.featFeatures) {
+    const feat = featByName.get(feature.name)
+    if (feat) activeFeatIds.add(feat.id)
   }
 
   for (const featId of activeFeatIds) {
@@ -227,9 +202,20 @@ export function calculateAllStats(character: Character): CalculatedStats {
     if (featId === 'tough') toughBonus += character.level * 2
   }
 
-  // Apply Tough bonus to HP
+  const activeFeats = dedupeByKey(
+    Array.from(activeFeatIds)
+      .map((featId) => featById.get(featId))
+      .filter((feat): feat is NonNullable<typeof feat> => feat != null),
+    (feat) => feat.id,
+  )
+
   const finalMaxHp = maxHp + toughBonus
   const finalCurrentHp = Math.min(character.hp.current, finalMaxHp)
+
+  const speciesFeatures = [...aggregated.speciesFeatures].sort((a, b) => a.level - b.level)
+  const classFeatures = [...aggregated.classFeatures].sort((a, b) => a.level - b.level)
+  const subclassFeatures = [...aggregated.subclassFeatures].sort((a, b) => a.level - b.level)
+  const allFeatures = [...aggregated.features].sort((a, b) => a.level - b.level)
 
   return {
     finalAbilityScores,
@@ -244,7 +230,11 @@ export function calculateAllStats(character: Character): CalculatedStats {
     speed,
     passivePerception: 10 + skillModifiers.perception,
     allProficiencies: aggregated.proficiencies,
-    allFeatures: aggregated.features.sort((a, b) => a.level - b.level),
+    allFeatures,
+    speciesFeatures,
+    classFeatures,
+    subclassFeatures,
+    activeFeats,
     hp: { max: finalMaxHp, current: finalCurrentHp, temporary: character.hp.temporary },
     darkvision: aggregated.darkvision,
     sizeIT,

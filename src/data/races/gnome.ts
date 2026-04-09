@@ -16,41 +16,55 @@ export const gnome: Species = {
       descriptionIT: 'Hai vantaggio a tutti i tiri salvezza su Intelligenza, Saggezza e Carisma contro la magia.',
       level: 1,
     },
-    // Forest Gnome variants
-    {
-      name: 'Natural Illusionist',
-      nameIT: 'Illusionista Naturale',
-      description: 'You know the minor illusion cantrip. Intelligence is your spellcasting ability for it (Forest Gnome variant).',
-      descriptionIT: 'Conosci il trucchetto illusione minore. Intelligenza Ã¨ la tua caratteristica da incantatore (variante Gnomo delle Foreste).',
-      level: 1,
-    },
-    {
-      name: 'Speak with Small Beasts',
-      nameIT: 'Parlare con le Piccole Bestie',
-      description: 'Through sounds and gestures, you can communicate simple ideas with Small or smaller beasts (Forest Gnome variant).',
-      descriptionIT: 'Attraverso suoni e gesti, puoi comunicare idee semplici con bestie di taglia Piccola o inferiore (variante Gnomo delle Foreste).',
-      level: 1,
-    },
-    // Rock Gnome variants
-    {
-      name: "Artificer's Lore",
-      nameIT: 'Sapere dell\'Artefice',
-      description: 'Whenever you make an Intelligence (History) check related to magic items, alchemical objects, or technological devices, you add double your proficiency bonus (Rock Gnome variant).',
-      descriptionIT: 'Quando effettui una prova di Intelligenza (Storia) relativa a oggetti magici, alchemici o tecnologici, aggiungi il doppio del tuo bonus di competenza (variante Gnomo delle Rocce).',
-      level: 1,
-    },
-    {
-      name: 'Tinker',
-      nameIT: 'Inventore',
-      description: 'You have proficiency with artisan\'s tools (tinker\'s tools). Using them, you can spend 1 hour and 10 gp to construct a Tiny clockwork device (AC 5, 1 hp) (Rock Gnome variant).',
-      descriptionIT: 'Hai competenza con gli strumenti da artigiano (strumenti da inventore). Usandoli, puoi spendere 1 ora e 10 mo per costruire un minuscolo congegno a orologeria (CA 5, 1 pf) (variante Gnomo delle Rocce).',
-      level: 1,
-    },
   ],
-  proficiencies: [
-    { type: 'tool', value: "Tinker's Tools", valueIT: 'Strumenti da Inventore' },
-  ],
+  proficiencies: [],
   languages: ['Common', 'Gnomish'],
   languagesIT: ['Comune', 'Gnomesco'],
-  variants: ['Gnomo delle Foreste', 'Gnomo delle Rocce'],
+  variants: [
+    {
+      id: 'forest-gnome',
+      name: 'Forest Gnome',
+      nameIT: 'Gnomo delle Foreste',
+      features: [
+        {
+          name: 'Natural Illusionist',
+          nameIT: 'Illusionista Naturale',
+          description: 'You know the minor illusion cantrip. Intelligence is your spellcasting ability for it.',
+          descriptionIT: 'Conosci il trucchetto illusione minore. Intelligenza è la tua caratteristica da incantatore.',
+          level: 1,
+        },
+        {
+          name: 'Speak with Small Beasts',
+          nameIT: 'Parlare con le Piccole Bestie',
+          description: 'Through sounds and gestures, you can communicate simple ideas with Small or smaller beasts.',
+          descriptionIT: 'Attraverso suoni e gesti, puoi comunicare idee semplici con bestie di taglia Piccola o inferiore.',
+          level: 1,
+        },
+      ],
+    },
+    {
+      id: 'rock-gnome',
+      name: 'Rock Gnome',
+      nameIT: 'Gnomo delle Rocce',
+      features: [
+        {
+          name: "Artificer's Lore",
+          nameIT: 'Sapere dell’Artefice',
+          description: 'Whenever you make an Intelligence (History) check related to magic items, alchemical objects, or technological devices, you add double your proficiency bonus.',
+          descriptionIT: 'Quando effettui una prova di Intelligenza (Storia) relativa a oggetti magici, alchemici o tecnologici, aggiungi il doppio del tuo bonus di competenza.',
+          level: 1,
+        },
+        {
+          name: 'Tinker',
+          nameIT: 'Inventore',
+          description: 'You have proficiency with tinker’s tools and can use them to assemble tiny clockwork devices.',
+          descriptionIT: 'Hai competenza con gli strumenti da inventore e puoi usarli per assemblare minuscoli congegni a orologeria.',
+          level: 1,
+        },
+      ],
+      proficiencies: [
+        { type: 'tool', value: "Tinker's Tools", valueIT: 'Strumenti da Inventore' },
+      ],
+    },
+  ],
 }

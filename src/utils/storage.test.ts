@@ -10,12 +10,12 @@ describe('storage migration', () => {
 
   it('returns default storage when empty', () => {
     const storage = loadStorage()
-    expect(storage.version).toBe(9)
+    expect(storage.version).toBe(10)
     expect(storage.characters).toEqual([])
     expect(storage.activeCharacterId).toBeNull()
   })
 
-  it('migrates v1 characters to v9', () => {
+  it('migrates v1 characters to v10 preserving the legacy subrace as raceVariantId', () => {
     const v1Data = {
       version: 1,
       characters: [
@@ -51,12 +51,14 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v1Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(9)
+    expect(storage.version).toBe(10)
     expect(storage.characters).toHaveLength(1)
 
     const char = storage.characters[0]
     const legacyChar = char as unknown as Record<string, unknown>
     expect(char.id).toBe('test-1')
+    expect(char.raceVariantId).toBe('high-elf')
+    expect(char.classFeatureChoices).toEqual([])
     expect(char.backgroundAbilityChoices).toBeNull()
     expect(legacyChar.subraceId).toBeUndefined()
     expect(legacyChar.chosenAbilityBonuses).toBeUndefined()
@@ -69,7 +71,7 @@ describe('storage migration', () => {
     expect(char.activeInitiativeId).toBeNull()
   })
 
-  it('migrates v3 storage to v9 with new fields', () => {
+  it('migrates v3 storage to v10 with new fields', () => {
     const v3Data = {
       version: 3,
       characters: [
@@ -104,9 +106,11 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v3Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(9)
+    expect(storage.version).toBe(10)
     expect(storage.characters).toHaveLength(1)
     const char = storage.characters[0]
+    expect(char.raceVariantId).toBeNull()
+    expect(char.classFeatureChoices).toEqual([])
     expect(char.backgroundAbilityChoices).toEqual({
       mode: 'plus2_plus1',
       primary: 'STR',
@@ -156,9 +160,11 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v3Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(9)
+    expect(storage.version).toBe(10)
     const char = storage.characters[0]
     expect(char.equipment).toHaveLength(2)
+    expect(char.raceVariantId).toBeNull()
+    expect(char.classFeatureChoices).toEqual([])
     expect(char.equipment[0]).toMatchObject({
       id: 'gear-0',
       name: 'Torcia',
@@ -223,8 +229,10 @@ describe('storage migration', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v7Data))
 
     const storage = loadStorage()
-    expect(storage.version).toBe(9)
+    expect(storage.version).toBe(10)
     const char = storage.characters[0]
+    expect(char.raceVariantId).toBeNull()
+    expect(char.classFeatureChoices).toEqual([])
     expect(char.knownSpells).toEqual(['fire-bolt', 'magic-missile'])
     expect(char.preparedSpells).toEqual(['fire-bolt', 'magic-missile'])
     expect(char.activeConditions).toEqual([])
@@ -235,10 +243,68 @@ describe('storage migration', () => {
     expect(char.activeInitiativeId).toBeNull()
   })
 
+  it('migrates v9 characters to v10 with race variants and class feature choices', () => {
+    const v9Data = {
+      version: 9,
+      characters: [
+        {
+          id: 'test-5',
+          name: 'Chierico Draconico',
+          raceId: 'dragonborn',
+          raceVariantId: 'topaz',
+          classId: 'cleric',
+          subclassId: 'life',
+          classFeatureChoices: [{ groupId: 'divine-order', optionId: 'protector' }],
+          backgroundId: 'wayfarer',
+          backgroundAbilityChoices: { mode: 'plus1_plus1_plus1', abilities: ['WIS', 'CON', 'CHA'] },
+          level: 1,
+          abilityScores: { STR: 13, DEX: 10, CON: 14, INT: 8, WIS: 15, CHA: 12 },
+          hp: { max: 9, current: 9, temporary: 0 },
+          skillProficiencies: ['insight'],
+          chosenLanguages: [],
+          alignment: '',
+          personalityTraits: '',
+          ideals: '',
+          bonds: '',
+          flaws: '',
+          equipment: [],
+          equippedArmorId: null,
+          equippedShieldId: null,
+          knownSpells: [],
+          preparedSpells: [],
+          expendedSpellSlots: {},
+          asiChoices: [],
+          deathSaves: { successes: 0, failures: 0 },
+          activeConditions: [],
+          exhaustionLevel: 0,
+          inspiration: false,
+          isStabilized: false,
+          spentHitDice: 0,
+          expertiseSkills: [],
+          currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+          initiativeTracker: [],
+          activeInitiativeId: null,
+          notes: '',
+          createdAt: '2026-04-01',
+          updatedAt: '2026-04-07',
+          imageUrl: null,
+        },
+      ],
+      activeCharacterId: 'test-5',
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(v9Data))
+
+    const storage = loadStorage()
+    expect(storage.version).toBe(10)
+    expect(storage.characters[0].raceVariantId).toBe('topaz')
+    expect(storage.characters[0].classFeatureChoices).toEqual([{ groupId: 'divine-order', optionId: 'protector' }])
+  })
+
   it('returns default for unknown versions', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 99, characters: [] }))
     const storage = loadStorage()
-    expect(storage.version).toBe(9)
+    expect(storage.version).toBe(10)
     expect(storage.characters).toEqual([])
   })
 })

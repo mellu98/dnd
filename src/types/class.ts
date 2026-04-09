@@ -8,6 +8,29 @@ export interface Subclass {
   proficiencies: Proficiency[]
 }
 
+export interface ClassFeatureChoiceOption {
+  id: string
+  name: string
+  nameIT: string
+  description?: string
+  descriptionIT?: string
+  features?: Feature[]
+  proficiencies?: Proficiency[]
+}
+
+export interface ClassFeatureChoiceGroup {
+  id: string
+  name: string
+  nameIT: string
+  level: number
+  options: ClassFeatureChoiceOption[]
+}
+
+export interface ClassFeatureChoiceSelection {
+  groupId: string
+  optionId: string
+}
+
 export interface ClassDefinition extends Sourced {
   id: string
   name: string
@@ -25,6 +48,7 @@ export interface ClassDefinition extends Sourced {
   features: Feature[]
   subclasses: Subclass[]
   subclassLevel: number
+  featureChoices?: ClassFeatureChoiceGroup[]
   spellcasting?: {
     ability: AbilityName
     knownType: 'prepared' | 'known' | 'all'

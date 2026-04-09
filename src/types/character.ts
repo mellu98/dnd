@@ -1,4 +1,6 @@
 import type { AbilityName, ASIChoice, BackgroundAbilityChoiceMode, Feature, Proficiency, SkillName } from './common'
+import type { ClassFeatureChoiceSelection } from './class'
+import type { Feat } from './feat'
 import type { EquipmentItem } from './equipment'
 
 export interface CharacterAbilityScores {
@@ -61,8 +63,10 @@ export interface Character {
   id: string
   name: string
   raceId: string
+  raceVariantId: string | null
   classId: string
   subclassId: string | null
+  classFeatureChoices: ClassFeatureChoiceSelection[]
   backgroundId: string
   backgroundAbilityChoices: BackgroundAbilityChoices | null
   level: number
@@ -121,6 +125,10 @@ export interface CalculatedStats {
   passivePerception: number
   allProficiencies: Proficiency[]
   allFeatures: Feature[]
+  speciesFeatures: Feature[]
+  classFeatures: Feature[]
+  subclassFeatures: Feature[]
+  activeFeats: Feat[]
   hp: HpState
   darkvision: number
   /** Creature size derived from species (e.g. "Media", "Piccola") */

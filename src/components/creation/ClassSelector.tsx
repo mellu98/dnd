@@ -1,43 +1,39 @@
-import { useState, useEffect } from 'react'
 import { classes } from '../../data/classes'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
 import { SelectionCard } from '../ui/SelectionCard'
 import type { SkillName } from '../../types'
+import { getClassFeatureChoiceGroups, getSelectedClassFeatureChoiceOption } from '../../utils/class-feature-choices'
 
 export default function ClassSelector() {
   const { state, dispatch } = useCharacterContext()
   const draft = state.creationDraft
 
-  const [selectedClass, setSelectedClass] = useState(draft.classId || '')
-  const [selectedSubclass, setSelectedSubclass] = useState(draft.subclassId || '')
-  const [selectedSkills, setSelectedSkills] = useState<SkillName[]>(draft.skillProficiencies || [])
+  const selectedClassId = draft.classId ?? ''
+  const selectedSubclassId = draft.subclassId ?? ''
+  const selectedSkills = draft.skillProficiencies ?? []
+  const selectedFeatureChoices = draft.classFeatureChoices ?? []
 
-  const cls = classes.find(c => c.id === selectedClass)
+  const cls = classes.find((candidate) => candidate.id === selectedClassId)
+  const levelOneFeatureChoices = getClassFeatureChoiceGroups(cls, 1)
 
-  useEffect(() => {
-    if (selectedClass) {
-      dispatch({ type: 'SET_CLASS', classId: selectedClass, subclassId: selectedSubclass || null })
-    }
-  }, [selectedClass, selectedSubclass, dispatch])
+  const handleSelectClass = (classId: string) => {
+    dispatch({ type: 'SET_CLASS', classId, subclassId: null })
+    dispatch({ type: 'SET_SKILL_PROFICIENCIES', skills: [] })
+  }
 
-  useEffect(() => {
-    dispatch({ type: 'SET_SKILL_PROFICIENCIES', skills: selectedSkills })
-  }, [selectedSkills, dispatch])
-
-  const handleSelectClass = (id: string) => {
-    setSelectedClass(id)
-    setSelectedSubclass('')
-    setSelectedSkills([])
+  const handleSelectSubclass = (subclassId: string) => {
+    if (!selectedClassId) return
+    dispatch({ type: 'SET_CLASS', classId: selectedClassId, subclassId })
   }
 
   const toggleSkill = (skill: SkillName) => {
     if (!cls) return
     const max = cls.skillChoices.choose
     if (selectedSkills.includes(skill)) {
-      setSelectedSkills(selectedSkills.filter(s => s !== skill))
+      dispatch({ type: 'SET_SKILL_PROFICIENCIES', skills: selectedSkills.filter((entry) => entry !== skill) })
     } else if (selectedSkills.length < max) {
-      setSelectedSkills([...selectedSkills, skill])
+      dispatch({ type: 'SET_SKILL_PROFICIENCIES', skills: [...selectedSkills, skill] })
     }
   }
 
@@ -46,52 +42,107 @@ export default function ClassSelector() {
       <h2 className="text-xl font-semibold text-accent-gold mb-4">{it.step_class}</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {classes.map(c => (
+        {classes.map((candidate) => (
           <SelectionCard
-            key={c.id}
-            selected={selectedClass === c.id}
-            onClick={() => handleSelectClass(c.id)}
-            title={c.nameIT}
-            subtitle={`${it.hit_die}: ${c.hitDie}  |  ${it.saving_throws}: ${c.savingThrows.map(s => it[s as keyof typeof it]).join(', ')}`}
-            badges={c.spellcasting ? (
+            key={candidate.id}
+            selected={selectedClassId === candidate.id}
+            onClick={() => handleSelectClass(candidate.id)}
+            title={candidate.nameIT}
+            subtitle={`${it.hit_die}: ${candidate.hitDie} | ${it.saving_throws}: ${candidate.savingThrows.map((save) => it[save as keyof typeof it]).join(', ')}`}
+            badges={candidate.spellcasting ? (
               <span className="text-xs bg-accent-blue/20 text-accent-blue px-2 py-0.5 rounded">
-                {it.tab_spells} ({it[c.spellcasting.ability as keyof typeof it]})
+                {it.tab_spells} ({it[candidate.spellcasting.ability as keyof typeof it]})
               </span>
             ) : undefined}
           />
         ))}
       </div>
 
-      {/* Subclass selection (only for classes with subclassLevel <= 1) */}
       {cls && cls.subclassLevel <= 1 && cls.subclasses.length > 0 && (
         <div className="mt-4 p-4 bg-bg-secondary rounded-xl border border-border">
           <h3 className="text-sm font-semibold text-accent-gold mb-3">{it.choose_subclass}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {cls.subclasses.map(sc => (
+            {cls.subclasses.map((subclass) => (
               <button
-                key={sc.id}
-                onClick={() => setSelectedSubclass(sc.id)}
+                key={subclass.id}
+                onClick={() => handleSelectSubclass(subclass.id)}
                 className={`text-left p-3 rounded-lg border transition-all ${
-                  selectedSubclass === sc.id
+                  selectedSubclassId === subclass.id
                     ? 'border-accent-gold bg-bg-card'
                     : 'border-border bg-bg-card/50 hover:bg-bg-card'
                 }`}
               >
-                <span className="font-medium text-sm">{sc.nameIT}</span>
+                <span className="font-medium text-sm">{subclass.nameIT}</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Skill choices */}
+      {cls && levelOneFeatureChoices.length > 0 && (
+        <div className="mt-4 p-4 bg-bg-secondary rounded-xl border border-border space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-accent-gold mb-1">Scelte di classe iniziali</h3>
+            <p className="text-xs text-text-secondary">
+              Queste opzioni NON sono decorative: attivano privilegi e competenze reali. Per il Chierico, qui si risolve davvero Ordine Divino.
+            </p>
+          </div>
+
+          {levelOneFeatureChoices.map((group) => {
+            const selectedOption = getSelectedClassFeatureChoiceOption(cls, selectedFeatureChoices, group.id)
+            return (
+              <div key={group.id} className="space-y-2">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h4 className="text-sm font-semibold text-text-primary">{group.nameIT}</h4>
+                  {selectedOption && (
+                    <span className="text-xs bg-accent-emerald/15 text-accent-emerald px-2 py-1 rounded-full border border-accent-emerald/30">
+                      {selectedOption.nameIT}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {group.options.map((option) => {
+                    const isSelected = selectedOption?.id === option.id
+                    const summary = option.proficiencies?.map((proficiency) => proficiency.valueIT).join(', ')
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => dispatch({ type: 'SET_CLASS_FEATURE_CHOICE', selection: { groupId: group.id, optionId: option.id } })}
+                        className={`text-left p-3 rounded-lg border transition-all ${
+                          isSelected
+                            ? 'border-accent-gold bg-bg-card shadow-sm shadow-accent-gold/10'
+                            : 'border-border bg-bg-card/50 hover:bg-bg-card'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-sm text-text-primary">{option.nameIT}</span>
+                          {isSelected && (
+                            <span className="text-[10px] uppercase tracking-wide text-accent-gold font-semibold">attivo</span>
+                          )}
+                        </div>
+                        {option.descriptionIT && (
+                          <p className="text-xs text-text-secondary mt-2 leading-relaxed">{option.descriptionIT}</p>
+                        )}
+                        {summary && (
+                          <p className="text-[11px] text-accent-emerald mt-2">Competenze: {summary}</p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {cls && (
         <div className="mt-4 p-4 bg-bg-secondary rounded-xl border border-border">
           <h3 className="text-sm font-semibold text-accent-gold mb-3">
             {it.choose_skills} ({selectedSkills.length}/{cls.skillChoices.choose})
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {cls.skillChoices.from.map(skill => {
+            {cls.skillChoices.from.map((skill) => {
               const isSelected = selectedSkills.includes(skill)
               const isDisabled = !isSelected && selectedSkills.length >= cls.skillChoices.choose
               return (

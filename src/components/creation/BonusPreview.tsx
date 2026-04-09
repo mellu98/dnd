@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react'
 import { it } from '../../i18n/it'
 import { aggregateBonuses } from '../../engine/bonus-aggregator'
-import type { AbilityName, BackgroundAbilityChoices } from '../../types'
+import type { AbilityName, BackgroundAbilityChoices, ClassFeatureChoiceSelection } from '../../types'
 import { feetToMeters } from '../../utils/units'
 import { toMetricRuleText } from '../../utils/rules-text'
+import { getRaceById } from '../../data/races'
+import { getSpeciesVariant } from '../../utils/species-resolution'
 
 interface Props {
   raceId?: string
+  raceVariantId?: string
   classId?: string
   subclassId?: string
+  classFeatureChoices?: ClassFeatureChoiceSelection[]
   backgroundId?: string
   backgroundAbilityChoices?: BackgroundAbilityChoices
 }
@@ -22,20 +26,70 @@ const abilityLabel: Record<AbilityName, string> = {
   CHA: it.CHA,
 }
 
-export default function BonusPreview({ raceId, classId, subclassId, backgroundId, backgroundAbilityChoices }: Props) {
+function FeatureSection({
+  title,
+  features,
+  expandedFeature,
+  onToggle,
+}: {
+  title: string
+  features: { nameIT: string; descriptionIT?: string; level: number }[]
+  expandedFeature: string | null
+  onToggle: (key: string) => void
+}) {
+  if (features.length === 0) return null
+
+  return (
+    <Section title={title}>
+      <div className="space-y-2">
+        {features.map((feature) => {
+          const key = `${title}-${feature.nameIT}-${feature.level}`
+          return (
+            <div
+              key={key}
+              className="bg-bg-card rounded-lg p-2 cursor-pointer hover:bg-bg-card-hover transition-colors"
+              onClick={() => onToggle(key)}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-text-primary">{feature.nameIT}</span>
+                <span className="text-xs text-text-secondary">Lv. {feature.level}</span>
+              </div>
+              {expandedFeature === key && feature.descriptionIT && (
+                <p className="text-xs text-text-secondary mt-2 leading-relaxed">{toMetricRuleText(feature.descriptionIT)}</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Section>
+  )
+}
+
+export default function BonusPreview({
+  raceId,
+  raceVariantId,
+  classId,
+  subclassId,
+  classFeatureChoices,
+  backgroundId,
+  backgroundAbilityChoices,
+}: Props) {
   const bonuses = useMemo(
-    () =>
-      aggregateBonuses({
-        raceId,
-        classId,
-        subclassId,
-        backgroundId,
-        backgroundAbilityChoices,
-      }),
-    [raceId, classId, subclassId, backgroundId, backgroundAbilityChoices],
+    () => aggregateBonuses({
+      raceId,
+      raceVariantId,
+      classId,
+      subclassId,
+      classFeatureChoices,
+      backgroundId,
+      backgroundAbilityChoices,
+    }),
+    [raceId, raceVariantId, classId, subclassId, classFeatureChoices, backgroundId, backgroundAbilityChoices],
   )
 
-  const [expandedFeature, setExpandedFeature] = useState<number | null>(null)
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
+  const race = raceId ? getRaceById(raceId) : null
+  const variant = getSpeciesVariant(race, raceVariantId)
 
   const hasContent = raceId || classId || backgroundId
 
@@ -51,9 +105,9 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
   }
 
   const profsByType: Record<string, { value: string; valueIT: string }[]> = {}
-  for (const p of bonuses.proficiencies) {
-    if (!profsByType[p.type]) profsByType[p.type] = []
-    profsByType[p.type].push(p)
+  for (const proficiency of bonuses.proficiencies) {
+    if (!profsByType[proficiency.type]) profsByType[proficiency.type] = []
+    profsByType[proficiency.type].push(proficiency)
   }
 
   const profTypeLabels: Record<string, string> = {
@@ -69,21 +123,30 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
     <div className="bg-bg-secondary rounded-xl p-4 border border-border overflow-y-auto max-h-[calc(100vh-200px)]">
       <h3 className="text-accent-gold font-semibold text-lg mb-3">Anteprima Bonus</h3>
 
-      {/* Background ASI Bonuses */}
+      {variant && (
+        <Section title="Variante selezionata">
+          <div className="flex flex-wrap gap-2">
+            <span className="bg-bg-card px-3 py-1 rounded-lg text-sm text-text-primary">{variant.nameIT}</span>
+            {variant.mechanics?.familyIT && <span className="bg-bg-card px-3 py-1 rounded-lg text-sm">{variant.mechanics.familyIT}</span>}
+            {variant.mechanics?.damageTypeIT && <span className="bg-bg-card px-3 py-1 rounded-lg text-sm">Danno {variant.mechanics.damageTypeIT}</span>}
+            {variant.mechanics?.resistanceTypeIT && <span className="bg-bg-card px-3 py-1 rounded-lg text-sm">Resistenza {variant.mechanics.resistanceTypeIT}</span>}
+          </div>
+        </Section>
+      )}
+
       {bonuses.backgroundAbilityBonuses.length > 0 && (
         <Section title="Bonus Background (ASI)">
           <div className="flex flex-wrap gap-2">
-            {bonuses.backgroundAbilityBonuses.map((b, i) => (
-              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm font-mono">
-                <span className="text-accent-gold">{abilityLabel[b.ability]}</span>{' '}
-                <span className="text-accent-emerald">+{b.value}</span>
+            {bonuses.backgroundAbilityBonuses.map((bonus) => (
+              <span key={`${bonus.ability}-${bonus.value}`} className="bg-bg-card px-3 py-1 rounded-lg text-sm font-mono">
+                <span className="text-accent-gold">{abilityLabel[bonus.ability]}</span>{' '}
+                <span className="text-accent-emerald">+{bonus.value}</span>
               </span>
             ))}
           </div>
         </Section>
       )}
 
-      {/* Speed & Darkvision */}
       <Section title={it.speed}>
         <span className="text-text-primary">{feetToMeters(bonuses.speed)}</span>
       </Section>
@@ -94,87 +157,84 @@ export default function BonusPreview({ raceId, classId, subclassId, backgroundId
         </Section>
       )}
 
-      {/* Hit Die */}
       {bonuses.hitDie && (
         <Section title={it.hit_die}>
           <span className="text-accent-gold font-mono text-lg">{bonuses.hitDie}</span>
         </Section>
       )}
 
-      {/* Saving Throws */}
       {bonuses.savingThrows.length > 0 && (
         <Section title={it.saving_throws}>
-          <div className="flex gap-2">
-            {bonuses.savingThrows.map((st) => (
-              <span key={st} className="bg-bg-card px-3 py-1 rounded-lg text-sm text-accent-emerald">
-                {abilityLabel[st as keyof typeof abilityLabel]}
+          <div className="flex gap-2 flex-wrap">
+            {bonuses.savingThrows.map((save) => (
+              <span key={save} className="bg-bg-card px-3 py-1 rounded-lg text-sm text-accent-emerald">
+                {abilityLabel[save]}
               </span>
             ))}
           </div>
         </Section>
       )}
 
-      {/* Languages */}
       {bonuses.languagesIT.length > 0 && (
         <Section title={it.languages}>
           <div className="flex flex-wrap gap-2">
-            {bonuses.languagesIT.map((l, i) => (
-              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
-                {l}
+            {bonuses.languagesIT.map((language) => (
+              <span key={language} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
+                {language}
               </span>
             ))}
           </div>
         </Section>
       )}
 
-      {/* Proficiencies by type */}
-      {Object.entries(profsByType).map(([type, profs]) => (
+      {Object.entries(profsByType).map(([type, proficiencies]) => (
         <Section key={type} title={profTypeLabels[type] || type}>
           <div className="flex flex-wrap gap-2">
-            {profs.map((p, i) => (
-              <span key={i} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
-                {p.valueIT}
+            {proficiencies.map((proficiency) => (
+              <span key={`${proficiency.type}-${proficiency.value}`} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
+                {proficiency.valueIT}
               </span>
             ))}
           </div>
         </Section>
       ))}
 
-      {/* Skill Choices */}
       {bonuses.skillChoices && (
         <Section title={`${it.choose_skills} (${bonuses.skillChoices.choose})`}>
           <div className="flex flex-wrap gap-1">
-            {bonuses.skillChoices.from.map((s) => (
-              <span key={s} className="bg-bg-card px-2 py-0.5 rounded text-xs text-text-secondary">
-                {it[`skill_${s}` as keyof typeof it]}
+            {bonuses.skillChoices.from.map((skill) => (
+              <span key={skill} className="bg-bg-card px-2 py-0.5 rounded text-xs text-text-secondary">
+                {it[`skill_${skill}` as keyof typeof it]}
               </span>
             ))}
           </div>
         </Section>
       )}
 
-      {/* Features */}
-      {bonuses.features.length > 0 && (
-        <Section title={it.features_traits}>
-          <div className="space-y-2">
-            {bonuses.features.map((f, i) => (
-              <div
-                key={i}
-                className="bg-bg-card rounded-lg p-2 cursor-pointer hover:bg-bg-card-hover transition-colors"
-                onClick={() => setExpandedFeature(expandedFeature === i ? null : i)}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-text-primary">{f.nameIT}</span>
-                  <span className="text-xs text-text-secondary">Lv. {f.level}</span>
-                </div>
-                {expandedFeature === i && (
-                  <p className="text-xs text-text-secondary mt-2 leading-relaxed">{toMetricRuleText(f.descriptionIT)}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
+      <FeatureSection
+        title="Privilegi di specie"
+        features={bonuses.speciesFeatures}
+        expandedFeature={expandedFeature}
+        onToggle={setExpandedFeature}
+      />
+      <FeatureSection
+        title="Privilegi di classe"
+        features={bonuses.classFeatures}
+        expandedFeature={expandedFeature}
+        onToggle={setExpandedFeature}
+      />
+      <FeatureSection
+        title="Privilegi di sottoclasse"
+        features={bonuses.subclassFeatures}
+        expandedFeature={expandedFeature}
+        onToggle={setExpandedFeature}
+      />
+      <FeatureSection
+        title="Talenti"
+        features={bonuses.featFeatures}
+        expandedFeature={expandedFeature}
+        onToggle={setExpandedFeature}
+      />
     </div>
   )
 }

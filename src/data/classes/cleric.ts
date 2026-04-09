@@ -18,6 +18,43 @@ export const cleric: ClassDefinition = {
   ],
   weaponProficiencies: [{ type: 'weapon', value: 'Simple Weapons', valueIT: 'Armi Semplici' }],
   toolProficiencies: [],
+  featureChoices: [
+    {
+      id: 'divine-order',
+      name: 'Divine Order',
+      nameIT: 'Ordine Divino',
+      level: 1,
+      options: [
+        {
+          id: 'protector',
+          name: 'Protector',
+          nameIT: 'Protettore',
+          description: 'Trained for battle, you gain proficiency with martial weapons and heavy armor.',
+          descriptionIT: 'Addestrato per la battaglia, ottieni competenza con armi da guerra e armature pesanti.',
+          proficiencies: [
+            { type: 'armor', value: 'Heavy Armor', valueIT: 'Armature Pesanti' },
+            { type: 'weapon', value: 'Martial Weapons', valueIT: 'Armi da Guerra' },
+          ],
+        },
+        {
+          id: 'thaumaturge',
+          name: 'Thaumaturge',
+          nameIT: 'Taumaturgo',
+          description: 'You learn one extra cleric cantrip and add your Wisdom modifier to Arcana or Religion checks.',
+          descriptionIT: 'Impari un trucchetto da chierico aggiuntivo e aggiungi il modificatore di Saggezza alle prove di Arcano o Religione.',
+          features: [
+            {
+              name: 'Thaumaturge',
+              nameIT: 'Taumaturgo',
+              description: 'You know one extra cleric cantrip. In addition, your Wisdom modifier is added to your Intelligence (Arcana or Religion) checks.',
+              descriptionIT: 'Conosci un trucchetto da chierico aggiuntivo. Inoltre aggiungi il tuo modificatore di Saggezza alle prove di Intelligenza (Arcano o Religione).',
+              level: 1,
+            },
+          ],
+        },
+      ],
+    },
+  ],
   features: [
     {
       name: 'Spellcasting',

@@ -11,8 +11,10 @@ function makeCharacter(overrides: Partial<Character>): Character {
     id: 'test',
     name: 'Test',
     raceId: 'human',
+    raceVariantId: null,
     classId: 'fighter',
     subclassId: null,
+    classFeatureChoices: [],
     backgroundId: 'guard',
     backgroundAbilityChoices: null,
     level: 1,
@@ -53,14 +55,16 @@ function makeCharacter(overrides: Partial<Character>): Character {
 describe('aggregateBonuses', () => {
   it('aggregates species features (no ability bonuses)', () => {
     const agg = aggregateBonuses({ raceId: 'human' })
-    // Species in 2024 have no ability bonuses, just features
     expect(agg.backgroundAbilityBonuses.length).toBe(0)
     expect(agg.speed).toBe(30)
+    expect(agg.speciesFeatures.length).toBeGreaterThan(0)
   })
 
-  it('aggregates class features', () => {
-    const agg = aggregateBonuses({ classId: 'barbarian' })
-    expect(agg.features.length).toBeGreaterThanOrEqual(2) // Rage, Unarmored Defense at level 1
+  it('aggregates class features separately from subclass features', () => {
+    const agg = aggregateBonuses({ classId: 'cleric', subclassId: 'life', level: 1 })
+    expect(agg.classFeatures.some((feature) => feature.name === 'Spellcasting')).toBe(true)
+    expect(agg.subclassFeatures.some((feature) => feature.name === 'Disciple of Life')).toBe(true)
+    expect(agg.featFeatures).toEqual([])
   })
 
   it('aggregates background proficiencies and ASI', () => {
@@ -74,20 +78,23 @@ describe('aggregateBonuses', () => {
     expect(agg.backgroundAbilityBonuses[1].value).toBe(1)
   })
 
-  it('includes origin feat from background', () => {
+  it('includes origin feat from background in the feat bucket', () => {
     const agg = aggregateBonuses({ backgroundId: 'acolyte' })
-    expect(agg.features.some((f) => f.name === 'Magic Initiate (Cleric)')).toBe(true)
+    expect(agg.featFeatures.some((feature) => feature.name === 'Magic Initiate (Cleric)')).toBe(true)
+    expect(agg.classFeatures.some((feature) => feature.name === 'Magic Initiate (Cleric)')).toBe(false)
   })
 
-  it('combines multiple sources', () => {
+  it('combines multiple sources including species variants', () => {
     const agg = aggregateBonuses({
-      raceId: 'elf',
+      raceId: 'dragonborn',
+      raceVariantId: 'topaz',
       classId: 'fighter',
       backgroundId: 'guard',
       backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'STR', secondary: 'WIS' },
     })
     expect(agg.backgroundAbilityBonuses.length).toBe(2)
     expect(agg.features.length).toBeGreaterThan(0)
+    expect(agg.speciesFeatures.some((feature) => feature.name === 'Topaz Resistance')).toBe(true)
   })
 
   it('supports the 2024 +1/+1/+1 background distribution', () => {
@@ -105,8 +112,18 @@ describe('aggregateBonuses', () => {
 
   it('uses Lucky as the Wayfarer origin feat', () => {
     const agg = aggregateBonuses({ backgroundId: 'wayfarer' })
+    expect(agg.featFeatures.some((feature) => feature.name === 'Lucky')).toBe(true)
+  })
 
-    expect(agg.features.some((feature) => feature.name === 'Lucky')).toBe(true)
+  it('applies Divine Order Protector proficiencies for clerics', () => {
+    const agg = aggregateBonuses({
+      classId: 'cleric',
+      classFeatureChoices: [{ groupId: 'divine-order', optionId: 'protector' }],
+      level: 1,
+    })
+
+    expect(agg.proficiencies.some((proficiency) => proficiency.type === 'armor' && proficiency.value === 'Heavy Armor')).toBe(true)
+    expect(agg.proficiencies.some((proficiency) => proficiency.type === 'weapon' && proficiency.value === 'Martial Weapons')).toBe(true)
   })
 })
 
@@ -131,6 +148,7 @@ describe('calculateAllStats', () => {
   it('returns a complete stats object', () => {
     const stats = calculateAllStats(makeCharacter({
       raceId: 'elf',
+      raceVariantId: 'wood-elf',
       classId: 'barbarian',
       backgroundId: 'acolyte',
       backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'WIS', secondary: 'INT' },
@@ -138,25 +156,24 @@ describe('calculateAllStats', () => {
       skillProficiencies: ['acrobatics', 'perception'],
       chosenLanguages: ['Elvish'],
     }))
-    expect(stats.speed).toBeGreaterThanOrEqual(25)
+    expect(stats.speed).toBeGreaterThanOrEqual(35)
     expect(stats.passivePerception).toBeGreaterThanOrEqual(10)
     expect(stats.armorClass).toBeGreaterThanOrEqual(10)
     expect(stats.proficiencyBonus).toBe(2)
+    expect(stats.speciesFeatures.some((feature) => feature.name === 'Fleet of Foot')).toBe(true)
   })
 
   it('adds proficiency bonus to proficient skills', () => {
     const stats = calculateAllStats(makeCharacter({
       raceId: 'human',
       classId: 'fighter',
-      backgroundId: 'criminal', // criminal gives stealth + deception, no perception
+      backgroundId: 'criminal',
       backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'DEX', secondary: 'INT' },
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
       skillProficiencies: ['acrobatics'],
     }))
-    // acrobatics is DEX-based, DEX 12 + 2 (background primary DEX) = 14 → mod +2, prof +2 → +4
-    expect(stats.skillModifiers['acrobatics']).toBe(4)
-    // perception without prof, WIS 10 → mod +0 (no ASI to WIS in this build)
-    expect(stats.skillModifiers['perception']).toBe(0)
+    expect(stats.skillModifiers.acrobatics).toBe(4)
+    expect(stats.skillModifiers.perception).toBe(0)
   })
 
   it('adds shield bonus from inventory data even when no armor is equipped', () => {
@@ -209,10 +226,8 @@ describe('calculateAllStats', () => {
       backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'STR', secondary: 'WIS' },
       abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
     }))
-    // STR 14 + 2 (background primary) = 16 → mod +3
     expect(stats.finalAbilityScores.STR).toBe(16)
     expect(stats.abilityModifiers.STR).toBe(3)
-    // WIS 10 + 1 (background secondary) = 11 → mod +0
     expect(stats.finalAbilityScores.WIS).toBe(11)
   })
 
@@ -227,7 +242,6 @@ describe('calculateAllStats', () => {
       equippedShieldId: 'shield',
     }))
 
-    // DEX 14 + background +2 = 16 → base 13, shield +2 → 15
     expect(stats.armorClass).toBe(15)
   })
 
@@ -242,12 +256,28 @@ describe('calculateAllStats', () => {
       equippedShieldId: 'shield',
     }))
 
-    // Monk with shield falls back to 10 + DEX, then shield bonus applies
     expect(stats.armorClass).toBe(15)
+  })
+
+  it('surfaces species, class, subclass, and feat sections distinctly', () => {
+    const stats = calculateAllStats(makeCharacter({
+      raceId: 'dragonborn',
+      raceVariantId: 'topaz',
+      classId: 'cleric',
+      classFeatureChoices: [{ groupId: 'divine-order', optionId: 'protector' }],
+      subclassId: 'life',
+      backgroundId: 'wayfarer',
+      backgroundAbilityChoices: { mode: 'plus1_plus1_plus1', abilities: ['WIS', 'CON', 'CHA'] },
+      abilityScores: { STR: 13, DEX: 10, CON: 14, INT: 8, WIS: 15, CHA: 12 },
+    }))
+
+    expect(stats.speciesFeatures.some((feature) => feature.name === 'Topaz Resistance')).toBe(true)
+    expect(stats.classFeatures.some((feature) => feature.name === 'Spellcasting')).toBe(true)
+    expect(stats.subclassFeatures.some((feature) => feature.name === 'Disciple of Life')).toBe(true)
+    expect(stats.activeFeats.some((feat) => feat.id === 'lucky')).toBe(true)
   })
 })
 
-// Translation test spot-check
 describe('i18n', () => {
   it('has translations for all skills', () => {
     const skillKeys: SkillName[] = [

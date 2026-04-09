@@ -5,6 +5,7 @@ import type { CalculatedStats } from '../../types'
 import type { EquipmentItem } from '../../types/equipment'
 import { it } from '../../i18n/it'
 import { getWeaponCombatSummary } from '../../utils/weapon-combat'
+import { isArmorProficient, isShieldProficient } from '../../utils/equipment-proficiency'
 
 interface EquipmentPanelProps {
   stats: CalculatedStats
@@ -157,6 +158,8 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
 
   const equippedArmor = equippedArmorId ? getArmorById(equippedArmorId) : null
   const equippedShield = equippedShieldId ? getShieldById(equippedShieldId) : null
+  const armorProficient = equippedArmor ? isArmorProficient(equippedArmor, stats.allProficiencies) : true
+  const shieldProficient = equippedShield ? isShieldProficient(stats.allProficiencies) : true
 
   return (
     <div className="space-y-5">
@@ -185,6 +188,9 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
 
         {equippedArmor && (
           <div className="text-xs text-text-secondary flex flex-wrap gap-2 px-1">
+            <span className={armorProficient ? 'text-accent-emerald' : 'text-accent-red/80'}>
+              {armorProficient ? 'Competente con l’armatura' : 'Non competente con l’armatura'}
+            </span>
             {equippedArmor.stealthDisadvantage && (
               <span className="text-accent-red/80">{it.stealth_disadvantage}</span>
             )}
@@ -288,9 +294,12 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
         )}
 
         {equippedShield && (
-          <div className="text-xs text-text-secondary px-1">
+          <div className="text-xs text-text-secondary px-1 flex flex-wrap gap-2">
             <span className="text-accent-emerald font-semibold">
               CA attuale: {equippedShield.shieldBonus} dallo scudo
+            </span>
+            <span className={shieldProficient ? 'text-accent-emerald' : 'text-accent-red/80'}>
+              {shieldProficient ? 'Competente con lo scudo' : 'Non competente con lo scudo'}
             </span>
           </div>
         )}
