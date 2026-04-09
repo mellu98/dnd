@@ -233,27 +233,29 @@ export const warlock: ClassDefinition = {
   ],
   subclassLevel: 1,
   spellcasting: { ability: 'CHA', knownType: 'known' },
+  // PHB 2024 Warlock Pact Magic slots
+  // Format: [1st, 2nd, 3rd, 4th, 5th, ...] — all warlock slots are at the same level
   spellSlotTable: {
-    1: [1],
-    2: [2],
-    3: [2],
-    4: [2],
-    5: [2],
-    6: [2],
-    7: [2],
-    8: [2],
-    9: [2],
-    10: [2],
-    11: [3],
-    12: [3],
-    13: [3],
-    14: [3],
-    15: [3],
-    16: [3],
-    17: [4],
-    18: [4],
-    19: [4],
-    20: [4],
+    1: [1],          // 1 slot (1st level)
+    2: [2],          // 2 slots (1st level)
+    3: [0, 2],       // 2 slots (2nd level)
+    4: [0, 2],       // 2 slots (2nd level)
+    5: [0, 0, 2],    // 2 slots (3rd level)
+    6: [0, 0, 2],    // 2 slots (3rd level)
+    7: [0, 0, 0, 2], // 2 slots (4th level)
+    8: [0, 0, 0, 2], // 2 slots (4th level)
+    9: [0, 0, 0, 2], // 2 slots (4th level)
+    10: [0, 0, 0, 2],// 2 slots (4th level)
+    11: [0, 0, 0, 0, 3], // 3 slots (5th level)
+    12: [0, 0, 0, 0, 3], // 3 slots (5th level)
+    13: [0, 0, 0, 0, 3], // 3 slots (5th level)
+    14: [0, 0, 0, 0, 3], // 3 slots (5th level)
+    15: [0, 0, 0, 0, 3], // 3 slots (5th level)
+    16: [0, 0, 0, 0, 3], // 3 slots (5th level)
+    17: [0, 0, 0, 0, 4], // 4 slots (5th level)
+    18: [0, 0, 0, 0, 4], // 4 slots (5th level)
+    19: [0, 0, 0, 0, 4], // 4 slots (5th level)
+    20: [0, 0, 0, 0, 4], // 4 slots (5th level)
   },
   startingEquipment: [
     ['Light crossbow + 20 bolts', 'Any simple weapon'],

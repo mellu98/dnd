@@ -3,7 +3,7 @@ import { it } from '../../i18n/it'
 import { AbilityColumnBlock } from './AbilityColumnBlock'
 import { useCharacterContext } from '../../context/CharacterContext'
 
-const ABILITIES: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
+const ABILITIES: AbilityName[] = ['STR', 'INT', 'DEX', 'WIS', 'CON', 'CHA']
 
 interface Props {
   stats: CalculatedStats
