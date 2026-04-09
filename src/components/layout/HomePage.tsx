@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
 import { getRaceById } from '../../data/races'
@@ -8,14 +9,22 @@ import type { Character } from '../../types'
 export function HomePage() {
   const { state, dispatch } = useCharacterContext()
   const characters = state.savedCharacters
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const handleLoad = (character: Character) => {
     dispatch({ type: 'LOAD_CHARACTER', character })
   }
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDeleteRequest = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    dispatch({ type: 'DELETE_CHARACTER', id })
+    setConfirmDeleteId(id)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (confirmDeleteId) {
+      dispatch({ type: 'DELETE_CHARACTER', id: confirmDeleteId })
+      setConfirmDeleteId(null)
+    }
   }
 
   return (
@@ -92,7 +101,7 @@ export function HomePage() {
                         Lv. {char.level}
                       </span>
                       <button
-                        onClick={(e) => handleDelete(e, char.id)}
+                        onClick={(e) => handleDeleteRequest(e, char.id)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary/40 hover:text-accent-red hover:bg-accent-red/10 opacity-0 group-hover:opacity-100 transition-all"
                         title={it.delete_character}
                       >
@@ -116,6 +125,43 @@ export function HomePage() {
           + {it.new_character}
         </button>
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDeleteId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          onClick={() => setConfirmDeleteId(null)}
+        >
+          <div
+            className="bg-bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 rounded-full bg-accent-red/15 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-accent-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-text-primary font-semibold text-lg">Eliminare il personaggio?</h3>
+              <p className="text-text-muted text-sm mt-1">Questa azione è irreversibile.</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-border text-text-secondary hover:text-text-primary hover:border-border/80 transition-all font-medium"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 py-2.5 rounded-xl bg-accent-red/90 hover:bg-accent-red text-white font-semibold transition-all"
+              >
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import type { AbilityName, CalculatedStats } from '../../types'
 import { AbilityScoreBlock } from './AbilityScoreBlock'
 
-const ABILITIES: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
+const ABILITIES: AbilityName[] = ['STR', 'INT', 'DEX', 'WIS', 'CON', 'CHA']
 
 interface Props {
   stats: CalculatedStats
