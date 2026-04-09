@@ -3,20 +3,20 @@ import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
 
 const CONDITIONS = [
-  { id: 'blinded', nameIT: 'Accecato', icon: 'ðŸ‘' },
-  { id: 'charmed', nameIT: 'Affascinato', icon: 'ðŸ’«' },
-  { id: 'deafened', nameIT: 'Assordato', icon: 'ðŸ‘‚' },
-  { id: 'frightened', nameIT: 'Spaventato', icon: 'ðŸ˜¨' },
-  { id: 'grappled', nameIT: 'Afferrato', icon: 'ðŸ¤' },
-  { id: 'incapacitated', nameIT: 'Incapacitato', icon: 'ðŸ’¤' },
-  { id: 'invisible', nameIT: 'Invisibile', icon: 'ðŸ‘»' },
-  { id: 'paralyzed', nameIT: 'Paralizzato', icon: 'ðŸ§Š' },
-  { id: 'petrified', nameIT: 'Pietrificato', icon: 'ðŸª¨' },
-  { id: 'poisoned', nameIT: 'Avvelenato', icon: 'â˜ ï¸' },
-  { id: 'prone', nameIT: 'Prono', icon: 'â¬‡ï¸' },
-  { id: 'restrained', nameIT: 'Trattenuto', icon: 'ðŸ”—' },
-  { id: 'stunned', nameIT: 'Stordito', icon: 'â­' },
-  { id: 'unconscious', nameIT: 'Incosciente', icon: 'ðŸ˜µ' },
+  { id: 'blinded', nameIT: 'Accecato', icon: '\u{1F441}\uFE0F' },
+  { id: 'charmed', nameIT: 'Affascinato', icon: '\u{1F498}' },
+  { id: 'deafened', nameIT: 'Assordato', icon: '\u{1F442}' },
+  { id: 'frightened', nameIT: 'Spaventato', icon: '\u{1F628}' },
+  { id: 'grappled', nameIT: 'Afferrato', icon: '\u{1F517}' },
+  { id: 'incapacitated', nameIT: 'Incapacitato', icon: '\u{1F4A4}' },
+  { id: 'invisible', nameIT: 'Invisibile', icon: '\u{1F47B}' },
+  { id: 'paralyzed', nameIT: 'Paralizzato', icon: '\u{1F9CA}' },
+  { id: 'petrified', nameIT: 'Pietrificato', icon: '\u{1FAA8}' },
+  { id: 'poisoned', nameIT: 'Avvelenato', icon: '\u2620\uFE0F' },
+  { id: 'prone', nameIT: 'Prono', icon: '\u{1F6CC}' },
+  { id: 'restrained', nameIT: 'Trattenuto', icon: '\u26D3\uFE0F' },
+  { id: 'stunned', nameIT: 'Stordito', icon: '\u2B50' },
+  { id: 'unconscious', nameIT: 'Incosciente', icon: '\u{1F635}' },
 ]
 
 export function ConditionsTracker() {
