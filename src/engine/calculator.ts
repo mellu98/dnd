@@ -10,26 +10,36 @@ import { getClassById } from '../data/classes'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
+function getEquippedShieldBonus(character: Character): number {
+  const shieldId = character.equippedShieldId
+  if (!shieldId) return 0
+
+  const dataShieldBonus = getShieldById(shieldId)?.shieldBonus
+  if (typeof dataShieldBonus === 'number') return dataShieldBonus
+
+  const equippedShield = character.equipment.find((item) => item.id === shieldId && item.category === 'shield')
+  return equippedShield?.shieldBonus ?? 0
+}
+
 /**
  * Calculates Armor Class dynamically based on equipped armor, shield, class
  * (Unarmored Defense for Barbarian/Monk/Sorcerer Draconic), and magical bonuses.
  */
 function calculateArmorClass(character: Character, modifiers: Record<AbilityName, number>): number {
   const armorId = character.equippedArmorId
-  const shieldId = character.equippedShieldId
   const classId = character.classId
   const subclassId = character.subclassId
-  const hasShieldEquipped = Boolean(shieldId)
+  const shieldBonus = getEquippedShieldBonus(character)
 
   let ac: number
 
-  // No armor equipped → Unarmored Defense variants
+  // No armor equipped -> Unarmored Defense variants
   if (!armorId) {
     if (classId === 'barbarian') {
       ac = 10 + modifiers.DEX + modifiers.CON
     } else if (classId === 'monk') {
-      ac = hasShieldEquipped ? 10 + modifiers.DEX : 10 + modifiers.DEX + modifiers.WIS
-    // Sorcerer: Draconic Bloodline — Draconic Resilience
+      ac = shieldBonus === 0 ? 10 + modifiers.DEX + modifiers.WIS : 10 + modifiers.DEX
+    // Sorcerer: Draconic Bloodline -> Draconic Resilience
     } else if (classId === 'sorcerer' && subclassId === 'draconic') {
       ac = 13 + modifiers.DEX
     } else {
@@ -39,7 +49,7 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
     // Armor equipped
     const armor = getArmorById(armorId)
     if (!armor) {
-      ac = 10 + modifiers.DEX // fallback — unknown armor id
+      ac = 10 + modifiers.DEX // fallback -> unknown armor id
     } else {
       ac = armor.ac
       const dexCap = armor.dexModifier ?? Infinity
@@ -48,10 +58,7 @@ function calculateArmorClass(character: Character, modifiers: Record<AbilityName
   }
 
   // Shield bonus (data-driven)
-  if (shieldId) {
-    const shield = getShieldById(shieldId)
-    if (shield) ac += shield.shieldBonus
-  }
+  ac += shieldBonus
 
   // Magical armor bonus (equipped item in category 'armor' with magicalBonus)
   const magicalItem = character.equipment.find((e) => e.equipped && e.magicalBonus != null && e.category === 'armor')

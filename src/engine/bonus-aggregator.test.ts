@@ -140,6 +140,48 @@ describe('calculateAllStats', () => {
     expect(stats.skillModifiers['perception']).toBe(0)
   })
 
+  it('adds shield bonus from inventory data even when no armor is equipped', () => {
+    const stats = calculateAllStats(makeCharacter({
+      classId: 'fighter',
+      abilityScores: { STR: 14, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 8 },
+      equipment: [
+        {
+          id: 'shield',
+          name: 'Shield',
+          nameIT: 'Scudo',
+          category: 'shield',
+          quantity: 1,
+          equipped: false,
+          shieldBonus: 2,
+        },
+      ],
+      equippedShieldId: 'shield',
+    }))
+
+    expect(stats.armorClass).toBe(13)
+  })
+
+  it('does not apply monk unarmored defense when the shield bonus comes from inventory data', () => {
+    const stats = calculateAllStats(makeCharacter({
+      classId: 'monk',
+      abilityScores: { STR: 10, DEX: 16, CON: 12, INT: 10, WIS: 18, CHA: 8 },
+      equipment: [
+        {
+          id: 'shield',
+          name: 'Shield',
+          nameIT: 'Scudo',
+          category: 'shield',
+          quantity: 1,
+          equipped: false,
+          shieldBonus: 2,
+        },
+      ],
+      equippedShieldId: 'shield',
+    }))
+
+    expect(stats.armorClass).toBe(15)
+  })
+
   it('applies background ASI to final ability scores', () => {
     const stats = calculateAllStats(makeCharacter({
       raceId: 'human',
