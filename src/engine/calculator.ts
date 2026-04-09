@@ -217,7 +217,7 @@ export function calculateAllStats(character: Character): CalculatedStats {
     speed,
     passivePerception: 10 + skillModifiers.perception,
     allProficiencies: aggregated.proficiencies,
-    allFeatures: aggregated.features,
+    allFeatures: aggregated.features.sort((a, b) => a.level - b.level),
     hp: { max: finalMaxHp, current: finalCurrentHp, temporary: character.hp.temporary },
     darkvision: aggregated.darkvision,
     sizeIT,
