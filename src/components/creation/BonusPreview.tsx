@@ -191,7 +191,7 @@ export default function BonusPreview({
         <Section key={type} title={profTypeLabels[type] || type}>
           <div className="flex flex-wrap gap-2">
             {proficiencies.map((proficiency) => (
-              <span key={`${proficiency.type}-${proficiency.value}`} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
+              <span key={proficiency.value} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
                 {proficiency.valueIT}
               </span>
             ))}
