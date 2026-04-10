@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
-import { armors, shields, weapons, getArmorById, getShieldById, getWeaponById } from '../../data/equipment'
+import { armors, shields, weapons, getArmorById, getShieldById, getWeaponById, adventuringGear, getGearById, allTools, getToolById, ammunition, getAmmunitionById } from '../../data/equipment'
 import type { CalculatedStats } from '../../types'
 import type { EquipmentItem } from '../../types/equipment'
 import { it } from '../../i18n/it'
@@ -37,6 +37,10 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
   const [newItem, setNewItem] = useState('')
   const [showWeapons, setShowWeapons] = useState(false)
   const [showShields, setShowShields] = useState(false)
+  const [showGear, setShowGear] = useState(false)
+  const [showTools, setShowTools] = useState(false)
+  const [showAmmo, setShowAmmo] = useState(false)
+  const [gearFilter, setGearFilter] = useState('')
 
   const gearItems = equipment.filter((item) => item.category === 'gear')
   const weaponItems = equipment.filter((item) => item.category === 'weapon')
@@ -100,6 +104,27 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
     }
 
     dispatch({ type: 'ADD_EQUIPMENT_ITEM', item })
+  }
+
+  const addGearFromData = (gearId: string) => {
+    const data = getGearById(gearId)
+    if (!data || equipment.some((item) => item.id === gearId)) return
+
+    dispatch({ type: 'ADD_EQUIPMENT_ITEM', item: { ...data, quantity: 1 } })
+  }
+
+  const addToolFromData = (toolId: string) => {
+    const data = getToolById(toolId)
+    if (!data || equipment.some((item) => item.id === toolId)) return
+
+    dispatch({ type: 'ADD_EQUIPMENT_ITEM', item: { ...data, quantity: 1 } })
+  }
+
+  const addAmmunitionFromData = (ammoId: string) => {
+    const data = getAmmunitionById(ammoId)
+    if (!data || equipment.some((item) => item.id === ammoId)) return
+
+    dispatch({ type: 'ADD_EQUIPMENT_ITEM', item: { ...data, quantity: data.quantity } })
   }
 
   const getWeaponSummary = (weaponId: string) => {
@@ -481,11 +506,148 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs text-text-secondary uppercase tracking-wider font-semibold">
-          {it.tab_equipment}
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="block text-xs text-text-secondary uppercase tracking-wider font-semibold">
+            Equipaggiamento
+          </label>
+          <div className="flex gap-2">
+            <button onClick={() => setShowAmmo((v) => !v)} className="text-xs text-accent-blue hover:text-accent-blue/80 transition-colors">
+              {showAmmo ? 'Chiudi munizioni' : '+ Munizioni'}
+            </button>
+            <button onClick={() => setShowTools((v) => !v)} className="text-xs text-accent-blue hover:text-accent-blue/80 transition-colors">
+              {showTools ? 'Chiudi attrezzi' : '+ Attrezzi'}
+            </button>
+            <button onClick={() => setShowGear((v) => !v)} className="text-xs text-accent-blue hover:text-accent-blue/80 transition-colors">
+              {showGear ? 'Chiudi' : '+ Equipagg.'}
+            </button>
+          </div>
+        </div>
 
-        <div className="flex gap-2">
+        {/* Ammo picker */}
+        {showAmmo && (
+          <div className="bg-bg-secondary border border-border rounded-lg p-2 space-y-1 max-h-48 overflow-y-auto">
+            {ammunition.map((a) => {
+              const alreadyOwned = equipment.some((item) => item.id === a.id)
+              return (
+                <button
+                  key={a.id}
+                  onClick={() => !alreadyOwned && addAmmunitionFromData(a.id)}
+                  disabled={alreadyOwned}
+                  className={`w-full text-left text-sm px-2 py-1 rounded transition-colors ${
+                    alreadyOwned ? 'text-text-muted/50 cursor-default' : 'text-text-primary hover:bg-bg-card'
+                  }`}
+                >
+                  {a.nameIT} — {a.value} MO
+                  {alreadyOwned && ' (già posseduto)'}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Tools picker */}
+        {showTools && (
+          <div className="bg-bg-secondary border border-border rounded-lg p-2 space-y-3 max-h-64 overflow-y-auto">
+            {[
+              { label: 'Attrezzi Artigianali', items: allTools.filter((t) => artisanTools.includes(t)) },
+              { label: 'Strumenti Musicali', items: musicalInstruments },
+              { label: 'Set da Gioco', items: gamingSets },
+              { label: 'Veicoli e Sella', items: vehicles },
+            ].map((group) => (
+              <div key={group.label}>
+                <div className="text-[10px] text-text-muted uppercase tracking-wider mb-1 px-1">{group.label}</div>
+                {group.items.map((tool) => {
+                  const alreadyOwned = equipment.some((item) => item.id === tool.id)
+                  return (
+                    <button
+                      key={tool.id}
+                      onClick={() => !alreadyOwned && addToolFromData(tool.id)}
+                      disabled={alreadyOwned}
+                      className={`w-full text-left text-sm px-2 py-1 rounded transition-colors ${
+                        alreadyOwned ? 'text-text-muted/50 cursor-default' : 'text-text-primary hover:bg-bg-card'
+                      }`}
+                    >
+                      {tool.nameIT} — {tool.value} MO
+                      {alreadyOwned && ' (già posseduto)'}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Adventuring gear picker */}
+        {showGear && (
+          <div className="bg-bg-secondary border border-border rounded-lg p-2 space-y-1">
+            <input
+              type="text"
+              value={gearFilter}
+              onChange={(e) => setGearFilter(e.target.value)}
+              placeholder="Filtra equipaggiamento..."
+              className="w-full bg-bg-card border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-muted/50 focus:outline-none mb-1"
+            />
+            {(() => {
+              const query = gearFilter.toLowerCase()
+              const filtered = query
+                ? adventuringGear.filter((g) => g.nameIT.toLowerCase().includes(query) || g.name.toLowerCase().includes(query))
+                : adventuringGear
+              return filtered.slice(0, 50).map((g) => {
+                const alreadyOwned = equipment.some((item) => item.id === g.id)
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => !alreadyOwned && addGearFromData(g.id)}
+                    disabled={alreadyOwned}
+                    className={`w-full text-left text-sm px-2 py-1 rounded transition-colors ${
+                      alreadyOwned ? 'text-text-muted/50 cursor-default' : 'text-text-primary hover:bg-bg-card'
+                    }`}
+                  >
+                    {g.nameIT} — {g.value} MO
+                    {alreadyOwned && ' (già posseduto)'}
+                  </button>
+                )
+              })
+            })()}
+          </div>
+        )}
+
+        {/* Gear items list */}
+        {gearItems.length === 0 ? (
+          <p className="text-text-secondary text-sm italic px-1">Nessun equipaggiamento.</p>
+        ) : (
+          <ul className="space-y-1">
+            {gearItems.map((item) => {
+              const dataItem = getGearById(item.id) || getToolById(item.id) || getAmmunitionById(item.id)
+              return (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between bg-bg-card border border-border rounded-lg px-3 py-2 group hover:bg-bg-card-hover transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm text-text-primary">{item.nameIT}</span>
+                    {item.quantity > 1 && (
+                      <span className="text-[11px] text-text-muted ml-2">×{item.quantity}</span>
+                    )}
+                    {dataItem && (
+                      <span className="text-[11px] text-text-muted ml-1">— {dataItem.value} MO</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="text-accent-red/60 hover:text-accent-red transition-colors text-lg leading-none px-1"
+                    title="Rimuovi"
+                  >
+                    &times;
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
+        {/* Manual add item */}
+        <div className="flex gap-2 pt-1">
           <input
             type="text"
             value={newItem}
@@ -501,28 +663,6 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
             +
           </button>
         </div>
-
-        {gearItems.length === 0 ? (
-          <p className="text-text-secondary text-sm italic px-1">Nessun equipaggiamento.</p>
-        ) : (
-          <ul className="space-y-1">
-            {gearItems.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between bg-bg-card border border-border rounded-lg px-3 py-2 group hover:bg-bg-card-hover transition-colors"
-              >
-                <span className="text-sm text-text-primary">{item.nameIT}</span>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="text-accent-red/60 hover:text-accent-red transition-colors text-lg leading-none px-1"
-                  title="Rimuovi"
-                >
-                  &times;
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   )

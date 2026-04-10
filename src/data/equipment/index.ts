@@ -1,3 +1,6 @@
 export { armors, getArmorById } from './armors'
 export { shields, getShieldById } from './shields'
 export { weapons, getWeaponById } from './weapons'
+export { adventuringGear, getGearById } from './gear'
+export { artisanTools, musicalInstruments, gamingSets, vehicles, allTools, getToolById } from './tools'
+export { ammunition, getAmmunitionById } from './ammunition'

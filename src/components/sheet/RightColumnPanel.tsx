@@ -9,6 +9,7 @@ import { InspirationTracker } from './InspirationTracker'
 import { InitiativeTracker } from './InitiativeTracker'
 import { CurrencyPanel } from './CurrencyPanel'
 import { SensesPanel } from './SensesPanel'
+import { WeaponAttacksPanel } from './WeaponAttacksPanel'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { getClassById } from '../../data/classes'
 import { toMetricRuleText } from '../../utils/rules-text'
@@ -33,6 +34,8 @@ export function RightColumnPanel({ stats }: Props) {
       </div>
 
       {character && <RestButtons />}
+
+      {character && <WeaponAttacksPanel stats={stats} />}
 
       <SensesPanel stats={stats} />
 
