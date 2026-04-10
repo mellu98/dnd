@@ -1,11 +1,9 @@
 import { useCharacterContext } from '../../context/CharacterContext'
 import { getWeaponById } from '../../data/equipment'
-import { getClassById } from '../../data/classes'
 import type { CalculatedStats } from '../../types'
 import { it } from '../../i18n/it'
-import { getWeaponCombatSummary, isWeaponRanged } from '../../utils/weapon-combat'
+import { getWeaponCombatSummary } from '../../utils/weapon-combat'
 import { getAbilityFull } from '../../i18n/lookup'
-
 interface Props {
   stats: CalculatedStats
 }
@@ -14,8 +12,6 @@ export function WeaponAttacksPanel({ stats }: Props) {
   const { state } = useCharacterContext()
   const character = state.character
   if (!character) return null
-
-  const cls = getClassById(character.classId)
 
   const equippedWeapons = character.equipment
     .filter((item) => item.category === 'weapon' && item.equipped)
@@ -33,7 +29,7 @@ export function WeaponAttacksPanel({ stats }: Props) {
 
       return { item, data, summary }
     })
-    .filter(Boolean)
+    .filter((w): w is NonNullable<typeof w> => w !== null)
 
   // Unarmed strike is always available
   const unarmedData = getWeaponById('unarmed-strike')

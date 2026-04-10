@@ -48,7 +48,7 @@ export function CurrencyPanel() {
                   type: 'UPDATE_CURRENCY',
                   denomination: coin.key,
                   amount: Number(event.target.value) || 0,
-                })}
+                })
               }
               className="w-full bg-transparent text-sm font-semibold text-text-primary focus:outline-none"
             />

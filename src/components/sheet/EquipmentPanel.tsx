@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
-import { armors, shields, weapons, getArmorById, getShieldById, getWeaponById, adventuringGear, getGearById, allTools, getToolById, ammunition, getAmmunitionById } from '../../data/equipment'
+import { armors, shields, weapons, getArmorById, getShieldById, getWeaponById, adventuringGear, getGearById, allTools, getToolById, ammunition, getAmmunitionById, artisanTools, musicalInstruments, gamingSets, vehicles } from '../../data/equipment'
 import type { CalculatedStats } from '../../types'
 import type { EquipmentItem } from '../../types/equipment'
 import { it } from '../../i18n/it'

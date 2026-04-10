@@ -1,6 +1,6 @@
 import type { EquipmentItem } from '../../types/equipment'
 
-function ammo(data: Omit<EquipmentItem, 'category' | 'equipped'>): EquipmentItem {
+function ammo(data: Omit<EquipmentItem, 'category' | 'equipped' | 'quantity'>): EquipmentItem {
   return { ...data, category: 'consumable', quantity: 20, equipped: false }
 }
 
