@@ -1,4 +1,5 @@
 services:
+  # Frontend — Static Site
   - type: web
     name: dnd-character-sheet
     runtime: static
@@ -7,7 +8,26 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      # After deploying the signaling server, update this value manually
+      # or via Render dashboard with the signaling server URL
+      - key: VITE_SIGNALING_URL
+        value: https://dnd-signaling-server.onrender.com
     headers:
       - path: /*
         name: X-Frame-Options
         value: SAMEORIGIN
+
+  # Signaling Server — Node.js Web Service
+  - type: web
+    name: dnd-signaling-server
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: workers/signaling
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 10000
