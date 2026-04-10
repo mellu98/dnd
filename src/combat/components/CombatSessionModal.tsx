@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useCombatSession } from '../useCombatSession'
+import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
+import type { CharacterSummary } from '../types'
 
 interface Props {
   onClose: () => void
@@ -8,6 +10,7 @@ interface Props {
 
 export function CombatSessionModal({ onClose }: Props) {
   const { createSession, joinSession } = useCombatSession()
+  const { dispatch } = useCharacterContext()
   const [mode, setMode] = useState<'create' | 'join'>('create')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,6 +43,41 @@ export function CombatSessionModal({ onClose }: Props) {
       setError(err instanceof Error ? err.message : 'Errore nel join della sessione')
       setLoading(false)
     }
+  }
+
+  const handleDemo = () => {
+    const demoCode = 'DEMO-01'
+    const hostId = crypto.randomUUID()
+
+    const demoPlayers: Map<string, CharacterSummary> = new Map()
+    const mockPlayers: CharacterSummary[] = [
+      { playerId: 'p1', characterId: 'c1', name: 'Thorin Scudo di Ferro', classIT: 'Guerriero', speciesIT: 'Nano', level: 5, armorClass: 18, maxHp: 52, currentHp: 38, temporaryHp: 0, initiativeBonus: 2, speed: 25, deathSaves: { successes: 0, failures: 0 }, activeConditions: [], exhaustionLevel: 0, inspiration: true, hitDie: 'd10' },
+      { playerId: 'p2', characterId: 'c2', name: 'Lyra Cantoluce', classIT: 'Bardo', speciesIT: 'Elfo', level: 5, armorClass: 15, maxHp: 38, currentHp: 38, temporaryHp: 5, initiativeBonus: 4, speed: 30, deathSaves: { successes: 0, failures: 0 }, activeConditions: ['invisible'], exhaustionLevel: 0, inspiration: false, hitDie: 'd8' },
+      { playerId: 'p3', characterId: 'c3', name: 'Grim Voltodra', classIT: 'Stregone', speciesIT: 'Mezzorco', level: 5, armorClass: 12, maxHp: 30, currentHp: 12, temporaryHp: 0, initiativeBonus: 3, speed: 30, deathSaves: { successes: 1, failures: 0 }, activeConditions: ['poisoned'], exhaustionLevel: 1, inspiration: false, hitDie: 'd6' },
+    ]
+    for (const p of mockPlayers) demoPlayers.set(p.playerId, p)
+
+    dispatch({
+      type: 'SET_COMBAT_SESSION',
+      session: {
+        role: 'dm',
+        sessionCode: demoCode,
+        myPeerId: hostId,
+        players: demoPlayers,
+        initiative: mockPlayers.map((p) => ({
+          id: `player-${p.playerId}`,
+          name: p.name,
+          playerId: p.playerId,
+          initiative: Math.floor(Math.random() * 20) + p.initiativeBonus,
+          notes: `${p.classIT} Lv.${p.level}`,
+        })),
+        activeInitiativeId: null,
+        round: 1,
+        myUpdates: null,
+        diceRolls: [],
+        status: 'active',
+      },
+    })
   }
 
   return (
@@ -124,6 +162,13 @@ export function CombatSessionModal({ onClose }: Props) {
           className="w-full mt-3 py-2 text-sm text-text-muted hover:text-text-secondary transition-colors disabled:opacity-40"
         >
           {it.cancel}
+        </button>
+
+        <button
+          onClick={handleDemo}
+          className="w-full mt-1 py-2 text-xs font-medium text-text-muted/60 hover:text-accent-gold/70 transition-colors"
+        >
+          Modalità Demo (dati di prova)
         </button>
       </div>
     </div>
