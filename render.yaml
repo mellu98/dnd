@@ -11,7 +11,7 @@ services:
       # After deploying the signaling server, update this value manually
       # or via Render dashboard with the signaling server URL
       - key: VITE_SIGNALING_URL
-        value: https://dnd-signaling-server.onrender.com
+        value: https://dnd-signal.onrender.com
     headers:
       - path: /*
         name: X-Frame-Options
