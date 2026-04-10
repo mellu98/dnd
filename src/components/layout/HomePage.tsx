@@ -123,14 +123,8 @@ export function HomePage() {
               )}
             </h2>
 
-            <div className="ml-auto flex flex-wrap gap-2">
-              <button
-                onClick={() => setShowCombatModal(true)}
-                className="px-3 py-2 rounded-xl border border-accent-red/30 bg-accent-red/10 text-accent-red text-sm font-medium hover:bg-accent-red/15 transition-all"
-              >
-                ⚔️ {it.combat_hub_title}
-              </button>
-              <input
+          <div className="flex flex-wrap gap-2 ml-auto">
+            <input
                 ref={importInputRef}
                 type="file"
                 accept=".json,application/json"
@@ -236,6 +230,14 @@ export function HomePage() {
           className="w-full py-4 bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold rounded-xl shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 text-lg tracking-wide"
         >
           + {it.new_character}
+        </button>
+
+        {/* Combat Hub Button */}
+        <button
+          onClick={() => setShowCombatModal(true)}
+          className="w-full mt-3 py-4 bg-gradient-to-r from-accent-red to-red-600 text-white font-semibold rounded-xl shadow-lg shadow-accent-red/20 hover:shadow-accent-red/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 text-lg tracking-wide"
+        >
+          ⚔️ {it.combat_hub_title}
         </button>
       </div>
 
