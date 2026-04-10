@@ -136,8 +136,11 @@ export function useCombatSession(): {
         }),
       })
 
-      // Connect to host
-      await manager.joinAsPlayer()
+      // Connect to host with 15s timeout
+      const timeout = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout di connessione. Verifica il codice e riprova.')), 15_000),
+      )
+      await Promise.race([manager.joinAsPlayer(), timeout])
 
       dispatch({
         type: 'SET_COMBAT_SESSION',
