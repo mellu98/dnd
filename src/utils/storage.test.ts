@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { loadStorage } from './storage'
+import { exportCharactersToJson, loadStorage, parseCharactersFromJson } from './storage'
 
 const STORAGE_KEY = 'dnd5e-characters'
 
@@ -59,6 +59,7 @@ describe('storage migration', () => {
     expect(char.id).toBe('test-1')
     expect(char.raceVariantId).toBe('high-elf')
     expect(char.classFeatureChoices).toEqual([])
+    expect(char.speciesChoiceSelections).toEqual([])
     expect(char.backgroundAbilityChoices).toBeNull()
     expect(legacyChar.subraceId).toBeUndefined()
     expect(legacyChar.chosenAbilityBonuses).toBeUndefined()
@@ -111,6 +112,7 @@ describe('storage migration', () => {
     const char = storage.characters[0]
     expect(char.raceVariantId).toBeNull()
     expect(char.classFeatureChoices).toEqual([])
+    expect(char.speciesChoiceSelections).toEqual([])
     expect(char.backgroundAbilityChoices).toEqual({
       mode: 'plus2_plus1',
       primary: 'STR',
@@ -165,6 +167,7 @@ describe('storage migration', () => {
     expect(char.equipment).toHaveLength(2)
     expect(char.raceVariantId).toBeNull()
     expect(char.classFeatureChoices).toEqual([])
+    expect(char.speciesChoiceSelections).toEqual([])
     expect(char.equipment[0]).toMatchObject({
       id: 'gear-0',
       name: 'Torcia',
@@ -233,6 +236,7 @@ describe('storage migration', () => {
     const char = storage.characters[0]
     expect(char.raceVariantId).toBeNull()
     expect(char.classFeatureChoices).toEqual([])
+    expect(char.speciesChoiceSelections).toEqual([])
     expect(char.knownSpells).toEqual(['fire-bolt', 'magic-missile'])
     expect(char.preparedSpells).toEqual(['fire-bolt', 'magic-missile'])
     expect(char.activeConditions).toEqual([])
@@ -299,6 +303,7 @@ describe('storage migration', () => {
     expect(storage.version).toBe(10)
     expect(storage.characters[0].raceVariantId).toBe('topaz')
     expect(storage.characters[0].classFeatureChoices).toEqual([{ groupId: 'divine-order', optionId: 'protector' }])
+    expect(storage.characters[0].speciesChoiceSelections).toEqual([])
   })
 
   it('returns default for unknown versions', () => {
@@ -306,5 +311,66 @@ describe('storage migration', () => {
     const storage = loadStorage()
     expect(storage.version).toBe(10)
     expect(storage.characters).toEqual([])
+  })
+
+  it('exports and re-imports a JSON character bundle', () => {
+    const json = exportCharactersToJson([
+      {
+        id: 'human-1',
+        name: 'Aelar',
+        raceId: 'human',
+        raceVariantId: null,
+        speciesChoiceSelections: [
+          { groupId: 'human-size', optionId: 'small' },
+          { groupId: 'human-skillful', optionId: 'stealth' },
+          { groupId: 'human-versatile', optionId: 'alert' },
+        ],
+        classId: 'fighter',
+        subclassId: null,
+        classFeatureChoices: [],
+        backgroundId: 'guard',
+        backgroundAbilityChoices: null,
+        level: 1,
+        abilityScores: { STR: 15, DEX: 14, CON: 13, INT: 10, WIS: 8, CHA: 12 },
+        hp: { max: 12, current: 12, temporary: 0 },
+        skillProficiencies: ['athletics'],
+        chosenLanguages: [],
+        alignment: '',
+        personalityTraits: '',
+        ideals: '',
+        bonds: '',
+        flaws: '',
+        equipment: [],
+        equippedArmorId: null,
+        equippedShieldId: null,
+        knownSpells: [],
+        preparedSpells: [],
+        expendedSpellSlots: {},
+        asiChoices: [],
+        deathSaves: { successes: 0, failures: 0 },
+        activeConditions: [],
+        exhaustionLevel: 0,
+        inspiration: false,
+        isStabilized: false,
+        spentHitDice: 0,
+        expertiseSkills: [],
+        currency: { cp: 0, sp: 0, ep: 0, gp: 5, pp: 0 },
+        initiativeTracker: [],
+        activeInitiativeId: null,
+        notes: '',
+        createdAt: '2026-04-10T10:00:00.000Z',
+        updatedAt: '2026-04-10T10:00:00.000Z',
+        imageUrl: null,
+      },
+    ], 'human-1')
+
+    const parsed = parseCharactersFromJson(json)
+    expect(parsed.activeCharacterId).toBe('human-1')
+    expect(parsed.characters).toHaveLength(1)
+    expect(parsed.characters[0].speciesChoiceSelections).toEqual([
+      { groupId: 'human-size', optionId: 'small' },
+      { groupId: 'human-skillful', optionId: 'stealth' },
+      { groupId: 'human-versatile', optionId: 'alert' },
+    ])
   })
 })

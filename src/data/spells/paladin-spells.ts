@@ -1,6 +1,7 @@
 import type { Spell } from '../../types'
+import { buildClassSpellList } from './class-spell-builder'
 
-export const paladinSpells: Spell[] = [
+const paladinSpellOverrides: Spell[] = [
   // ── LEVEL 1 ──────────────────────────────────────────────────────
   {
     id: 'bless',
@@ -246,3 +247,5 @@ export const paladinSpells: Spell[] = [
     descriptionIT: 'Un\'onda di energia erompe. Ogni creatura subisce 5d6 tuono + 5d6 radiosi/necrotici se fallisce il TS su Cost.',
   },
 ]
+
+export const paladinSpells: Spell[] = buildClassSpellList('paladin', paladinSpellOverrides)

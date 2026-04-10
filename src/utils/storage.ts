@@ -4,6 +4,7 @@ import type {
   Character,
   ClassFeatureChoiceSelection,
   CurrencyPouch,
+  SpeciesChoiceSelection,
   SkillName,
 } from '../types'
 import { normalizeBackgroundAbilityChoices } from './background-ability-choices'
@@ -56,6 +57,7 @@ type LegacyCharacter = Omit<
   | 'initiativeTracker'
   | 'activeInitiativeId'
   | 'classFeatureChoices'
+  | 'speciesChoiceSelections'
 > & {
   equipment?: unknown
   knownSpells?: unknown
@@ -74,6 +76,7 @@ type LegacyCharacter = Omit<
   activeInitiativeId?: unknown
   subraceId?: unknown
   classFeatureChoices?: unknown
+  speciesChoiceSelections?: unknown
 }
 
 interface StorageSchemaV3 {
@@ -138,6 +141,14 @@ const defaultStorage: StorageSchemaV10 = {
   version: 10,
   characters: [],
   activeCharacterId: null,
+}
+
+export interface CharacterExportBundle {
+  exportVersion: 1
+  exportedAt: string
+  appStorageVersion: number
+  characters: Character[]
+  activeCharacterId: string | null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -272,6 +283,18 @@ function normalizeClassFeatureChoices(value: unknown): ClassFeatureChoiceSelecti
   })
 }
 
+function normalizeSpeciesChoiceSelections(value: unknown): SpeciesChoiceSelection[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((selection) => {
+    if (!isRecord(selection) || typeof selection.groupId !== 'string' || typeof selection.optionId !== 'string') {
+      return []
+    }
+
+    return [{ groupId: selection.groupId, optionId: selection.optionId }]
+  })
+}
+
 function withCharacterDefaults(character: LegacyCharacter): Character {
   const normalizedKnownSpells = Array.isArray(character.knownSpells)
     ? character.knownSpells.filter((spellId): spellId is string => typeof spellId === 'string')
@@ -290,6 +313,7 @@ function withCharacterDefaults(character: LegacyCharacter): Character {
   return {
     ...(character as Character),
     raceVariantId,
+    speciesChoiceSelections: normalizeSpeciesChoiceSelections(character.speciesChoiceSelections),
     classFeatureChoices: normalizeClassFeatureChoices(character.classFeatureChoices),
     backgroundAbilityChoices: normalizeBackgroundAbilityChoices(character.backgroundAbilityChoices),
     equipment: normalizeEquipment(character.equipment),
@@ -541,4 +565,48 @@ export function saveStorage(data: StorageSchemaV10): void {
 
 export function generateId(): string {
   return crypto.randomUUID()
+}
+
+export function exportCharactersToJson(characters: Character[], activeCharacterId: string | null): string {
+  const bundle: CharacterExportBundle = {
+    exportVersion: 1,
+    exportedAt: new Date().toISOString(),
+    appStorageVersion: defaultStorage.version,
+    characters: characters.map((character) => withCharacterDefaults(character as LegacyCharacter)),
+    activeCharacterId,
+  }
+
+  return JSON.stringify(bundle, null, 2)
+}
+
+export function parseCharactersFromJson(raw: string): { characters: Character[]; activeCharacterId: string | null } {
+  const parsed: unknown = JSON.parse(raw)
+
+  if (!isRecord(parsed)) {
+    throw new Error('Formato JSON non valido.')
+  }
+
+  if (parsed.exportVersion === 1 && Array.isArray(parsed.characters)) {
+    return {
+      characters: parsed.characters.map((character) => withCharacterDefaults(character as LegacyCharacter)),
+      activeCharacterId: typeof parsed.activeCharacterId === 'string' ? parsed.activeCharacterId : null,
+    }
+  }
+
+  if (typeof parsed.version === 'number' && Array.isArray(parsed.characters)) {
+    return {
+      characters: parsed.characters.map((character) => withCharacterDefaults(character as LegacyCharacter)),
+      activeCharacterId: typeof parsed.activeCharacterId === 'string' ? parsed.activeCharacterId : null,
+    }
+  }
+
+  if (typeof parsed.id === 'string' && typeof parsed.name === 'string') {
+    const character = withCharacterDefaults(parsed as LegacyCharacter)
+    return {
+      characters: [character],
+      activeCharacterId: character.id,
+    }
+  }
+
+  throw new Error('Il file JSON non contiene personaggi importabili.')
 }

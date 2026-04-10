@@ -1,6 +1,7 @@
 import type { Spell } from '../../types'
+import { buildClassSpellList } from './class-spell-builder'
 
-export const rangerSpells: Spell[] = [
+const rangerSpellOverrides: Spell[] = [
   // ── LEVEL 1 ──────────────────────────────────────────────────────
   {
     id: 'hunters-mark',
@@ -282,3 +283,5 @@ export const rangerSpells: Spell[] = [
     descriptionIT: 'Acquisisci la capacita di entrare negli alberi e teletrasportarti tra loro fino a 18 metri.',
   },
 ]
+
+export const rangerSpells: Spell[] = buildClassSpellList('ranger', rangerSpellOverrides)

@@ -1,15 +1,29 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
 import { getRaceById } from '../../data/races'
 import { getClassById } from '../../data/classes'
 import { CharacterAvatar } from '../ui/CharacterAvatar'
 import type { Character } from '../../types'
+import { exportCharactersToJson, parseCharactersFromJson } from '../../utils/storage'
+
+function downloadJson(filename: string, json: string) {
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
 
 export function HomePage() {
   const { state, dispatch } = useCharacterContext()
   const characters = state.savedCharacters
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [transferMessage, setTransferMessage] = useState<string | null>(null)
+  const [transferError, setTransferError] = useState<string | null>(null)
+  const importInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleLoad = (character: Character) => {
     dispatch({ type: 'LOAD_CHARACTER', character })
@@ -24,6 +38,51 @@ export function HomePage() {
     if (confirmDeleteId) {
       dispatch({ type: 'DELETE_CHARACTER', id: confirmDeleteId })
       setConfirmDeleteId(null)
+    }
+  }
+
+  const handleExportAll = () => {
+    if (characters.length === 0) return
+
+    const json = exportCharactersToJson(characters, state.character?.id ?? null)
+    downloadJson(`dnd-personaggi-${new Date().toISOString().slice(0, 10)}.json`, json)
+    setTransferError(null)
+    setTransferMessage(`Esportati ${characters.length} personaggi in JSON.`)
+  }
+
+  const handleExportCharacter = (event: React.MouseEvent, character: Character) => {
+    event.stopPropagation()
+    const slug = character.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'personaggio'
+    const json = exportCharactersToJson([character], character.id)
+    downloadJson(`${slug}.json`, json)
+    setTransferError(null)
+    setTransferMessage(`Esportato ${character.name} in JSON.`)
+  }
+
+  const handleOpenImport = () => {
+    importInputRef.current?.click()
+  }
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const raw = await file.text()
+      const imported = parseCharactersFromJson(raw)
+      dispatch({
+        type: 'IMPORT_CHARACTERS',
+        characters: imported.characters,
+        activeCharacterId: imported.activeCharacterId,
+      })
+      setTransferError(null)
+      setTransferMessage(`Importati ${imported.characters.length} personaggi da ${file.name}.`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Importazione JSON non riuscita.'
+      setTransferMessage(null)
+      setTransferError(message)
+    } finally {
+      event.target.value = ''
     }
   }
 
@@ -51,15 +110,52 @@ export function HomePage() {
 
         {/* My Characters */}
         <div className="mb-8 animate-fade-in">
-          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-accent-gold rounded-full" />
-            {it.my_characters}
-            {characters.length > 0 && (
-              <span className="ml-auto text-xs bg-bg-card px-2 py-0.5 rounded-full text-text-muted">
-                {characters.length}
-              </span>
-            )}
-          </h2>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 bg-accent-gold rounded-full" />
+              {it.my_characters}
+              {characters.length > 0 && (
+                <span className="ml-auto text-xs bg-bg-card px-2 py-0.5 rounded-full text-text-muted">
+                  {characters.length}
+                </span>
+              )}
+            </h2>
+
+            <div className="ml-auto flex flex-wrap gap-2">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={handleImport}
+              />
+              <button
+                onClick={handleOpenImport}
+                className="px-3 py-2 rounded-xl border border-border bg-bg-card/60 text-text-primary text-sm font-medium hover:border-accent-blue/40 hover:text-accent-blue transition-all"
+              >
+                Importa JSON
+              </button>
+              <button
+                onClick={handleExportAll}
+                disabled={characters.length === 0}
+                className="px-3 py-2 rounded-xl border border-accent-gold/30 bg-accent-gold/10 text-accent-gold text-sm font-medium hover:bg-accent-gold/15 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Esporta tutti
+              </button>
+            </div>
+          </div>
+
+          {transferMessage && (
+            <div className="mb-3 rounded-xl border border-accent-emerald/30 bg-accent-emerald/10 px-4 py-3 text-sm text-accent-emerald">
+              {transferMessage}
+            </div>
+          )}
+
+          {transferError && (
+            <div className="mb-3 rounded-xl border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red">
+              {transferError}
+            </div>
+          )}
 
           {characters.length === 0 ? (
             <div className="bg-bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-10 text-center">
@@ -97,6 +193,15 @@ export function HomePage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 ml-4">
+                      <button
+                        onClick={(e) => handleExportCharacter(e, char)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary/50 hover:text-accent-gold hover:bg-accent-gold/10 transition-all"
+                        title="Esporta JSON"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" />
+                        </svg>
+                      </button>
                       <span className="text-xs font-bold text-accent-gold bg-accent-gold/15 px-2.5 py-1 rounded-full">
                         Lv. {char.level}
                       </span>

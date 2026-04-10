@@ -2,18 +2,6 @@ import type { AbilityName, Proficiency } from '../types'
 import type { WeaponData } from '../types/equipment'
 import { formatModifier } from './modifiers'
 
-const RANGED_WEAPON_IDS = new Set([
-  'light-crossbow',
-  'dart',
-  'shortbow',
-  'sling',
-  'blowgun',
-  'hand-crossbow',
-  'heavy-crossbow',
-  'longbow',
-  'net',
-])
-
 function normalizeLabel(value: string): string {
   return value
     .toLowerCase()
@@ -37,7 +25,7 @@ function isMonkWeapon(weapon: WeaponData): boolean {
 }
 
 export function isWeaponRanged(weapon: WeaponData): boolean {
-  return RANGED_WEAPON_IDS.has(weapon.id)
+  return weapon.attackType === 'ranged'
 }
 
 export function getWeaponAbility(

@@ -7,6 +7,8 @@ import { RestButtons } from './RestButtons'
 import { ConditionsTracker } from './ConditionsTracker'
 import { InspirationTracker } from './InspirationTracker'
 import { InitiativeTracker } from './InitiativeTracker'
+import { CurrencyPanel } from './CurrencyPanel'
+import { SensesPanel } from './SensesPanel'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { getClassById } from '../../data/classes'
 import { toMetricRuleText } from '../../utils/rules-text'
@@ -31,6 +33,10 @@ export function RightColumnPanel({ stats }: Props) {
       </div>
 
       {character && <RestButtons />}
+
+      <SensesPanel stats={stats} />
+
+      {character && <CurrencyPanel />}
 
       {stats.speciesFeatures.length > 0 && (
         <div className="bg-bg-card/60 border border-border/50 rounded-xl p-4">

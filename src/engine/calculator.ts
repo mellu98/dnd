@@ -80,11 +80,11 @@ export function calculateAllStats(character: Character): CalculatedStats {
   const race = getRaceById(character.raceId)
   const cls = getClassById(character.classId)
   const resolvedSpecies = resolveSpecies(race, character.raceVariantId)
-  const sizeIT = resolvedSpecies?.sizeIT ?? race?.sizeIT ?? 'Media'
 
   const aggregated = aggregateBonuses({
     raceId: character.raceId,
     raceVariantId: character.raceVariantId ?? undefined,
+    speciesChoiceSelections: character.speciesChoiceSelections,
     classId: character.classId,
     subclassId: character.subclassId ?? undefined,
     classFeatureChoices: character.classFeatureChoices,
@@ -92,6 +92,8 @@ export function calculateAllStats(character: Character): CalculatedStats {
     level: character.level,
     backgroundAbilityChoices: character.backgroundAbilityChoices,
   })
+
+  const sizeIT = aggregated.sizeIT ?? resolvedSpecies?.sizeIT ?? race?.sizeIT ?? 'Media'
 
   const finalAbilityScores = { ...character.abilityScores } as CharacterAbilityScores
   for (const bonus of aggregated.backgroundAbilityBonuses) {

@@ -2,6 +2,7 @@ import type { AbilityName, ASIChoice, BackgroundAbilityChoiceMode, Feature, Prof
 import type { ClassFeatureChoiceSelection } from './class'
 import type { Feat } from './feat'
 import type { EquipmentItem } from './equipment'
+import type { SpeciesChoiceSelection } from './race'
 
 export interface CharacterAbilityScores {
   STR: number
@@ -64,6 +65,7 @@ export interface Character {
   name: string
   raceId: string
   raceVariantId: string | null
+  speciesChoiceSelections: SpeciesChoiceSelection[]
   classId: string
   subclassId: string | null
   classFeatureChoices: ClassFeatureChoiceSelection[]

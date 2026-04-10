@@ -13,6 +13,7 @@ import type {
   Character,
   CharacterAbilityScores,
   ClassFeatureChoiceSelection,
+  SpeciesChoiceSelection,
   SkillName,
   Feature,
   BackgroundAbilityChoices,
@@ -43,6 +44,7 @@ export interface GenerationState {
 type Action =
   | { type: 'SET_RACE'; raceId: string }
   | { type: 'SET_RACE_VARIANT'; raceVariantId: string | null }
+  | { type: 'SET_SPECIES_CHOICE'; selection: SpeciesChoiceSelection }
   | { type: 'SET_CLASS'; classId: string; subclassId: string | null }
   | { type: 'SET_CLASS_FEATURE_CHOICE'; selection: ClassFeatureChoiceSelection }
   | { type: 'SET_BACKGROUND'; backgroundId: string }
@@ -86,6 +88,7 @@ type Action =
   | { type: 'SET_ACTIVE_INITIATIVE'; entryId: string | null }
   | { type: 'UPDATE_HP_MAX'; max: number }
   | { type: 'LOAD_CHARACTER'; character: Character }
+  | { type: 'IMPORT_CHARACTERS'; characters: Character[]; activeCharacterId?: string | null }
   | { type: 'NEW_CHARACTER' }
   | { type: 'FINALIZE_CREATION' }
   | { type: 'DELETE_CHARACTER'; id: string }
@@ -151,13 +154,29 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     case 'SET_RACE':
       return {
         ...state,
-        creationDraft: { ...state.creationDraft, raceId: action.raceId, raceVariantId: null },
+        creationDraft: {
+          ...state.creationDraft,
+          raceId: action.raceId,
+          raceVariantId: null,
+          speciesChoiceSelections: [],
+        },
       }
     case 'SET_RACE_VARIANT':
       return {
         ...state,
         creationDraft: { ...state.creationDraft, raceVariantId: action.raceVariantId },
       }
+    case 'SET_SPECIES_CHOICE': {
+      const existingSelections = state.creationDraft.speciesChoiceSelections ?? []
+      const filtered = existingSelections.filter((selection) => selection.groupId !== action.selection.groupId)
+      return {
+        ...state,
+        creationDraft: {
+          ...state.creationDraft,
+          speciesChoiceSelections: [...filtered, action.selection],
+        },
+      }
+    }
     case 'SET_CLASS': {
       const shouldResetClassChoices = state.creationDraft.classId !== action.classId
       return {
@@ -455,6 +474,36 @@ function reducer(state: CharacterState, action: Action): CharacterState {
     }
     case 'LOAD_CHARACTER':
       return { ...state, character: action.character, creationStep: 0 }
+    case 'IMPORT_CHARACTERS': {
+      if (action.characters.length === 0) return state
+
+      const merged = [...state.savedCharacters]
+      for (const importedCharacter of action.characters) {
+        const existingIndex = merged.findIndex((saved) => saved.id === importedCharacter.id)
+        if (existingIndex === -1) {
+          merged.push(importedCharacter)
+        } else {
+          merged[existingIndex] = importedCharacter
+        }
+      }
+
+      const nextActiveId = action.activeCharacterId
+        ?? state.character?.id
+        ?? action.characters[0]?.id
+        ?? null
+
+      const activeCharacter = nextActiveId
+        ? (merged.find((saved) => saved.id === nextActiveId) ?? action.characters[0] ?? null)
+        : null
+
+      return {
+        ...state,
+        savedCharacters: merged,
+        character: activeCharacter,
+        creationStep: 0,
+        creationDraft: {},
+      }
+    }
     case 'NEW_CHARACTER':
       return { ...state, character: null, creationStep: 1, creationDraft: {} }
     case 'FINALIZE_CREATION': {
@@ -465,6 +514,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         name: draft.name || 'Senza Nome',
         raceId: draft.raceId || '',
         raceVariantId: draft.raceVariantId ?? null,
+        speciesChoiceSelections: draft.speciesChoiceSelections ?? [],
         classId: draft.classId || '',
         subclassId: draft.subclassId ?? null,
         classFeatureChoices: draft.classFeatureChoices ?? [],
@@ -505,6 +555,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
       const agg = aggregateBonuses({
         raceId: character.raceId,
         raceVariantId: character.raceVariantId ?? undefined,
+        speciesChoiceSelections: character.speciesChoiceSelections,
         classId: character.classId,
         subclassId: character.subclassId ?? undefined,
         classFeatureChoices: character.classFeatureChoices,
@@ -646,6 +697,7 @@ function reducer(state: CharacterState, action: Action): CharacterState {
           spentHitDice: Math.max(0, remainingAfterRest),
           deathSaves: { successes: 0, failures: 0 },
           isStabilized: false,
+          inspiration: character.raceId === 'human' ? true : character.inspiration,
           updatedAt: new Date().toISOString(),
         }
       })

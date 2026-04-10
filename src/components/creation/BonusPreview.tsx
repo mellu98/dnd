@@ -1,15 +1,22 @@
 import { useMemo, useState } from 'react'
 import { it } from '../../i18n/it'
 import { aggregateBonuses } from '../../engine/bonus-aggregator'
-import type { AbilityName, BackgroundAbilityChoices, ClassFeatureChoiceSelection } from '../../types'
+import type {
+  AbilityName,
+  BackgroundAbilityChoices,
+  ClassFeatureChoiceSelection,
+  SpeciesChoiceSelection,
+} from '../../types'
 import { feetToMeters } from '../../utils/units'
 import { toMetricRuleText } from '../../utils/rules-text'
 import { getRaceById } from '../../data/races'
 import { getSpeciesVariant } from '../../utils/species-resolution'
+import { getSelectedSpeciesChoiceOption, getSpeciesChoiceGroups } from '../../utils/species-choice-selections'
 
 interface Props {
   raceId?: string
   raceVariantId?: string
+  speciesChoiceSelections?: SpeciesChoiceSelection[]
   classId?: string
   subclassId?: string
   classFeatureChoices?: ClassFeatureChoiceSelection[]
@@ -68,6 +75,7 @@ function FeatureSection({
 export default function BonusPreview({
   raceId,
   raceVariantId,
+  speciesChoiceSelections,
   classId,
   subclassId,
   classFeatureChoices,
@@ -78,18 +86,20 @@ export default function BonusPreview({
     () => aggregateBonuses({
       raceId,
       raceVariantId,
+      speciesChoiceSelections,
       classId,
       subclassId,
       classFeatureChoices,
       backgroundId,
       backgroundAbilityChoices,
     }),
-    [raceId, raceVariantId, classId, subclassId, classFeatureChoices, backgroundId, backgroundAbilityChoices],
+    [raceId, raceVariantId, speciesChoiceSelections, classId, subclassId, classFeatureChoices, backgroundId, backgroundAbilityChoices],
   )
 
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
   const race = raceId ? getRaceById(raceId) : null
   const variant = getSpeciesVariant(race, raceVariantId)
+  const speciesChoiceGroups = getSpeciesChoiceGroups(race)
 
   const hasContent = raceId || classId || backgroundId
 
@@ -130,6 +140,24 @@ export default function BonusPreview({
             {variant.mechanics?.familyIT && <span className="bg-bg-card px-3 py-1 rounded-lg text-sm">{variant.mechanics.familyIT}</span>}
             {variant.mechanics?.damageTypeIT && <span className="bg-bg-card px-3 py-1 rounded-lg text-sm">Danno {variant.mechanics.damageTypeIT}</span>}
             {variant.mechanics?.resistanceTypeIT && <span className="bg-bg-card px-3 py-1 rounded-lg text-sm">Resistenza {variant.mechanics.resistanceTypeIT}</span>}
+          </div>
+        </Section>
+      )}
+
+      {speciesChoiceGroups.length > 0 && (
+        <Section title="Scelte di specie">
+          <div className="flex flex-wrap gap-2">
+            {speciesChoiceGroups.map((group) => {
+              const selectedOption = getSelectedSpeciesChoiceOption(race, speciesChoiceSelections, group.id)
+              return (
+                <span key={group.id} className="bg-bg-card px-3 py-1 rounded-lg text-sm">
+                  <strong className="text-text-primary">{group.nameIT}:</strong>{' '}
+                  <span className={selectedOption ? 'text-accent-emerald' : 'text-text-muted'}>
+                    {selectedOption?.nameIT ?? 'Da scegliere'}
+                  </span>
+                </span>
+              )
+            })}
           </div>
         </Section>
       )}

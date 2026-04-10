@@ -29,11 +29,13 @@ export default function AbilityScoreAssigner() {
 
   const bonuses = useMemo(() => aggregateBonuses({
     raceId: draft.raceId,
+    raceVariantId: draft.raceVariantId ?? undefined,
+    speciesChoiceSelections: draft.speciesChoiceSelections ?? [],
     classId: draft.classId,
     subclassId: draft.subclassId ?? undefined,
     backgroundId: draft.backgroundId,
     backgroundAbilityChoices: draft.backgroundAbilityChoices ?? undefined,
-  }), [draft.raceId, draft.classId, draft.subclassId, draft.backgroundId, draft.backgroundAbilityChoices])
+  }), [draft.raceId, draft.raceVariantId, draft.speciesChoiceSelections, draft.classId, draft.subclassId, draft.backgroundId, draft.backgroundAbilityChoices])
 
   const usedPoints = Object.values(scores).reduce((sum, s) => sum + pointCosts[s], 0)
   const remaining = TOTAL_POINTS - usedPoints

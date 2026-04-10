@@ -1,6 +1,7 @@
 import type { Spell } from '../../types'
+import { buildClassSpellList } from './class-spell-builder'
 
-export const bardSpells: Spell[] = [
+const bardSpellOverrides: Spell[] = [
   // ── CANTRIP (level 0) ─────────────────────────────────────────────────────
   {
     id: 'vicious-mockery',
@@ -431,3 +432,5 @@ export const bardSpells: Spell[] = [
     descriptionIT: 'Trasforma una creatura in un\'altra creatura o un oggetto in una creatura. Se mantenuto per tutta la durata, la trasformazione e permanente.',
   },
 ]
+
+export const bardSpells: Spell[] = buildClassSpellList('bard', bardSpellOverrides)

@@ -40,11 +40,14 @@ export interface WeaponData extends Sourced {
   id: string
   name: string
   nameIT: string
+  attackType: 'melee' | 'ranged'
   damageDice: string
   damageType: string
   damageTypeIT: string
   properties: string[]
   propertiesIT: string[]
+  mastery: string
+  masteryIT: string
   weight: number
   value: number
   category: 'simple' | 'martial'

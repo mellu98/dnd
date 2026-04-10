@@ -12,19 +12,11 @@ interface EquipmentPanelProps {
 }
 
 const WEAPON_CATEGORIES = [
-  { label: 'Semplici da Mischia', ids: ['club', 'dagger', 'greatclub', 'handaxe', 'javelin', 'light-hammer', 'mace', 'quarterstaff', 'sickle', 'spear', 'unarmed-strike'] },
-  { label: 'Semplici a Distanza', ids: ['light-crossbow', 'dart', 'shortbow', 'sling'] },
-  { label: 'Marziali da Mischia', ids: ['battleaxe', 'flail', 'glaive', 'greataxe', 'greatsword', 'halberd', 'lance', 'longsword', 'maul', 'morningstar', 'pike', 'rapier', 'scimitar', 'shortsword', 'trident', 'war-pick', 'warhammer', 'whip'] },
-  { label: 'Marziali a Distanza', ids: ['blowgun', 'hand-crossbow', 'heavy-crossbow', 'longbow', 'net'] },
+  { label: 'Semplici da Mischia', match: (weapon: typeof weapons[number]) => weapon.category === 'simple' && weapon.attackType === 'melee' && !weapon.isLegacy },
+  { label: 'Semplici a Distanza', match: (weapon: typeof weapons[number]) => weapon.category === 'simple' && weapon.attackType === 'ranged' && !weapon.isLegacy },
+  { label: 'Marziali da Mischia', match: (weapon: typeof weapons[number]) => weapon.category === 'martial' && weapon.attackType === 'melee' && !weapon.isLegacy },
+  { label: 'Marziali a Distanza', match: (weapon: typeof weapons[number]) => weapon.category === 'martial' && weapon.attackType === 'ranged' && !weapon.isLegacy },
 ]
-
-const COIN_FIELDS = [
-  { key: 'pp', label: 'PP' },
-  { key: 'gp', label: 'MO' },
-  { key: 'ep', label: 'ME' },
-  { key: 'sp', label: 'MA' },
-  { key: 'cp', label: 'MR' },
-] as const
 
 function generateId(): string {
   return `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -33,29 +25,6 @@ function generateId(): string {
 function usesAmmunition(weaponId: string): boolean {
   const weapon = getWeaponById(weaponId)
   return weapon?.properties.includes('ammunition') === true
-}
-
-function CurrencyField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: number
-  onChange: (value: number) => void
-}) {
-  return (
-    <label className="bg-bg-card border border-border rounded-lg px-3 py-2">
-      <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-1">{label}</span>
-      <input
-        type="number"
-        min="0"
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value) || 0)}
-        className="w-full bg-transparent text-sm font-semibold text-text-primary focus:outline-none"
-      />
-    </label>
-  )
 }
 
 export function EquipmentPanel({ stats }: EquipmentPanelProps) {
@@ -267,6 +236,7 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                 </div>
               )
             })}
+
           </div>
         )}
 
@@ -380,6 +350,16 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                             {weaponData.propertiesIT.join(', ')}
                           </p>
                         )}
+                        {weaponData && weaponData.mastery !== '—' && (
+                          <p className="text-[11px] text-accent-purple">
+                            <strong>Mastery:</strong> {weaponData.masteryIT}
+                          </p>
+                        )}
+                        {weaponData?.isLegacy && (
+                          <p className="text-[11px] text-accent-red/80">
+                            Contenuto legacy ({weaponData.source ?? 'PHB 2014'})
+                          </p>
+                        )}
                       </div>
                     </button>
 
@@ -434,9 +414,7 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
         {showWeapons && (
           <div className="bg-bg-secondary border border-border rounded-lg p-2 space-y-3 max-h-64 overflow-y-auto">
             {WEAPON_CATEGORIES.map((category) => {
-              const categoryWeapons = category.ids
-                .map((id) => weapons.find((weapon) => weapon.id === id))
-                .filter((weapon): weapon is NonNullable<typeof weapon> => weapon != null)
+              const categoryWeapons = weapons.filter(category.match)
 
               if (categoryWeapons.length === 0) return null
 
@@ -460,7 +438,8 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                         }`}
                       >
                         {weapon.nameIT} ({weapon.damageDice} {weapon.damageTypeIT})
-                        {weapon.propertiesIT.length > 0 ? ` · ${weapon.propertiesIT.join(', ')}` : ''}
+                        {weapon.propertiesIT.length > 0 ? ` | ${weapon.propertiesIT.join(', ')}` : ''}
+                        {weapon.mastery !== '—' ? ` | Mastery ${weapon.masteryIT}` : ''}
                         {alreadyOwned && ' (già posseduta)'}
                       </button>
                     )
@@ -468,27 +447,38 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
                 </div>
               )
             })}
+
+            {weapons.some((weapon) => weapon.isLegacy) && (
+              <div>
+                <div className="text-[10px] text-accent-red/70 uppercase tracking-wider mb-1 px-1">
+                  Legacy / 2014
+                </div>
+
+                {weapons.filter((weapon) => weapon.isLegacy).map((weapon) => {
+                  const alreadyOwned = weaponItems.some((item) => item.id === weapon.id)
+                  return (
+                    <button
+                      key={weapon.id}
+                      onClick={() => !alreadyOwned && addWeaponFromData(weapon.id)}
+                      disabled={alreadyOwned}
+                      className={`w-full text-left text-sm px-2 py-1 rounded transition-colors ${
+                        alreadyOwned
+                          ? 'text-text-muted/50 cursor-default'
+                          : 'text-text-primary hover:bg-bg-card'
+                      }`}
+                    >
+                      {weapon.nameIT} ({!weapon.damageTypeIT ? 'speciale' : `${weapon.damageDice} ${weapon.damageTypeIT}`})
+                      {' | '}
+                      {weapon.source ?? 'Legacy'}
+                      {alreadyOwned && ' (già posseduta)'}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {character && (
-        <div className="space-y-2">
-          <label className="block text-xs text-text-secondary uppercase tracking-wider font-semibold">
-            {it.currency_label}
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {COIN_FIELDS.map((coin) => (
-              <CurrencyField
-                key={coin.key}
-                label={coin.label}
-                value={character.currency[coin.key]}
-                onChange={(value) => dispatch({ type: 'UPDATE_CURRENCY', denomination: coin.key, amount: value })}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="space-y-2">
         <label className="block text-xs text-text-secondary uppercase tracking-wider font-semibold">

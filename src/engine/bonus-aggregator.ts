@@ -11,13 +11,16 @@ import type {
 import { getRaceById } from '../data/races'
 import { getClassById } from '../data/classes'
 import { getBackgroundById } from '../data/backgrounds'
+import { getFeatById } from '../data/feats'
 import { getBackgroundAbilityBonuses } from '../utils/background-ability-choices'
 import { resolveSpecies } from '../utils/species-resolution'
+import { resolveSpeciesChoiceEffects } from '../utils/species-choice-selections'
 import { resolveClassFeatureChoiceEffects } from '../utils/class-feature-choices'
 
 export interface AggregateParams {
   raceId?: string
   raceVariantId?: string
+  speciesChoiceSelections?: { groupId: string; optionId: string }[] | null
   classId?: string
   subclassId?: string
   classFeatureChoices?: ClassFeatureChoiceSelection[] | null
@@ -37,6 +40,8 @@ export interface AggregatedBonuses {
   languagesIT: string[]
   speed: number
   darkvision: number
+  size: 'Small' | 'Medium' | null
+  sizeIT: string | null
   hitDie: DieType | null
   savingThrows: AbilityName[]
   skillChoices: { choose: number; from: SkillName[] } | null
@@ -65,6 +70,8 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
     languagesIT: [],
     speed: 30,
     darkvision: 0,
+    size: null,
+    sizeIT: null,
     hitDie: null,
     savingThrows: [],
     skillChoices: null,
@@ -78,12 +85,40 @@ export function aggregateBonuses(params: AggregateParams): AggregatedBonuses {
     const resolvedSpecies = resolveSpecies(race, params.raceVariantId)
 
     if (resolvedSpecies) {
+      result.size = resolvedSpecies.size
+      result.sizeIT = resolvedSpecies.sizeIT
       result.speciesFeatures.push(...resolvedSpecies.features)
       result.proficiencies.push(...resolvedSpecies.proficiencies)
       result.speed = resolvedSpecies.speed
       result.darkvision = resolvedSpecies.darkvision
       result.languages = [...resolvedSpecies.languages]
       result.languagesIT = [...resolvedSpecies.languagesIT]
+
+      const speciesChoiceEffects = resolveSpeciesChoiceEffects({
+        species: race,
+        selections: params.speciesChoiceSelections,
+      })
+
+      if (speciesChoiceEffects.size) result.size = speciesChoiceEffects.size
+      if (speciesChoiceEffects.sizeIT) result.sizeIT = speciesChoiceEffects.sizeIT
+      if (speciesChoiceEffects.features.length) result.speciesFeatures.push(...speciesChoiceEffects.features)
+      if (speciesChoiceEffects.proficiencies.length) result.proficiencies.push(...speciesChoiceEffects.proficiencies)
+      if (speciesChoiceEffects.languages.length) result.languages.push(...speciesChoiceEffects.languages)
+      if (speciesChoiceEffects.languagesIT.length) result.languagesIT.push(...speciesChoiceEffects.languagesIT)
+
+      for (const featId of speciesChoiceEffects.featIds) {
+        const feat = getFeatById(featId)
+        if (!feat) continue
+        result.featFeatures.push({
+          name: feat.name,
+          nameIT: feat.nameIT,
+          description: feat.description,
+          descriptionIT: feat.descriptionIT,
+          level: 1,
+          source: feat.source,
+          isLegacy: feat.isLegacy,
+        })
+      }
     }
   }
 

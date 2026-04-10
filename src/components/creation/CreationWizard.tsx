@@ -12,6 +12,7 @@ import { getRaceById } from '../../data/races'
 import { getClassById } from '../../data/classes'
 import { isBackgroundAbilityChoicesValid } from '../../utils/background-ability-choices'
 import { hasRequiredClassFeatureChoices } from '../../utils/class-feature-choices'
+import { hasRequiredSpeciesChoices } from '../../utils/species-choice-selections'
 
 const steps = [
   { num: 1, label: it.step_background, icon: '??' },
@@ -35,8 +36,8 @@ export default function CreationWizard() {
       case 2: {
         if (!creationDraft.raceId) return false
         const race = getRaceById(creationDraft.raceId)
-        if (!race?.variants?.length) return true
-        return !!creationDraft.raceVariantId
+        if (race?.variants?.length && !creationDraft.raceVariantId) return false
+        return hasRequiredSpeciesChoices(race, creationDraft.speciesChoiceSelections ?? [])
       }
       case 3: {
         if (!creationDraft.classId) return false
@@ -148,6 +149,7 @@ export default function CreationWizard() {
               <BonusPreview
                 raceId={creationDraft.raceId}
                 raceVariantId={creationDraft.raceVariantId ?? undefined}
+                speciesChoiceSelections={creationDraft.speciesChoiceSelections ?? []}
                 classId={creationDraft.classId}
                 subclassId={creationDraft.subclassId ?? undefined}
                 classFeatureChoices={creationDraft.classFeatureChoices ?? []}
@@ -170,6 +172,7 @@ export default function CreationWizard() {
               <BonusPreview
                 raceId={creationDraft.raceId}
                 raceVariantId={creationDraft.raceVariantId ?? undefined}
+                speciesChoiceSelections={creationDraft.speciesChoiceSelections ?? []}
                 classId={creationDraft.classId}
                 subclassId={creationDraft.subclassId ?? undefined}
                 classFeatureChoices={creationDraft.classFeatureChoices ?? []}

@@ -1,6 +1,7 @@
 import type { Spell } from '../../types'
+import { buildClassSpellList } from './class-spell-builder'
 
-export const sorcererSpells: Spell[] = [
+const sorcererSpellOverrides: Spell[] = [
   // ── CANTRIP (level 0) ─────────────────────────────────────────────────────
   {
     id: 'sorcerer-fire-bolt',
@@ -449,3 +450,5 @@ export const sorcererSpells: Spell[] = [
     descriptionIT: 'L\'incantesimo piu potente. Duplica qualsiasi incantesimo di 8 livello o inferiore, o crea qualsiasi effetto.',
   },
 ]
+
+export const sorcererSpells: Spell[] = buildClassSpellList('sorcerer', sorcererSpellOverrides)

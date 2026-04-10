@@ -12,6 +12,11 @@ function makeCharacter(overrides: Partial<Character>): Character {
     name: 'Test',
     raceId: 'human',
     raceVariantId: null,
+    speciesChoiceSelections: [
+      { groupId: 'human-size', optionId: 'medium' },
+      { groupId: 'human-skillful', optionId: 'stealth' },
+      { groupId: 'human-versatile', optionId: 'skilled' },
+    ],
     classId: 'fighter',
     subclassId: null,
     classFeatureChoices: [],
@@ -54,7 +59,14 @@ function makeCharacter(overrides: Partial<Character>): Character {
 
 describe('aggregateBonuses', () => {
   it('aggregates species features (no ability bonuses)', () => {
-    const agg = aggregateBonuses({ raceId: 'human' })
+    const agg = aggregateBonuses({
+      raceId: 'human',
+      speciesChoiceSelections: [
+        { groupId: 'human-size', optionId: 'medium' },
+        { groupId: 'human-skillful', optionId: 'acrobatics' },
+        { groupId: 'human-versatile', optionId: 'alert' },
+      ],
+    })
     expect(agg.backgroundAbilityBonuses.length).toBe(0)
     expect(agg.speed).toBe(30)
     expect(agg.speciesFeatures.length).toBeGreaterThan(0)
@@ -88,6 +100,7 @@ describe('aggregateBonuses', () => {
     const agg = aggregateBonuses({
       raceId: 'dragonborn',
       raceVariantId: 'topaz',
+      speciesChoiceSelections: [],
       classId: 'fighter',
       backgroundId: 'guard',
       backgroundAbilityChoices: { mode: 'plus2_plus1', primary: 'STR', secondary: 'WIS' },
@@ -124,6 +137,22 @@ describe('aggregateBonuses', () => {
 
     expect(agg.proficiencies.some((proficiency) => proficiency.type === 'armor' && proficiency.value === 'Heavy Armor')).toBe(true)
     expect(agg.proficiencies.some((proficiency) => proficiency.type === 'weapon' && proficiency.value === 'Martial Weapons')).toBe(true)
+  })
+
+  it('applies Human 2024 species choices for size, skill, and feat', () => {
+    const agg = aggregateBonuses({
+      raceId: 'human',
+      speciesChoiceSelections: [
+        { groupId: 'human-size', optionId: 'small' },
+        { groupId: 'human-skillful', optionId: 'stealth' },
+        { groupId: 'human-versatile', optionId: 'alert' },
+      ],
+    })
+
+    expect(agg.size).toBe('Small')
+    expect(agg.sizeIT).toBe('Piccola')
+    expect(agg.proficiencies.some((proficiency) => proficiency.type === 'skill' && proficiency.value === 'stealth')).toBe(true)
+    expect(agg.featFeatures.some((feature) => feature.name === 'Alert')).toBe(true)
   })
 })
 
