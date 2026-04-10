@@ -6,6 +6,7 @@ import { getClassById } from '../../data/classes'
 import { CharacterAvatar } from '../ui/CharacterAvatar'
 import type { Character } from '../../types'
 import { exportCharactersToJson, parseCharactersFromJson } from '../../utils/storage'
+import { CombatSessionModal } from '../../combat/components/CombatSessionModal'
 
 function downloadJson(filename: string, json: string) {
   const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
@@ -23,6 +24,7 @@ export function HomePage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [transferMessage, setTransferMessage] = useState<string | null>(null)
   const [transferError, setTransferError] = useState<string | null>(null)
+  const [showCombatModal, setShowCombatModal] = useState(false)
   const importInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleLoad = (character: Character) => {
@@ -122,6 +124,12 @@ export function HomePage() {
             </h2>
 
             <div className="ml-auto flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowCombatModal(true)}
+                className="px-3 py-2 rounded-xl border border-accent-red/30 bg-accent-red/10 text-accent-red text-sm font-medium hover:bg-accent-red/15 transition-all"
+              >
+                ⚔️ {it.combat_hub_title}
+              </button>
               <input
                 ref={importInputRef}
                 type="file"
@@ -266,6 +274,13 @@ export function HomePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Combat session modal */}
+      {showCombatModal && (
+        <CombatSessionModal
+          onClose={() => setShowCombatModal(false)}
+        />
       )}
     </div>
   )

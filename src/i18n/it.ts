@@ -218,6 +218,29 @@ export const it = {
   rest_spend_hit_dice: 'Dadi da spendere',
   rest_heal_with: 'Cura con',
   rest_no_hit_dice: 'Nessun dado vita rimanente',
+
+  // Combat Hub
+  combat_hub_title: 'Combattimento',
+  combat_create: 'Crea Sessione',
+  combat_join: 'Entra in Sessione',
+  combat_create_desc: 'Crea una sessione di combattimento e condividi il codice con i giocatori.',
+  combat_join_desc: 'Inserisci il codice sessione fornito dal Master.',
+  combat_create_btn: 'Crea Sessione',
+  combat_join_btn: 'Entra',
+  combat_leave: 'Lascia Sessione',
+  combat_connecting: 'Connessione in corso...',
+  combat_code_placeholder: 'Codice sessione',
+  combat_dm: 'Master',
+  combat_player: 'Giocatore',
+  combat_populate_initiative: 'Popola Iniziativa',
+  combat_no_initiative: 'Nessuna iniziativa. Aggiungi giocatori o NPC.',
+  combat_no_players: 'Nessun giocatore connesso. Condividi il codice sessione.',
+  combat_connected: 'Giocatori Connessi',
+  combat_dice_roller: 'Tiro Dadi',
+  combat_modifier: 'Modificatore',
+  combat_last_roll: 'Ultimo tiro',
+  combat_your_turn: '🎯 È il tuo turno!',
+  combat_your_position: 'La tua posizione',
 } as const
 
 export type TranslationKey = keyof typeof it

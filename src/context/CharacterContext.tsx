@@ -24,6 +24,7 @@ import { computeMaxHp } from '../engine/hp-calculator'
 import { aggregateBonuses } from '../engine/bonus-aggregator'
 import { getClassById } from '../data/classes'
 import { abilityModifier } from '../utils/modifiers'
+import type { CombatSession } from '../combat/types'
 
 // State
 export interface CharacterState {
@@ -31,6 +32,7 @@ export interface CharacterState {
   creationStep: number // 0 = sheet view, 1-5 = creation steps
   savedCharacters: Character[]
   creationDraft: Partial<Character>
+  combatSession: CombatSession | null
 }
 
 // Actions
@@ -105,6 +107,7 @@ type Action =
   | { type: 'SHORT_REST'; hitDiceToSpend?: number }
   | { type: 'LONG_REST' }
   | { type: 'SET_EXPERTISE_SKILLS'; skills: SkillName[] }
+  | { type: 'SET_COMBAT_SESSION'; session: CombatSession | null }
 
 function initState(): CharacterState {
   const storage = loadStorage()
@@ -116,6 +119,7 @@ function initState(): CharacterState {
     creationStep: 0,
     savedCharacters: storage.characters,
     creationDraft: {},
+    combatSession: null,
   }
 }
 
@@ -709,6 +713,9 @@ function reducer(state: CharacterState, action: Action): CharacterState {
         expertiseSkills: action.skills,
         updatedAt: new Date().toISOString(),
       }))
+    }
+    case 'SET_COMBAT_SESSION': {
+      return { ...state, combatSession: action.session }
     }
     default:
       return state
