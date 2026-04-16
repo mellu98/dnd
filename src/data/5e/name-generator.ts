@@ -18,7 +18,7 @@ async function loadNames(): Promise<void> {
   if (_names) return
 
   const raw = await import('./raw/names.json')
-  const data = (raw as { default: { name: NameData[] } }).default
+  const data = (raw as unknown as { default: { name: NameData[] } }).default
 
   const map = new Map<string, NameData>()
   for (const entry of data.name ?? []) {

@@ -21,7 +21,7 @@ async function loadBestiary(): Promise<void> {
 
   _loading = (async () => {
     const raw = await import('./raw/bestiary-mm.json')
-    const monsters = (raw as { default: { monster: FiveeMonster[] } }).default?.monster ?? []
+    const monsters = (raw as unknown as { default: { monster: FiveeMonster[] } }).default?.monster ?? []
 
     const pool = new Map<string, MonsterStatBlock>()
     const list: MonsterStatBlock[] = []

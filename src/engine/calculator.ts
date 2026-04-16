@@ -11,8 +11,8 @@ import { feats } from '../data/feats'
 import { resolveSpecies } from '../utils/species-resolution'
 
 const allAbilities: AbilityName[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
-const featById = new Map(feats.map((feat) => [feat.id, feat]))
-const featByName = new Map(feats.map((feat) => [feat.name, feat]))
+const featById = new Map(feats().map((feat) => [feat.id, feat]))
+const featByName = new Map(feats().map((feat) => [feat.name, feat]))
 
 function getEquippedShieldBonus(character: Character): number {
   const shieldId = character.equippedShieldId

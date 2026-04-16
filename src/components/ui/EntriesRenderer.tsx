@@ -5,8 +5,7 @@
  * Spell refs, condition refs, and dice get special styling.
  */
 
-import type { EntryNode } from '../data/5e/entries-types'
-import { getSpellById } from '../../data/spells'
+import type { EntryNode } from '../../data/5e/entries-types'
 
 interface EntriesRendererProps {
   nodes: EntryNode[]

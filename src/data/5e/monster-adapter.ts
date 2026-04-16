@@ -2,8 +2,7 @@
  * Monster adapter — maps 5etools monster JSON to MonsterStatBlock.
  */
 
-import type { MonsterStatBlock, MonsterAction, MonsterTrait } from '../../types/monster'
-import type { EntryNode } from './entries-types'
+import type { MonsterStatBlock, MonsterAction } from '../../types/monster'
 import { normalizeId } from './id-normalizer'
 import { parseEntries } from './entries-parser'
 

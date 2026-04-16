@@ -18,7 +18,6 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
   const [search, setSearch] = useState('')
   const [minCR, setMinCR] = useState(0)
   const [maxCR, setMaxCR] = useState(30)
-  const [selectedMonster, setSelectedMonster] = useState<MonsterStatBlock | null>(null)
 
   useEffect(() => {
     loadMonsters()

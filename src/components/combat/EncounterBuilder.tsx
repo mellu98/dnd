@@ -8,7 +8,6 @@ import type { MonsterStatBlock } from '../../types/monster'
 import type { CombatInitiativeEntry } from '../../combat/types'
 import { MonsterBrowser } from './MonsterBrowser'
 import { MonsterStatBlockViewer } from './MonsterStatBlockViewer'
-import { t } from '../../i18n/game-terms'
 
 interface EncounterBuilderProps {
   onAddMonsters: (entries: CombatInitiativeEntry[]) => void

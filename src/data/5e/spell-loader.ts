@@ -15,7 +15,6 @@ import { prefer2024 } from './filters'
 const rawSpellData = import.meta.glob('./raw/spells-merged.json', { eager: true })
 
 let _spellPool: Map<string, Spell> | null = null
-let _classSpellIndex: Map<string, Spell[]> | null = null
 
 /**
  * Get all spells from 5etools, indexed by ID.
@@ -101,5 +100,4 @@ export function getSpellCount(): number {
  */
 export function clearSpellCache(): void {
   _spellPool = null
-  _classSpellIndex = null
 }

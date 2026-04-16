@@ -51,7 +51,7 @@ function ASIEditor({ level, existing, onSave, onCancel }: ASIEditorProps) {
       : 'DEX',
   )
   const [selectedFeatId, setSelectedFeatId] = useState(
-    existing?.type === 'feat' && existing.featId ? existing.featId : feats[0]?.id ?? '',
+    existing?.type === 'feat' && existing.featId ? existing.featId : feats()[0]?.id ?? '',
   )
 
   const handleSave = () => {
@@ -170,7 +170,7 @@ function ASIEditor({ level, existing, onSave, onCancel }: ASIEditorProps) {
             onChange={(e) => setSelectedFeatId(e.target.value)}
             className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-text-primary"
           >
-            {feats.map((f) => (
+            {feats().map((f) => (
               <option key={f.id} value={f.id}>
                 {f.nameIT}
               </option>
@@ -178,7 +178,7 @@ function ASIEditor({ level, existing, onSave, onCancel }: ASIEditorProps) {
           </select>
           {selectedFeatId && (
             <p className="text-xs text-text-muted italic">
-              {feats.find((f) => f.id === selectedFeatId)?.mechanicIT ?? ''}
+              {feats().find((f) => f.id === selectedFeatId)?.mechanicIT ?? ''}
             </p>
           )}
         </div>
@@ -200,7 +200,7 @@ function ASIEditor({ level, existing, onSave, onCancel }: ASIEditorProps) {
 
 function formatASIChoiceSummary(choice: ASIChoice): string {
   if (choice.type === 'feat') {
-    const feat = feats.find((f) => f.id === choice.featId)
+    const feat = feats().find((f) => f.id === choice.featId)
     return `Talento: ${feat?.nameIT ?? choice.featId}`
   }
   // ability

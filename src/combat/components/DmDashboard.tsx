@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useCombatSession } from '../useCombatSession'
 import type { CharacterSummary, CombatInitiativeEntry } from '../types'
-import { generateId } from '../../utils/storage'
 import { it } from '../../i18n/it'
 import { EncounterBuilder } from '../../components/combat/EncounterBuilder'
 

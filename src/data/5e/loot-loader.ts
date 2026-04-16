@@ -43,7 +43,7 @@ async function loadLoot(): Promise<void> {
   if (_lootData) return
 
   const raw = await import('./raw/loot.json')
-  const data = (raw as { default: { individual: LootIndividual[]; hoard: LootHoard[] } }).default
+  const data = (raw as unknown as { default: { individual: LootIndividual[]; hoard: LootHoard[] } }).default
 
   _lootData = {
     individual: data.individual ?? [],

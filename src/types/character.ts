@@ -64,6 +64,8 @@ export interface Character {
   id: string
   name: string
   raceId: string
+  /** Legacy alias / alternative path for species ID */
+  speciesId?: string
   raceVariantId: string | null
   speciesChoiceSelections: SpeciesChoiceSelection[]
   classId: string

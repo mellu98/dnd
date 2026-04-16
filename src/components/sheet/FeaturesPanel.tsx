@@ -50,7 +50,7 @@ export function FeaturesPanel({ stats, features = stats.allFeatures, emptyMessag
 
         if (isASI && asiChoice) {
           if (asiChoice.type === 'feat') {
-            const feat = feats.find((f) => f.id === asiChoice.featId)
+            const feat = feats().find((f) => f.id === asiChoice.featId)
             displayName = `Talento: ${feat?.nameIT ?? asiChoice.featId}`
             displayDescription = toMetricRuleText(feat?.descriptionIT)
           } else {

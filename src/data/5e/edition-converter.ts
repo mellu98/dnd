@@ -10,12 +10,12 @@
  * - Allow toggling between editions in the UI
  */
 
-import { resolveReprint, prefer2024, is2024 } from './filters'
+import { resolveReprint, is2024 } from './filters'
 
 export interface EditionPair {
   name2014: string
   name2024: string | null
-  source2014: string
+  source2014: string | null
   source2024: string | null
 }
 
@@ -84,7 +84,7 @@ export function get2024Version<T extends { name: string; source: string; reprint
  */
 export function get2014Version<T extends { name: string; source: string }>(
   name: string,
-  source: string,
+  _source: string,
   allEntries: T[],
 ): T | null {
   // Find entries with the same name but 2014 source

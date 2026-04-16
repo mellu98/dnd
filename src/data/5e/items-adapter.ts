@@ -4,7 +4,6 @@
  */
 
 import type { MagicItem } from '../../types/magic-item'
-import type { EntryNode } from './entries-types'
 import { normalizeId } from './id-normalizer'
 import { parseEntries } from './entries-parser'
 
