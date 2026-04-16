@@ -20,21 +20,27 @@ async function loadBestiary(): Promise<void> {
   if (_monsterPool || _loading) return _loading ?? Promise.resolve()
 
   _loading = (async () => {
-    const raw = await import('./raw/bestiary-mm.json')
-    const monsters = (raw as unknown as { default: { monster: FiveeMonster[] } }).default?.monster ?? []
+    try {
+      const raw = await import('./raw/bestiary-mm.json')
+      const monsters = (raw as unknown as { default: { monster: FiveeMonster[] } }).default?.monster ?? []
 
-    const pool = new Map<string, MonsterStatBlock>()
-    const list: MonsterStatBlock[] = []
+      const pool = new Map<string, MonsterStatBlock>()
+      const list: MonsterStatBlock[] = []
 
-    for (const rawMonster of monsters) {
-      const monster = mapMonster(rawMonster)
-      pool.set(monster.id, monster)
-      list.push(monster)
+      for (const rawMonster of monsters) {
+        const monster = mapMonster(rawMonster)
+        pool.set(monster.id, monster)
+        list.push(monster)
+      }
+
+      _monsterPool = pool
+      _monsterList = list
+    } catch (err) {
+      console.error('Failed to load bestiary:', err)
+      throw err
+    } finally {
+      _loading = null
     }
-
-    _monsterPool = pool
-    _monsterList = list
-    _loading = null
   })()
 
   return _loading

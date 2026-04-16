@@ -15,6 +15,7 @@ interface MonsterBrowserProps {
 export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
   const [monsters, setMonsters] = useState<MonsterStatBlock[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [minCR, setMinCR] = useState(0)
   const [maxCR, setMaxCR] = useState(30)
@@ -25,17 +26,26 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
 
   async function loadMonsters() {
     setLoading(true)
-    let results: MonsterStatBlock[]
-    if (search) {
-      results = await searchMonsters(search)
-    } else if (minCR > 0 || maxCR < 30) {
-      results = await getMonstersByCR(minCR, maxCR)
-    } else {
-      results = await getAllMonsters()
+    setError(null)
+    try {
+      let results: MonsterStatBlock[]
+      if (search) {
+        results = await searchMonsters(search)
+      } else if (minCR > 0 || maxCR < 30) {
+        results = await getMonstersByCR(minCR, maxCR)
+      } else {
+        results = await getAllMonsters()
+      }
+      // Limit to 100 results for performance
+      setMonsters(results.slice(0, 100))
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('MonsterBrowser load error:', err)
+      setError(message)
+      setMonsters([])
+    } finally {
+      setLoading(false)
     }
-    // Limit to 100 results for performance
-    setMonsters(results.slice(0, 100))
-    setLoading(false)
   }
 
   function handleSearch(query: string) {
@@ -123,7 +133,19 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
         {/* Results */}
         <div className="flex-1 overflow-y-auto">
           {loading && <p className="py-4 text-center text-gray-400">Loading monsters...</p>}
-          {!loading && monsters.length === 0 && (
+          {error && (
+            <div className="py-4 text-center">
+              <p className="text-red-400">Error: {error}</p>
+              <button
+                type="button"
+                onClick={loadMonsters}
+                className="mt-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {!loading && !error && monsters.length === 0 && (
             <p className="py-4 text-center text-gray-400">No monsters found.</p>
           )}
           <div className="grid gap-2 sm:grid-cols-2">
