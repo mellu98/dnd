@@ -15,21 +15,27 @@ async function loadItems(): Promise<void> {
   if (_itemPool || _loading) return _loading ?? Promise.resolve()
 
   _loading = (async () => {
-    const raw = await import('./raw/items.json')
-    const items = (raw as { default: { item: FiveeItem[] } }).default?.item ?? []
+    try {
+      const raw = await import('./raw/items.json')
+      const items = (raw as { default: { item: FiveeItem[] } }).default?.item ?? []
 
-    const pool = new Map<string, MagicItem>()
-    const list: MagicItem[] = []
+      const pool = new Map<string, MagicItem>()
+      const list: MagicItem[] = []
 
-    for (const rawItem of items) {
-      const item = mapMagicItem(rawItem)
-      pool.set(item.id, item)
-      list.push(item)
+      for (const rawItem of items) {
+        const item = mapMagicItem(rawItem)
+        pool.set(item.id, item)
+        list.push(item)
+      }
+
+      _itemPool = pool
+      _itemList = list
+    } catch (err) {
+      console.error('Failed to load magic items:', err)
+      throw err
+    } finally {
+      _loading = null
     }
-
-    _itemPool = pool
-    _itemList = list
-    _loading = null
   })()
 
   return _loading

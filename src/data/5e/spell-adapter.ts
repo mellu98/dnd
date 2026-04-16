@@ -7,6 +7,7 @@ import type { EntryNode } from './entries-types'
 import { normalizeId } from './id-normalizer'
 import { t, schoolAbbreviations } from '../../i18n/game-terms'
 import { parseEntries, entriesToPlainText } from './entries-parser'
+import { translateSpellName } from '../../i18n/spell-names'
 
 /** Raw 5etools spell record */
 export interface FiveeSpell {
@@ -167,7 +168,7 @@ export function mapSpell(raw: FiveeSpell): Spell {
   return {
     id,
     name: raw.name,
-    nameIT: t(raw.name),
+    nameIT: translateSpellName(raw.name),
     level: raw.level,
     school: schoolFull,
     schoolIT,

@@ -49,6 +49,7 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
   const [magicItemSearch, setMagicItemSearch] = useState('')
   const [magicItemRarityFilter, setMagicItemRarityFilter] = useState('')
   const [loadingMagicItems, setLoadingMagicItems] = useState(false)
+  const [magicItemError, setMagicItemError] = useState<string | null>(null)
 
   const gearItems = equipment.filter((item) => item.category === 'gear')
   const weaponItems = equipment.filter((item) => item.category === 'weapon')
@@ -137,16 +138,24 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
 
   const handleLoadMagicItems = async () => {
     setLoadingMagicItems(true)
-    let results: MagicItem[]
-    if (magicItemSearch) {
-      results = await searchMagicItems(magicItemSearch)
-    } else if (magicItemRarityFilter) {
-      results = await getMagicItemsByRarity(magicItemRarityFilter)
-    } else {
-      results = await getAllMagicItems()
+    setMagicItemError(null)
+    try {
+      let results: MagicItem[]
+      if (magicItemSearch) {
+        results = await searchMagicItems(magicItemSearch)
+      } else if (magicItemRarityFilter) {
+        results = await getMagicItemsByRarity(magicItemRarityFilter)
+      } else {
+        results = await getAllMagicItems()
+      }
+      setMagicItems(results.slice(0, 80))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Errore sconosciuto'
+      setMagicItemError(`Errore caricamento oggetti magici: ${msg}`)
+      setMagicItems([])
+    } finally {
+      setLoadingMagicItems(false)
     }
-    setMagicItems(results.slice(0, 80))
-    setLoadingMagicItems(false)
   }
 
   const addMagicItem = (item: MagicItem) => {
@@ -755,7 +764,18 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
             {loadingMagicItems && (
               <p className="text-xs text-text-muted italic py-2">Caricamento...</p>
             )}
-            {!loadingMagicItems && magicItems.length === 0 && (
+            {magicItemError && (
+              <div className="rounded-lg border border-accent-red/30 bg-accent-red/10 px-3 py-2 text-xs text-accent-red">
+                {magicItemError}
+                <button
+                  onClick={handleLoadMagicItems}
+                  className="ml-2 underline hover:no-underline"
+                >
+                  Riprova
+                </button>
+              </div>
+            )}
+            {!loadingMagicItems && !magicItemError && magicItems.length === 0 && (
               <p className="text-xs text-text-muted italic py-2">Nessun oggetto trovato.</p>
             )}
             {!loadingMagicItems && magicItems.length > 0 && (

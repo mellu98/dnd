@@ -4,8 +4,8 @@
 
 import type { Feat } from '../../types/feat'
 import { normalizeId } from './id-normalizer'
-import { t } from '../../i18n/game-terms'
 import { entriesToPlainText } from './entries-parser'
+import { translateFeatName } from '../../i18n/feat-names'
 
 /** Raw 5etools feat record */
 export interface FiveeFeat {
@@ -41,7 +41,7 @@ export function mapFeat(raw: FiveeFeat): Feat {
   return {
     id,
     name: raw.name,
-    nameIT: t(raw.name),
+    nameIT: translateFeatName(raw.name),
     description,
     descriptionIT: description,
     mechanicIT,
