@@ -27,7 +27,7 @@ export interface FiveeItem {
   chargeType?: string
   charges?: number
   recharge?: string
-  entries: unknown[]
+  entries?: unknown[]
   srd?: boolean
   reprintedAs?: string[]
 }
@@ -46,6 +46,17 @@ function parseBonus(value: string | undefined): number | undefined {
   return match ? Number(match[1]) : undefined
 }
 
+/** Normalize rarity to a valid MagicItemRarity value */
+function normalizeRarity(raw: string | undefined): MagicItem['rarity'] {
+  if (!raw) return 'unknown'
+  const r = raw.toLowerCase().trim()
+  if (r === 'very rare') return 'very rare'
+  if (r === 'unknown (magic)') return 'unknown'
+  if (r === 'varies') return 'unknown'
+  if (r === 'common' || r === 'uncommon' || r === 'rare' || r === 'legendary' || r === 'artifact') return r
+  return 'unknown'
+}
+
 /** Map a raw 5etools item to MagicItem */
 export function mapMagicItem(raw: FiveeItem): MagicItem {
   const attunement = parseAttunement(raw.reqAttune)
@@ -54,8 +65,8 @@ export function mapMagicItem(raw: FiveeItem): MagicItem {
   return {
     id: normalizeId(raw.name),
     name: raw.name,
-    type: typeof raw.type === 'string' ? raw.type : raw.type.typeName ?? raw.type.type,
-    rarity: (raw.rarity?.toLowerCase() ?? 'unknown') as MagicItem['rarity'],
+    type: typeof raw.type === 'string' ? raw.type : (raw.type?.typeName ?? raw.type?.type ?? ''),
+    rarity: normalizeRarity(raw.rarity),
     requiresAttunement: attunement.required,
     attunementRestriction: attunement.restriction,
     bonusSpellAttack: parseBonus(raw.bonusSpellAttack),
