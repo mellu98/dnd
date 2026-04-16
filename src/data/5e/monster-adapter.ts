@@ -49,11 +49,14 @@ export interface FiveeMonster {
 /** Parse CR string to number */
 function parseCR(cr: string | number): number {
   if (typeof cr === 'number') return cr
-  if (cr.includes('/')) {
-    const [num, den] = cr.split('/').map(Number)
-    return num / den
+  if (typeof cr === 'string') {
+    if (cr.includes('/')) {
+      const [num, den] = cr.split('/').map(Number)
+      return num / den
+    }
+    return Number(cr) || 0
   }
-  return Number(cr) || 0
+  return 0
 }
 
 /** Parse AC from 5etools format */
