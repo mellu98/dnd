@@ -6,7 +6,7 @@ import type { Spell, CantripScaling } from '../../types/spell'
 import type { EntryNode } from './entries-types'
 import { normalizeId } from './id-normalizer'
 import { t, schoolAbbreviations } from '../../i18n/game-terms'
-import { parseEntries } from './entries-parser'
+import { parseEntries, entriesToPlainText } from './entries-parser'
 
 /** Raw 5etools spell record */
 export interface FiveeSpell {
@@ -184,8 +184,8 @@ export function mapSpell(raw: FiveeSpell): Spell {
     durationIT: formatDuration(raw.duration),
     concentration: hasConcentration(raw.duration, raw.meta),
     ritual: isRitual(raw.meta, raw.ritual),
-    description: raw.entries.map((e) => (typeof e === 'string' ? e : JSON.stringify(e))).join(' '),
-    descriptionIT: raw.entries.map((e) => (typeof e === 'string' ? e : JSON.stringify(e))).join(' '),
+    description: entriesToPlainText(descriptionRaw),
+    descriptionIT: entriesToPlainText(descriptionRaw),
     source: raw.source,
     isLegacy: raw.source === 'PHB' || raw.edition === 'classic',
     cantripScaling: buildCantripScaling(raw),
