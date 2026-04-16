@@ -1,6 +1,5 @@
 import { useCharacter } from '../../hooks/useCharacter'
 import { useCombatSession } from '../useCombatSession'
-import { DiceRoller } from './DiceRoller'
 import { it } from '../../i18n/it'
 
 const CONDITION_NAMES_IT: Record<string, string> = {
@@ -138,36 +137,6 @@ export function PlayerCombatMode() {
               {it.exhaustion_label}: {myUpdates.exhaustionLevel}/6
             </div>
           )}
-        </div>
-      )}
-
-      {/* Dice Roller */}
-      <DiceRoller />
-
-      {/* Dice roll history */}
-      {session.diceRolls.length > 0 && (
-        <div className="bg-bg-card/60 border border-border/50 rounded-xl p-4">
-          <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
-            Tiri Recenti
-          </h3>
-          <div className="space-y-1">
-            {session.diceRolls
-              .slice(-5)
-              .reverse()
-              .map((roll, i) => (
-                <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="text-text-secondary">
-                    {roll.label} ({roll.diceNotation})
-                  </span>
-                  <span className="font-bold text-accent-gold">
-                    {roll.results.join(', ')}
-                    {roll.total !== roll.results[0] && (
-                      <span className="text-text-muted ml-1">= {roll.total}</span>
-                    )}
-                  </span>
-                </div>
-              ))}
-          </div>
         </div>
       )}
     </div>
