@@ -47,12 +47,19 @@ export interface CombatInitiativeEntry {
   playerId: string | null // null = NPC/monster
   initiative: number
   notes: string
+  /** Optional monster stat block for NPC entries */
+  monsterId?: string
+  /** Current HP for monster/NPC entries */
+  currentHp?: number
+  /** Max HP for monster/NPC entries */
+  maxHp?: number
 }
 
 /** Combat message types exchanged over WebRTC data channels */
 export type CombatMessage =
   | { type: 'character_summary'; summary: CharacterSummary }
   | { type: 'hp_update'; playerId: string; currentHp: number; temporaryHp: number }
+  | { type: 'npc_hp_update'; entryId: string; currentHp: number; maxHp: number }
   | { type: 'conditions_update'; playerId: string; conditions: string[]; exhaustion: number }
   | { type: 'death_saves_update'; playerId: string; data: { successes: number; failures: number; stabilized: boolean } }
   | { type: 'initiative_update'; entries: CombatInitiativeEntry[]; activeId: string | null; round: number }

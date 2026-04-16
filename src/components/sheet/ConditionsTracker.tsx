@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
+import { getCondition } from '../../data/5e/conditions-loader'
+import { entriesToPlainText } from '../../data/5e/entries-parser'
 
 const CONDITIONS = [
   { id: 'blinded', nameIT: 'Accecato', icon: '\u{1F441}\uFE0F' },
@@ -29,6 +31,7 @@ export function ConditionsTracker() {
   )
   const activeConditionsCount = activeConditions.size
   const exhaustionLevel = character?.exhaustionLevel ?? 0
+  const [tooltip, setTooltip] = useState<{ id: string; text: string; x: number; y: number } | null>(null)
 
   const toggleCondition = (id: string) => {
     const next = new Set(activeConditions)
@@ -44,6 +47,18 @@ export function ConditionsTracker() {
   const clearAll = () => {
     dispatch({ type: 'SET_ACTIVE_CONDITIONS', conditions: [] })
     dispatch({ type: 'SET_EXHAUSTION_LEVEL', level: 0 })
+  }
+
+  const handleConditionHover = async (conditionId: string, e: React.MouseEvent) => {
+    const cond = await getCondition(conditionId)
+    if (cond) {
+      const text = entriesToPlainText(cond.entries)
+      setTooltip({ id: conditionId, text, x: e.clientX, y: e.clientY })
+    }
+  }
+
+  const handleConditionLeave = () => {
+    setTooltip(null)
   }
 
   return (
@@ -97,7 +112,9 @@ export function ConditionsTracker() {
             <button
               key={condition.id}
               onClick={() => toggleCondition(condition.id)}
-              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+              onMouseEnter={(e) => handleConditionHover(condition.id, e)}
+              onMouseLeave={handleConditionLeave}
+              className={`relative flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                 isActive
                   ? 'bg-accent-red/15 border-accent-red/50 text-accent-red'
                   : 'bg-bg-secondary border-border/40 text-text-secondary hover:border-border hover:text-text-primary'
@@ -109,6 +126,21 @@ export function ConditionsTracker() {
           )
         })}
       </div>
+
+      {/* Condition tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 max-w-xs pointer-events-none"
+          style={{ left: tooltip.x - 120, top: tooltip.y + 16 }}
+        >
+          <div className="rounded-lg bg-bg-card border border-border shadow-xl p-3 text-xs text-text-secondary">
+            <p className="font-semibold text-accent-gold mb-1">
+              {CONDITIONS.find((c) => c.id === tooltip.id)?.nameIT}
+            </p>
+            <p className="leading-relaxed line-clamp-6">{tooltip.text}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

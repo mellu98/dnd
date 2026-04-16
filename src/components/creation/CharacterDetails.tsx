@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCharacterContext } from '../../context/CharacterContext'
 import { it } from '../../i18n/it'
+import { generateName } from '../../data/5e/name-generator'
 
 export default function CharacterDetails() {
   const { state, dispatch } = useCharacterContext()
   const draft = state.creationDraft
 
   const [name, setName] = useState(draft.name || '')
+  const [generatingName, setGeneratingName] = useState(false)
   const [alignment, setAlignment] = useState(draft.alignment || '')
   const [personalityTraits, setPersonalityTraits] = useState(draft.personalityTraits || '')
   const [ideals, setIdeals] = useState(draft.ideals || '')
@@ -28,6 +30,18 @@ export default function CharacterDetails() {
   const inputClass = 'w-full bg-bg-card border border-border rounded-lg px-3 py-2 text-text-primary placeholder-text-secondary/50 focus:outline-none focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/30 transition-colors'
   const textareaClass = `${inputClass} resize-none`
 
+  const handleGenerateName = async () => {
+    const raceId = state.creationDraft.raceId || state.creationDraft.speciesId
+    if (!raceId) return
+    setGeneratingName(true)
+    try {
+      const generated = await generateName(raceId)
+      if (generated) setName(generated)
+    } finally {
+      setGeneratingName(false)
+    }
+  }
+
   return (
     <div>
       <h2 className="text-xl font-semibold text-accent-gold mb-4">{it.step_details}</h2>
@@ -35,13 +49,24 @@ export default function CharacterDetails() {
       <div className="space-y-4">
         <div>
           <label className="block text-sm text-text-secondary mb-1">{it.char_name}</label>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="Es. Aragorn, Gandalf..."
-            className={inputClass}
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Es. Aragorn, Gandalf..."
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={handleGenerateName}
+              disabled={generatingName || (!state.creationDraft.raceId && !state.creationDraft.speciesId)}
+              className="px-3 py-2 rounded-lg bg-accent-purple/15 text-accent-purple border border-accent-purple/30 text-sm font-semibold hover:bg-accent-purple/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Genera nome casuale"
+            >
+              {generatingName ? '...' : '\uD83C\uDFB2'}
+            </button>
+          </div>
         </div>
 
         <div>

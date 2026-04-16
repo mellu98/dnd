@@ -3,6 +3,7 @@ import { useCombatSession } from '../useCombatSession'
 import type { CharacterSummary, CombatInitiativeEntry } from '../types'
 import { generateId } from '../../utils/storage'
 import { it } from '../../i18n/it'
+import { EncounterBuilder } from '../../components/combat/EncounterBuilder'
 
 const CONDITIONS = [
   { id: 'blinded', nameIT: 'Accecato' },
@@ -26,8 +27,6 @@ export function DmDashboard() {
     useCombatSession()
 
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null)
-  const [npcName, setNpcName] = useState('')
-  const [npcInit, setNpcInit] = useState('')
 
   const players = useMemo(() => Array.from(session?.players.values() ?? []), [session?.players])
   const initiative = session?.initiative ?? []
@@ -72,19 +71,9 @@ export function DmDashboard() {
     sendInitiativeUpdate(entries, null, 1)
   }
 
-  const addNpc = () => {
-    if (!npcName.trim()) return
-    const entry: CombatInitiativeEntry = {
-      id: generateId(),
-      name: npcName.trim(),
-      playerId: null,
-      initiative: Number(npcInit) || 0,
-      notes: '',
-    }
-    const next = [...initiative, entry]
+  const handleAddEncounter = (entries: CombatInitiativeEntry[]) => {
+    const next = [...initiative, ...entries]
     sendInitiativeUpdate(next, activeId, session?.round ?? 1)
-    setNpcName('')
-    setNpcInit('')
   }
 
   if (!session) return null
@@ -107,29 +96,8 @@ export function DmDashboard() {
           </button>
         </div>
 
-        {/* Add NPC */}
-        <div className="flex gap-2 mb-3">
-          <input
-            type="text"
-            value={npcName}
-            onChange={(e) => setNpcName(e.target.value)}
-            placeholder="Nome NPC"
-            className="flex-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-gold/50"
-          />
-          <input
-            type="number"
-            value={npcInit}
-            onChange={(e) => setNpcInit(e.target.value)}
-            placeholder="Init"
-            className="w-16 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-gold/50"
-          />
-          <button
-            onClick={addNpc}
-            className="px-3 py-1.5 rounded-lg bg-accent-gold/15 text-accent-gold border border-accent-gold/30 text-sm font-semibold hover:bg-accent-gold/25 transition-all"
-          >
-            +
-          </button>
-        </div>
+        {/* Encounter Builder */}
+        <EncounterBuilder onAddMonsters={handleAddEncounter} />
 
         {/* Initiative list */}
         {sortedInitiative.length === 0 ? (

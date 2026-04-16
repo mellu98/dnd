@@ -1,35 +1,10 @@
-import type { Spell } from '../../types'
+/**
+ * Spells index — delegates to 5etools JSON data.
+ *
+ * The 5etools spell-loader provides all spell data from merged JSON files.
+ * This module maintains the existing API (getSpellById, getSpellsByClass)
+ * so no UI code needs to change.
+ */
 
-import { wizardSpells } from './wizard-spells'
-import { clericSpells } from './cleric-spells'
-import { druidSpells } from './druid-spells'
-import { bardSpells } from './bard-spells'
-import { sorcererSpells } from './sorcerer-spells'
-import { warlockSpells } from './warlock-spells'
-import { paladinSpells } from './paladin-spells'
-import { rangerSpells } from './ranger-spells'
-
-const classSpellMap: Record<string, Spell[]> = {
-  wizard: wizardSpells,
-  cleric: clericSpells,
-  druid: druidSpells,
-  bard: bardSpells,
-  sorcerer: sorcererSpells,
-  warlock: warlockSpells,
-  paladin: paladinSpells,
-  ranger: rangerSpells,
-}
-
-export function getSpellsByClass(classId: string): Spell[] {
-  return classSpellMap[classId] ?? []
-}
-
-export function getSpellById(id: string, classId?: string): Spell | undefined {
-  if (classId) return getSpellsByClass(classId).find((s) => s.id === id)
-
-  for (const spells of Object.values(classSpellMap)) {
-    const found = spells.find((s) => s.id === id)
-    if (found) return found
-  }
-  return undefined
-}
+export { getSpellById } from '../5e/spell-loader'
+export { getSpellsByClass, getAllSpells, searchSpells, getSpellCount } from '../5e/spell-loader'

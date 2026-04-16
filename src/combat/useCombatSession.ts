@@ -34,6 +34,7 @@ export function useCombatSession(): {
   leaveSession: () => void
   sendCharacterSummary: (summary: CharacterSummary) => void
   sendHpUpdate: (playerId: string, currentHp: number, temporaryHp: number) => void
+  sendNpcHpUpdate: (entryId: string, currentHp: number, maxHp: number) => void
   sendConditionsUpdate: (playerId: string, conditions: string[], exhaustion: number) => void
   sendDeathSavesUpdate: (
     playerId: string,
@@ -95,6 +96,16 @@ export function useCombatSession(): {
           dispatch({
             type: 'SET_COMBAT_SESSION',
             session: { ...prevState, diceRolls: [...prevState.diceRolls, data.roll] },
+          })
+          break
+        }
+        case 'npc_hp_update': {
+          const updatedInitiative = prevState.initiative.map((e) =>
+            e.id === data.entryId ? { ...e, currentHp: data.currentHp, maxHp: data.maxHp } : e,
+          )
+          dispatch({
+            type: 'SET_COMBAT_SESSION',
+            session: { ...prevState, initiative: updatedInitiative },
           })
           break
         }
@@ -276,6 +287,27 @@ export function useCombatSession(): {
     [],
   )
 
+  const sendNpcHpUpdate = useCallback(
+    (entryId: string, currentHp: number, maxHp: number) => {
+      managerRef.current?.broadcast({
+        type: 'npc_hp_update',
+        entryId,
+        currentHp,
+        maxHp,
+      })
+      if (session) {
+        const updatedInitiative = session.initiative.map((e) =>
+          e.id === entryId ? { ...e, currentHp, maxHp } : e,
+        )
+        dispatch({
+          type: 'SET_COMBAT_SESSION',
+          session: { ...session, initiative: updatedInitiative },
+        })
+      }
+    },
+    [dispatch, session],
+  )
+
   const sendConditionsUpdate = useCallback(
     (playerId: string, conditions: string[], exhaustion: number) => {
       managerRef.current?.broadcast({
@@ -365,6 +397,7 @@ export function useCombatSession(): {
     joinSession,
     leaveSession,
     sendHpUpdate,
+    sendNpcHpUpdate,
     sendConditionsUpdate,
     sendDeathSavesUpdate,
     sendInitiativeUpdate,

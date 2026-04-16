@@ -3,9 +3,12 @@ import { useCharacterContext } from '../../context/CharacterContext'
 import { armors, shields, weapons, getArmorById, getShieldById, getWeaponById, adventuringGear, getGearById, allTools, getToolById, ammunition, getAmmunitionById, artisanTools, musicalInstruments, gamingSets, vehicles } from '../../data/equipment'
 import type { CalculatedStats } from '../../types'
 import type { EquipmentItem } from '../../types/equipment'
+import type { MagicItem } from '../../types/magic-item'
 import { it } from '../../i18n/it'
 import { getWeaponCombatSummary } from '../../utils/weapon-combat'
 import { isArmorProficient, isShieldProficient } from '../../utils/equipment-proficiency'
+import { getAllMagicItems, searchMagicItems, getMagicItemsByRarity } from '../../data/5e/items-loader'
+import { EntriesRenderer } from '../ui/EntriesRenderer'
 
 interface EquipmentPanelProps {
   stats: CalculatedStats
@@ -41,6 +44,11 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
   const [showTools, setShowTools] = useState(false)
   const [showAmmo, setShowAmmo] = useState(false)
   const [gearFilter, setGearFilter] = useState('')
+  const [showMagicItems, setShowMagicItems] = useState(false)
+  const [magicItems, setMagicItems] = useState<MagicItem[]>([])
+  const [magicItemSearch, setMagicItemSearch] = useState('')
+  const [magicItemRarityFilter, setMagicItemRarityFilter] = useState('')
+  const [loadingMagicItems, setLoadingMagicItems] = useState(false)
 
   const gearItems = equipment.filter((item) => item.category === 'gear')
   const weaponItems = equipment.filter((item) => item.category === 'weapon')
@@ -125,6 +133,35 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
     if (!data || equipment.some((item) => item.id === ammoId)) return
 
     dispatch({ type: 'ADD_EQUIPMENT_ITEM', item: { ...data, quantity: data.quantity } })
+  }
+
+  const handleLoadMagicItems = async () => {
+    setLoadingMagicItems(true)
+    let results: MagicItem[]
+    if (magicItemSearch) {
+      results = await searchMagicItems(magicItemSearch)
+    } else if (magicItemRarityFilter) {
+      results = await getMagicItemsByRarity(magicItemRarityFilter)
+    } else {
+      results = await getAllMagicItems()
+    }
+    setMagicItems(results.slice(0, 80))
+    setLoadingMagicItems(false)
+  }
+
+  const addMagicItem = (item: MagicItem) => {
+    if (equipment.some((e) => e.id === item.id)) return
+    const eqItem: EquipmentItem = {
+      id: item.id,
+      name: item.name,
+      nameIT: item.name,
+      category: 'gear',
+      quantity: 1,
+      equipped: false,
+      weight: item.weight,
+      value: item.value,
+    }
+    dispatch({ type: 'ADD_EQUIPMENT_ITEM', item: eqItem })
   }
 
   const getWeaponSummary = (weaponId: string) => {
@@ -663,6 +700,101 @@ export function EquipmentPanel({ stats }: EquipmentPanelProps) {
             +
           </button>
         </div>
+      </div>
+
+      {/* Magic Items Section */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="block text-xs text-text-secondary uppercase tracking-wider font-semibold">
+            Oggetti Magici
+          </label>
+          <button
+            onClick={() => {
+              setShowMagicItems((v) => !v)
+              if (!showMagicItems && magicItems.length === 0) handleLoadMagicItems()
+            }}
+            className="text-xs text-accent-purple hover:text-accent-purple/80 transition-colors"
+          >
+            {showMagicItems ? 'Chiudi' : '+ Sfoglia'}
+          </button>
+        </div>
+
+        {showMagicItems && (
+          <div className="bg-bg-secondary border border-border rounded-lg p-2 space-y-2">
+            {/* Filters */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={magicItemSearch}
+                onChange={(e) => setMagicItemSearch(e.target.value)}
+                placeholder="Cerca oggetto magico..."
+                className="flex-1 bg-bg-card border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-muted/50 focus:outline-none"
+              />
+              <select
+                value={magicItemRarityFilter}
+                onChange={(e) => setMagicItemRarityFilter(e.target.value)}
+                className="bg-bg-card border border-border rounded px-2 py-1 text-xs text-text-primary focus:outline-none"
+              >
+                <option value="">Tutte</option>
+                <option value="Common">Comune</option>
+                <option value="Uncommon">Non comune</option>
+                <option value="Rare">Raro</option>
+                <option value="Very Rare">Molto raro</option>
+                <option value="Legendary">Leggendario</option>
+                <option value="Artifact">Artefatto</option>
+              </select>
+              <button
+                onClick={handleLoadMagicItems}
+                className="px-3 py-1 rounded bg-accent-purple/20 text-accent-purple border border-accent-purple/30 text-xs font-semibold hover:bg-accent-purple/30 transition-colors"
+              >
+                Cerca
+              </button>
+            </div>
+
+            {/* Results */}
+            {loadingMagicItems && (
+              <p className="text-xs text-text-muted italic py-2">Caricamento...</p>
+            )}
+            {!loadingMagicItems && magicItems.length === 0 && (
+              <p className="text-xs text-text-muted italic py-2">Nessun oggetto trovato.</p>
+            )}
+            {!loadingMagicItems && magicItems.length > 0 && (
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {magicItems.map((item) => {
+                  const alreadyOwned = equipment.some((e) => e.id === item.id)
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded px-2 py-1.5 hover:bg-bg-card transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          onClick={() => !alreadyOwned && addMagicItem(item)}
+                          disabled={alreadyOwned}
+                          className="text-left text-sm text-text-primary hover:text-accent-purple transition-colors flex-1 disabled:text-text-muted/50 disabled:cursor-default"
+                        >
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-full border border-accent-purple/30 text-accent-purple">
+                            {item.rarity}
+                          </span>
+                          {item.requiresAttunement && (
+                            <span className="text-[10px] ml-1 text-accent-gold/70">
+                              (richiede sintonizzazione)
+                            </span>
+                          )}
+                          {alreadyOwned && <span className="text-[10px] text-text-muted/50 ml-1">(già posseduto)</span>}
+                        </button>
+                      </div>
+                      <div className="text-[11px] text-text-muted mt-0.5 pl-1">
+                        <EntriesRenderer nodes={item.description} className="inline" />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
