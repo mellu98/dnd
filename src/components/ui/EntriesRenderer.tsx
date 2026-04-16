@@ -6,7 +6,7 @@
  */
 
 import type { EntryNode } from '../data/5e/entries-types'
-import { getSpellById } from '../data/spells'
+import { getSpellById } from '../../data/spells'
 
 interface EntriesRendererProps {
   nodes: EntryNode[]

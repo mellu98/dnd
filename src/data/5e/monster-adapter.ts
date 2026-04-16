@@ -3,9 +3,9 @@
  */
 
 import type { MonsterStatBlock, MonsterAction, MonsterTrait } from '../../types/monster'
-import type { EntryNode } from '../entries-types'
-import { normalizeId } from '../id-normalizer'
-import { parseEntries } from '../entries-parser'
+import type { EntryNode } from './entries-types'
+import { normalizeId } from './id-normalizer'
+import { parseEntries } from './entries-parser'
 
 /** Raw 5etools monster record */
 export interface FiveeMonster {

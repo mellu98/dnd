@@ -4,9 +4,9 @@
  */
 
 import type { MagicItem } from '../../types/magic-item'
-import type { EntryNode } from '../entries-types'
-import { normalizeId } from '../id-normalizer'
-import { parseEntries } from '../entries-parser'
+import type { EntryNode } from './entries-types'
+import { normalizeId } from './id-normalizer'
+import { parseEntries } from './entries-parser'
 
 /** Raw 5etools magic item record */
 export interface FiveeItem {

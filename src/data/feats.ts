@@ -6,9 +6,9 @@
  * so no UI code needs to change.
  */
 
-export { getFeatById, searchFeats, getFeatCount } from '../5e/feat-loader'
+export { getFeatById, searchFeats, getFeatCount } from './5e/feat-loader'
 
 // Re-export getAllFeats as `feats` for backwards compatibility
 // with existing imports: `import { feats } from '../data/feats'`
-import { getAllFeats } from '../5e/feat-loader'
+import { getAllFeats } from './5e/feat-loader'
 export { getAllFeats as feats }
