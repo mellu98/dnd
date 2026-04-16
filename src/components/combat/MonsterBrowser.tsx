@@ -36,8 +36,9 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
       } else {
         results = await getAllMonsters()
       }
-      // Limit to 100 results for performance
-      setMonsters(results.slice(0, 100))
+      // Sort alphabetically, limit to 100
+      const sorted = [...results].sort((a, b) => a.name.localeCompare(b.name))
+      setMonsters(sorted.slice(0, 100))
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('MonsterBrowser load error:', err)
@@ -176,8 +177,9 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
         </div>
 
         {/* Footer */}
-        <div className="mt-2 text-xs text-gray-500">
-          Showing {monsters.length} monsters from Monster Manual (5etools data)
+        <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+          <span>Showing {monsters.length} monsters (sorted A–Z)</span>
+          <span>{search ? `searching: "${search}"` : `CR ${minCR}–${maxCR}`}</span>
         </div>
       </div>
     </div>
