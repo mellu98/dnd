@@ -8,6 +8,7 @@ import { normalizeId } from './id-normalizer'
 import { t, schoolAbbreviations } from '../../i18n/game-terms'
 import { parseEntries, entriesToPlainText } from './entries-parser'
 import { translateSpellName } from '../../i18n/spell-names'
+import { translateSpellDescription } from '../../i18n/spell-descriptions'
 
 /** Raw 5etools spell record */
 export interface FiveeSpell {
@@ -186,7 +187,7 @@ export function mapSpell(raw: FiveeSpell): Spell {
     concentration: hasConcentration(raw.duration, raw.meta),
     ritual: isRitual(raw.meta, raw.ritual),
     description: entriesToPlainText(descriptionRaw),
-    descriptionIT: entriesToPlainText(descriptionRaw),
+    descriptionIT: translateSpellDescription(raw.name, entriesToPlainText(descriptionRaw)),
     source: raw.source,
     isLegacy: raw.source === 'PHB' || raw.edition === 'classic',
     cantripScaling: buildCantripScaling(raw),

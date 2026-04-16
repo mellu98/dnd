@@ -6,6 +6,7 @@ import type { Feat } from '../../types/feat'
 import { normalizeId } from './id-normalizer'
 import { entriesToPlainText } from './entries-parser'
 import { translateFeatName } from '../../i18n/feat-names'
+import { featDescriptionsIT } from '../../i18n/feat-descriptions'
 
 /** Raw 5etools feat record */
 export interface FiveeFeat {
@@ -28,6 +29,7 @@ export interface FiveeFeat {
 export function mapFeat(raw: FiveeFeat): Feat {
   const id = normalizeId(raw.name)
   const description = entriesToPlainText(raw.entries)
+  const descriptionIT = featDescriptionsIT[raw.name] ?? description
 
   // Extract a short mechanic summary from the first entry
   let mechanicIT: string | undefined
@@ -43,7 +45,7 @@ export function mapFeat(raw: FiveeFeat): Feat {
     name: raw.name,
     nameIT: translateFeatName(raw.name),
     description,
-    descriptionIT: description,
+    descriptionIT,
     mechanicIT,
     source: raw.source,
     isLegacy: raw.source === 'PHB' || raw.edition === 'classic',
