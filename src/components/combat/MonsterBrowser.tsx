@@ -36,9 +36,9 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
       } else {
         results = await getAllMonsters()
       }
-      // Sort alphabetically, limit to 100
+      // Sort alphabetically
       const sorted = [...results].sort((a, b) => a.name.localeCompare(b.name))
-      setMonsters(sorted.slice(0, 100))
+      setMonsters(sorted)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('MonsterBrowser load error:', err)
@@ -70,7 +70,7 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="flex h-[80vh] w-[90vw] max-w-4xl flex-col rounded-lg bg-gray-800 p-4 shadow-xl">
+      <div className="flex h-[80vh] w-[95vw] max-w-5xl flex-col rounded-lg bg-gray-800 p-4 shadow-xl">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-100">Monster Browser</h2>
@@ -84,45 +84,48 @@ export function MonsterBrowser({ onSelect, onClose }: MonsterBrowserProps) {
         </div>
 
         {/* Filters */}
-        <form onSubmit={handleSearchSubmit} className="mb-4 flex gap-2">
+        <form onSubmit={handleSearchSubmit} className="mb-4 flex flex-wrap gap-2">
           <input
             type="text"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search monster..."
-            className="flex-1 rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500"
+            className="min-w-[200px] flex-1 rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500"
           />
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-400">CR:</span>
           <select
             value={minCR}
             onChange={(e) => setMinCR(Number(e.target.value))}
-            className="rounded border border-gray-600 bg-gray-700 px-2 py-2 text-sm text-gray-200"
+            className="w-20 rounded border border-gray-600 bg-gray-700 px-2 py-2 text-sm text-gray-200"
           >
-            <option value={0}>CR 0</option>
-            <option value={0.125}>CR 1/8</option>
-            <option value={0.25}>CR 1/4</option>
-            <option value={0.5}>CR 1/2</option>
+            <option value={0}>0</option>
+            <option value={0.125}>1/8</option>
+            <option value={0.25}>1/4</option>
+            <option value={0.5}>1/2</option>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30].map(
               (cr) => (
                 <option key={cr} value={cr}>
-                  CR {cr}
+                  {cr}
                 </option>
               ),
             )}
           </select>
-          <span className="flex items-center text-gray-400">to</span>
+          <span className="text-gray-400">–</span>
           <select
             value={maxCR}
             onChange={(e) => setMaxCR(Number(e.target.value))}
-            className="rounded border border-gray-600 bg-gray-700 px-2 py-2 text-sm text-gray-200"
+            className="w-20 rounded border border-gray-600 bg-gray-700 px-2 py-2 text-sm text-gray-200"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30].map(
               (cr) => (
                 <option key={cr} value={cr}>
-                  CR {cr}
+                  {cr}
                 </option>
               ),
             )}
           </select>
+          </div>
           <button
             type="submit"
             className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
